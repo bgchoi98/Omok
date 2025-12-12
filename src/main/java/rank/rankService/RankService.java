@@ -1,5 +1,8 @@
 package rank.rankService;
 
+import java.util.List;
+
+import rank.Rank;
 import rank.rankRepository.RankRepository;
 
 public class RankService {
@@ -20,4 +23,8 @@ public class RankService {
         }
         return instance;
     }
+    
+   public List<Rank> findAll() {
+	   return RANKREPOSITORY.findAll();
+   }
 }

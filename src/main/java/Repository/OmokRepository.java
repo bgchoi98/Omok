@@ -1,6 +1,8 @@
 
 package Repository;
 
+
+import java.util.List;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -16,15 +18,11 @@ public abstract class OmokRepository <E, ID> {
         return DriverManager.getConnection(
         	    "jdbc:mysql://omokdb.ctacq0y0i2c0.ap-northeast-2.rds.amazonaws.com:3306/omokdb?useSSL=false&serverTimezone=UTC",
         	    "admin",
-        	    "qorhqtlrp"
+        	    "qorhqtlrp" 
         	);
-
     }
 
-    /**
-     * SELECT 쿼리 실행
-     * mapper: ResultSet -> 객체 변환
-     */
+    // SELECT 
     protected <T> T executeQuery(String sql, SQLConsumer<PreparedStatement> parameterSetter,
                                  Function<ResultSet, T> mapper) {
         try (Connection conn = getConnection();
@@ -41,9 +39,7 @@ public abstract class OmokRepository <E, ID> {
         }
     }
 
-    /**
-     * INSERT, UPDATE, DELETE 실행
-     */
+    // INSERT, UPDATE, DELETE
     protected int executeUpdate(String sql, SQLConsumer<PreparedStatement> parameterSetter) {
         try (Connection conn = getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -58,9 +54,18 @@ public abstract class OmokRepository <E, ID> {
         }
     }
 
-    // PreparedStatement 파라미터 설정을 람다로 받을 수 있게 FunctionalInterface
+
     @FunctionalInterface
     protected interface SQLConsumer<T> {
         void accept(T t) throws SQLException;
     }
+    
+    protected abstract E mapRow(ResultSet rs) throws SQLException;
+
+    public abstract E save(E e);
+    public abstract E findById(ID id);
+    public abstract List<E> findAll();
+    public abstract int update(E e);
+    public abstract int delete(ID id);
 }
+

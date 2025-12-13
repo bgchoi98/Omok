@@ -68,7 +68,7 @@ public class UsersServlet extends HttpServlet {
 					req.setAttribute("errorMessage", "이미 존재하는 ID입니다.");
 					req.getRequestDispatcher("/signUp.jsp").forward(req, res);
 				}
-			} else {
+			} else {	
 				req.getRequestDispatcher("/signUp.jsp").forward(req, res);
 				return;
 			}
@@ -78,7 +78,7 @@ public class UsersServlet extends HttpServlet {
 			String id = req.getParameter("user_id");
 			String pw = req.getParameter("user_pw");
 			User user = USERSERVICE.login(id, pw);
-			
+				
 			if (user == null) {
 				req.setAttribute("errorMessage", "아이디 또는 비밀번호가 올바르지 않습니다.");
 				req.getRequestDispatcher("/signIn.jsp").forward(req, res);
@@ -95,6 +95,4 @@ public class UsersServlet extends HttpServlet {
 		}
 	} 
 		
-	
-
 	}

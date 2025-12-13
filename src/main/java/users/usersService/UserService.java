@@ -1,5 +1,6 @@
 package users.usersService;
 
+import users.SignUpForm;
 import users.User;
 import users.usersRepository.UserRepository;
 
@@ -32,5 +33,17 @@ public class UserService {
             return null;
         }
         return user;
+    }
+    
+    public boolean SignUp(SignUpForm signupform) {	
+    	String id = signupform.getUserId();
+        User user = USERREPOSITORY.findById(id);
+        if (user != null) {
+        	System.out.println("이미 존재하는 ID입니다.");
+        	return false; 
+        } else {
+        	//user = USERREPOSITORY; insert 로직
+        	return true;
+        }
     }
 }

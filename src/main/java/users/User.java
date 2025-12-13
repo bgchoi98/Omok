@@ -4,7 +4,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 public class User {
-	private int seqId;               // SEQ_ID (PK)
+	private static Long SEQ_ID = 1L;              // SEQ_ID (PK)
     private String userId;           // USER_ID
     private String userPw;           // USER_PW
     private String email;            // EMAIL
@@ -14,23 +14,22 @@ public class User {
 
     public User() {}
 
-    public User(int seqId, String userId, String userPw, String email,
-                LocalDateTime createdAt, LocalDateTime deletedAt, String nickname) {
-        this.seqId = seqId;
-        this.userId = userId;
+    public User(String userId, String userPw, String email,
+                String nickname) {
+        this.SEQ_ID = SEQ_ID++;
+        this.userId = userId;	
         this.userPw = userPw;
         this.email = email;
-        this.createdAt = createdAt;
-        this.deletedAt = deletedAt;
+        this.createdAt = LocalDateTime.now();
         this.nickname = nickname;
     }
 
-    public int getSeqId() {
-        return seqId;
+    public Long getSeqId() {
+        return SEQ_ID;
     }
 
     public void setSeqId(int seqId) {
-        this.seqId = seqId;
+        this.SEQ_ID = SEQ_ID;
     }
 
     public String getUserId() {
@@ -61,15 +60,15 @@ public class User {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
     public LocalDateTime getDeletedAt() {
         return deletedAt;
     }
 
-    public void setDeletedAt(LocalDateTime deletedAt) {
+    public void setCreatedAt(LocalDateTime createdAt) {
+	    this.createdAt = createdAt;
+	}
+
+	public void setDeletedAt(LocalDateTime deletedAt) {
         this.deletedAt = deletedAt;
     }
 

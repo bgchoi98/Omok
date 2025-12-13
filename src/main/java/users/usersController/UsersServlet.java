@@ -1,6 +1,8 @@
 package users.usersController;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -8,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import users.SignUpForm;
 import users.User;
 import users.usersService.UserService;
 
@@ -50,6 +53,26 @@ public class UsersServlet extends HttpServlet {
 	
 		if (uri.equals("/sign/signUp")) {
 			// 회원 가입 기능 구현
+			String id = req.getParameter("user_id");
+			String pw = req.getParameter("user_pw");
+			String pwRe = req.getParameter("user_pwRe");
+			String email = req.getParameter("email");
+			String nickname = req.getParameter("nickname");
+			
+			SignUpForm joinform = new SignUpForm(id, pw, email, nickname);
+			if(joinform.JoinValidation()) {
+				boolean SignFormChk = USERSERVICE.SignUp(joinform);
+				if (SignFormChk) {
+					res.sendRedirect("/Omok/main.jsp");	//회원가입 성공 시
+				} else {
+					req.setAttribute("errorMessage", "이미 존재하는 ID입니다.");
+					req.getRequestDispatcher("/signUp.jsp").forward(req, res);
+				}
+			} else {
+				req.getRequestDispatcher("/signUp.jsp").forward(req, res);
+				return;
+			}
+			
 		} else if (uri.equals("/sign/signIn")) {
 			// 로그인 기능 구현
 			String id = req.getParameter("user_id");

@@ -10,6 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import users.SignInForm;
 import users.SignUpForm;
 import users.User;
 import users.usersService.UserService;
@@ -74,44 +75,31 @@ public class UsersServlet extends HttpServlet {
 			}
 			
 		} else if (uri.equals("/sign/signIn")) {
-			// 로그인 기능 구현
-			String id = req.getParameter("user_id");
-			String pw = req.getParameter("user_pw");
-<<<<<<< HEAD
-			SignInForm signInForm = new SignInForm(id, pw);
+	         // 로그인 기능 구현
+	         String id = req.getParameter("user_id");
+	         String pw = req.getParameter("user_pw");
+	         SignInForm signInForm = new SignInForm(id, pw);
 
-			User user = null;
-			
-			if (signInForm.isValid()) {
-				user = USERSERVICE.login(id, pw); // 사용자 form이 정상이면
-				if (user == null) { // DB에서 불러온 user가 null이면 다시 SignIn 페이지로 보냄
-					req.setAttribute("errorMessage", "아이디 또는 비밀번호가 올바르지 않습니다.");
-					req.getRequestDispatcher("/signIn.jsp").forward(req, res);
-					return;
-				} else { // DB에서 불러온 user가 정상이면 메인 화면으로 보냄
-				    HttpSession session = req.getSession();	//세션 저장
-				    session.setAttribute("user_id", id);
-				    //상원님이 말한 prg 패턴인듯 리다이렉트를해야 get요청으로 이동해서 post요청이 안나는듯?
-				    res.sendRedirect("/Omok/main.jsp");
-				}				
-=======
-			User user = USERSERVICE.login(id, pw);
-				
-			if (user == null) {
-				req.setAttribute("errorMessage", "아이디 또는 비밀번호가 올바르지 않습니다.");
-				req.getRequestDispatcher("/signIn.jsp").forward(req, res);
-				return;
->>>>>>> 2bf7dc35ea3a93651c7d68bf074098e6842ca771
-			} else {
-			    HttpSession session = req.getSession();	//세션 저장
-			    session.setAttribute("user_id", id);
-			    //상원님이 말한 prg 패턴인듯 리다이렉트를해야 get요청으로 이동해서 post요청이 안나는듯?
-			    res.sendRedirect("/Omok/main.jsp");
-			}
-		} else if (uri.equals("/sign/signWithdraw")) {
-			// 회원 탈퇴 기능 구현
-			
-		}
-	} 
-		
+	         User user = null;
+	         
+	         if (signInForm.isValid()) {
+	            user = USERSERVICE.login(id, pw); // 사용자 form이 정상이면
+	            if (user == null) { // DB에서 불러온 user가 null이면 다시 SignIn 페이지로 보냄
+	               req.setAttribute("errorMessage", "아이디 또는 비밀번호가 올바르지 않습니다.");
+	               req.getRequestDispatcher("/signIn.jsp").forward(req, res);
+	               return;
+	            } else { // DB에서 불러온 user가 정상이면 메인 화면으로 보냄
+	                HttpSession session = req.getSession();   //세션 저장
+	                session.setAttribute("loginUser", user); // UserVO 객체째로 저장. DB 조회를 다시 안 해도 괜찮도록
+	                //상원님이 말한 prg 패턴인듯 리다이렉트를해야 get요청으로 이동해서 post요청이 안나는듯?
+	                res.sendRedirect(req.getContextPath() + "/main.jsp"); // ContextPath 사용 동적으로 경로 가져오기
+	            }            
+	         } else {
+	            req.setAttribute("errorMessage", "아이디와 비밀번호를 모두 입력해주세요.");
+	            req.getRequestDispatcher("/signIn.jsp").forward(req, res);
+	         }
+	         
+
+	      }
+		}	
 	}

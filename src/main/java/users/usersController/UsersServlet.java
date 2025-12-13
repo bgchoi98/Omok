@@ -60,7 +60,7 @@ public class UsersServlet extends HttpServlet {
 
 			User user = null;
 			
-			if (signInForm.isValid(id, pw)) {
+			if (signInForm.isValid()) {
 				user = USERSERVICE.login(id, pw); // 사용자 form이 정상이면
 				if (user == null) { // DB에서 불러온 user가 null이면 다시 SignIn 페이지로 보냄
 					req.setAttribute("errorMessage", "아이디 또는 비밀번호가 올바르지 않습니다.");

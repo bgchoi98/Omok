@@ -9,12 +9,13 @@ public class SignInForm {
 		this.userPw = userPw;
 	}
 	
-	public boolean isValid(String userId, String userPw) {
+	public boolean isValid() {
 		Boolean result = true;
-		if (userId.equals(null) || userId.equals("")) {
+		// equals(null)을 하면 NullPointerException 발생
+		if (userId == null || userId.isEmpty()) { 
 			result = false;
 		}
-		if (userPw.equals(null) || userPw.equals("")) {
+		if (userPw == null || userPw.isEmpty()) {
 			result = false;
 		}
 		return result;

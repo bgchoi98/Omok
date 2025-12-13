@@ -9,7 +9,7 @@ public class SignInForm {
 		this.userPw = userPw;
 	}
 	
-	public boolean isValid(String userId, String userPw) {
+	public boolean isValid() {
 		Boolean result = true;
 		return result;
 	}

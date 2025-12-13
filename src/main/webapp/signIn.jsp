@@ -92,7 +92,7 @@
 <body>
 
     <div class="login-container">
-        <form action="/Omok/sign/signIn" method="post">
+        <form action="${pageContext.request.contextPath}/sign/signIn" method="post">
             <div class="input-group">
                 <label for="user_id">ID</label>
                 <input type="text" id="user_id" name="user_id" placeholder="아이디" required>
@@ -112,7 +112,7 @@
             </div>
             <div class="button-container">
                 <button type="submit" id="login-btn">로그인</button>
-                <button type="button" id="register-btn" onclick="location.href='/Omok/signUp.jsp'">회원가입</button>
+                <button type="button" id="register-btn" onclick="location.href='${pageContext.request.contextPath}/signUp.jsp'">회원가입</button>
             </div>
             
         </form>

@@ -1,10 +1,17 @@
 package users;
 
 public class SignInForm {
-
-	public static void main(String[] args) {
-		// TODO Auto-generated method stub
-
+	private String userId;
+	private String userPw;
+	
+	public SignInForm(String userId, String userPw) {
+		this.userId = userId;
+		this.userPw = userPw;
+	}
+	
+	public boolean isValid(String userId, String userPw) {
+		Boolean result = true;
+		return result;
 	}
 
 }

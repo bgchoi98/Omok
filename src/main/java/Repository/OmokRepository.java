@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.function.Function;
 
+import users.User;
+
 public abstract class OmokRepository <E, ID> {
 
     protected Connection getConnection() throws SQLException {
@@ -22,7 +24,7 @@ public abstract class OmokRepository <E, ID> {
         }
         // 환경에 맞게 JDBC URL, 계정, 비밀번호 수정
         return DriverManager.getConnection(
-        		"jdbc:mariadb://omokdb.ctacq0y0i2c0.ap-northeast-2.rds.amazonaws.com/omokdb?useSSL=false&serverTimezone=Asia/Seoul&characterEncoding=UTF-8",
+        		"jdbc:mariadb://omokdb.ctacq0y0i2c0.ap-northeast-2.rds.amazonaws.com:3306/omokdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&useSSL=false",
       	        "admin",
       	        "qorhqtlrp" 
         	);
@@ -70,8 +72,11 @@ public abstract class OmokRepository <E, ID> {
 
     public abstract E save(E e);
     public abstract E findById(ID id);
+    public abstract E findByNickName(ID id);
     public abstract List<E> findAll();
     public abstract int update(E e);
     public abstract int delete(ID id);
+
+	
 }
 

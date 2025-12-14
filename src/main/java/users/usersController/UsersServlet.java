@@ -36,8 +36,21 @@ public class UsersServlet extends HttpServlet {
 
 		if (uri.equals("/sign/signUp")) {
 			// 회원 가입 기능 구현
-			
-			//굳이 서블릿 거쳐야되나? 물어보기
+			// 아이디, 닉네임 비동기 중복체크 (파라미터가 아이디/닉네임으로 민감한정보 아닐거로 예상되어 GET방식으로 조회함 아님 수정)
+		    if ("true".equals(req.getParameter("ajaxCheck"))) {
+		        String type = req.getParameter("type");      // id / nickname
+		        String value = req.getParameter("value");	// 사용자 입력값
+
+		        boolean isAvailable = false;
+		        if ("id".equals(type)) {
+		            isAvailable = USERSERVICE.isIdExist(value);	// 아이디 중복체크일경우
+		        } else if("nickname".equals(type)) {
+		            isAvailable = USERSERVICE.isNickNameExist(value); // 닉네임 중복체크일경우;
+		        }
+		        res.setContentType("text/plain;charset=UTF-8");
+		        res.getWriter().write(isAvailable ? "true" : "false");
+		        return; // AJAX 요청이면 여기서 종료
+		    }
 		} else if (uri.equals("/sign/signIn")) {
 			// 로그인 기능 구현	
 			req.getRequestDispatcher("/signIn.jsp")
@@ -57,28 +70,25 @@ public class UsersServlet extends HttpServlet {
 	} 
 	
 	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
+		req.setCharacterEncoding("UTF-8");
 		String uri = req.getRequestURI().substring(req.getContextPath().length());         
 	
 		if (uri.equals("/sign/signUp")) {
 			// 회원 가입 기능 구현
+			
 			String id = req.getParameter("user_id");
 			String pw = req.getParameter("user_pw");
-			String pwRe = req.getParameter("user_pwRe");
 			String email = req.getParameter("email");
 			String nickname = req.getParameter("nickname");
 			
-			SignUpForm joinform = new SignUpForm(id, pw, email, nickname);
-			if(joinform.JoinValidation()) {
-				boolean SignFormChk = USERSERVICE.SignUp(joinform);
-				if (SignFormChk) {
-					res.sendRedirect("/Omok/main.jsp");	//회원가입 성공 시
-				} else {
-					req.setAttribute("errorMessage", "이미 존재하는 ID입니다.");
-					req.getRequestDispatcher("/signUp.jsp").forward(req, res);
-				}
-			} else {	
-				req.getRequestDispatcher("/signUp.jsp").forward(req, res);
-				return;
+			SignUpForm joinform = new SignUpForm(id, pw, email, nickname);	// 서버단 검증 객체 생성
+			User user = USERSERVICE.SignUp(joinform);	// 서비스 로직에서 검증구현하기위해 객체 넘겨줌
+			
+			if (user != null) {	//회원가입 성공 시
+				res.sendRedirect(req.getContextPath()+"/signIn.jsp"); // 로그인 페이지로
+				System.out.println(user.toString()); // 테스트용 출력 (회원가입 정보)
+			} else {
+				// 서버 및 DB 에러시 어떻게 처리할지
 			}
 			
 		} else if (uri.equals("/sign/signIn")) {

@@ -1,5 +1,6 @@
 package users;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
@@ -78,6 +79,18 @@ public class User {
 
     public void setNickname(String nickname) {
         this.nickname = nickname;
+    }
+    
+    @Override
+    public String toString() {
+        return "User{" +
+                "seqId=" + SEQ_ID +
+                ", userId='" + userId + '\'' +
+                ", email='" + email + '\'' +
+                ", nickname='" + nickname + '\'' +
+                ", createdAt=" + createdAt +
+                ", deletedAt=" + deletedAt +
+                '}';
     }
 
 }

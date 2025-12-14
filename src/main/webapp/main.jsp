@@ -1,14 +1,12 @@
-<%@ page language="java" contentType="text/html; charset=EUC-KR"
-    pageEncoding="EUC-KR"%>
-<%-- 
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="users.User" %>
 <%
-String userId = (String) session.getAttribute("user_id"); // user ��ü �޵��� �ٲٱ�
-if(userId == null) {
-    // �α��� �� ������ �α��� �������� �����̷�Ʈ
-    response.sendRedirect("/Omok/login.jsp");
+User user = (User) session.getAttribute("loginUser");	//메인화면에 넘어올떄 세션에 값이 없다면 다시 로그인페이지로 리다이렉트
+if (user == null) {
+    response.sendRedirect("/signIn.jsp");
     return;
 }
-%> --%>
+%>  
 <!DOCTYPE html>
 <html>
 <head>
@@ -16,7 +14,10 @@ if(userId == null) {
 <title>Insert title here</title>
 </head>
 <body>
-	<h1>���������� �ӽ��Դϴ�.</h1>
-	�α��� �� ���� ���̵� : <%=session.getAttribute("user_id") %>
+	<h1>메인페이지 임시입니다.</h1>
+	로그인 및 세션 아이디 : <%=user.getUserId() %> <br>
+	닉네임 :  <%=user.getNickname() %> <br>
+	이메일 :  <%=user.getEmail() %>
+	
 </body>
 </html>

@@ -78,7 +78,7 @@ public class UserRepository extends OmokRepository<User, String> {
 	
 	// 로그인 아이디로 회원 조회
 	public User findBySignId(String signId) {
-		String sql = "SELECT * FROM omokdb.USERS WHERE USER_ID = ?";
+		String sql = "SELECT * FROM omokdb.USERS WHERE USER_ID = ? AND deleted_at IS NULL";
 
 		return executeQuery(sql, pstmt -> pstmt.setString(1, signId), rs -> {
 			try {

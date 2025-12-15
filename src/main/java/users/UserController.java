@@ -123,18 +123,21 @@ public class UserController extends HttpServlet {
 				// 회원 탈퇴 기능 구현 
 	            
 	            HttpSession session = req.getSession(false);
-	            if (session == null || session.getAttribute("loginUser") == null ) {
-	               res.sendRedirect(req.getContextPath() + "/signIn.jsp");
+	            if (session == null || session.getAttribute("signInUser") == null ) {
+	               res.sendRedirect(req.getContextPath() + "/sign/signIn?msg=logout");
+	               System.out.println("탈퇴3");
 	               return;
+
 	            }
-	            
-	            User user = (User) session.getAttribute("loginUser");
+	            System.out.println("탈퇴2");
+	            User user = (User) session.getAttribute("signInUser");
 	            boolean isDeleted = USERSERVICE.withdraw(user.getUserId());
 	            
 	            if (isDeleted) {
 	               // 성공 시 세션 파기하고 메인으로
+	               System.out.println("탈퇴");
 	               session.invalidate();
-	               res.sendRedirect(req.getContextPath() + "/signIn.jsp?msg=bye");
+	               res.sendRedirect(req.getContextPath() + "/sign/signWithdraw");
 	            } else {
 	               // 실패 시 예외처리
 	               res.sendRedirect(req.getContextPath() + "/main.jsp?error=fail");

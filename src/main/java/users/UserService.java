@@ -28,7 +28,7 @@ public class UserService {
     // 로그인 요청
     public User signIn(String userId, String userPW) {
     	
-	    if (userId == null || userId.isBlank()) {
+	    if (userId == null || userId.trim().isEmpty()) {
 	        return null;
 	    }
     	

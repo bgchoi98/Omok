@@ -62,10 +62,5 @@ public class RankRepository extends OmokRepository {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-
-	@Override
-	public Object findByNickName(Object id) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 }
+

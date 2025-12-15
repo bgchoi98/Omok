@@ -11,25 +11,33 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.function.Function;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+
 import users.User;
 
 public abstract class OmokRepository <E, ID> {
-
+	
+	private final DataSource dataSource;
+	
+	protected OmokRepository() {
+		try {
+			InitialContext ctx = new InitialContext();
+			this.dataSource = (DataSource) ctx.lookup("java:comp/env/jdbc/omokdb");
+			
+		} catch (NamingException e) {
+			 throw new RuntimeException("JNDI DataSource lookup failed: jdbc/omokdb", e); //서버가 뜰 때 바로 실패서 원인 추적 쉬움
+		}
+	} // OmokRepository
+	
     protected Connection getConnection() throws SQLException {
-    	try {
-            Class.forName("org.mariadb.jdbc.Driver"); // MariaDB 드라이버 로드
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-            throw new SQLException("MariaDB Driver not found", e);
-        }
-        // 환경에 맞게 JDBC URL, 계정, 비밀번호 수정
-        return DriverManager.getConnection(
-        		"jdbc:mariadb://omokdb.ctacq0y0i2c0.ap-northeast-2.rds.amazonaws.com:3306/omokdb?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Seoul&useSSL=false",
-      	        "admin",
-      	        "qorhqtlrp" 
-        	);
+    	return dataSource.getConnection();
+
     }
 
+   
+    
     // SELECT 
     protected <T> T executeQuery(String sql, SQLConsumer<PreparedStatement> parameterSetter,
                                  Function<ResultSet, T> mapper) {
@@ -72,7 +80,6 @@ public abstract class OmokRepository <E, ID> {
 
     public abstract E save(E e);
     public abstract E findById(ID id);
-    public abstract E findByNickName(ID id);
     public abstract List<E> findAll();
     public abstract int update(E e);
     public abstract int delete(ID id);

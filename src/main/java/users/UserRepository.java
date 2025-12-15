@@ -120,10 +120,15 @@ public class UserRepository extends OmokRepository<User, String> {
 		return 0;
 	}
 
-	@Override
-	public int delete(String id) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+	@Override  
+    public int delete(String id) {
+       //String sql = "DELETE FROM USERS WHERE user_id = ?";
+       String sql = "UPDATE USERS SET deleted_at = NOW() WHERE user_id = ?";
+      
+       // 회원 삭제(탈퇴) 쿼리
+       return executeUpdate(sql, pstmt -> {
+          pstmt.setString(1, id);
+       });
+   }
 
 }

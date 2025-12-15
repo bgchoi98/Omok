@@ -34,7 +34,7 @@ public class SignInCheckFilter extends HttpFilter implements Filter {
 	            HttpSession session = httpRequest.getSession(false);
 
 	            if (session == null ||
-	            		session.getAttribute("signMember") == null) { // 세션에 signMember 말고 다른 이름으로 넣는다면 변경 필요
+	            		session.getAttribute("signInUser") == null) { // 세션에 signMember 말고 다른 이름으로 넣는다면 변경 필요
 
 	                httpResponse.sendRedirect(httpRequest.getContextPath() + "/sign/signIn");
 	                return;

@@ -79,7 +79,7 @@ public class UserController extends HttpServlet {
 				User savedUser = USERSERVICE.signUp(user);
 				System.out.println(savedUser.toString()); // 테스트용 출력 (회원가입 정보)
 				
-				res.sendRedirect(req.getContextPath() + "/main.jsp");
+				res.sendRedirect(req.getContextPath() + "/signIn.jsp");
 			} else {
 				req.setAttribute("errorMessage", "입력해주세요");
 			}
@@ -119,6 +119,26 @@ public class UserController extends HttpServlet {
 				
 				// 로그아웃 후 로그인 페이지로 다시 돌아가기
 				res.sendRedirect(req.getContextPath() + "/signIn.jsp?msg=logout");
-			} 
+			} else if (uri.equals("/sign/signWithdraw")) {
+				// 회원 탈퇴 기능 구현 
+	            
+	            HttpSession session = req.getSession(false);
+	            if (session == null || session.getAttribute("loginUser") == null ) {
+	               res.sendRedirect(req.getContextPath() + "/signIn.jsp");
+	               return;
+	            }
+	            
+	            User user = (User) session.getAttribute("loginUser");
+	            boolean isDeleted = USERSERVICE.withdraw(user.getUserId());
+	            
+	            if (isDeleted) {
+	               // 성공 시 세션 파기하고 메인으로
+	               session.invalidate();
+	               res.sendRedirect(req.getContextPath() + "/signIn.jsp?msg=bye");
+	            } else {
+	               // 실패 시 예외처리
+	               res.sendRedirect(req.getContextPath() + "/main.jsp?error=fail");
+	            }
+	         } 
 		}	
 	}

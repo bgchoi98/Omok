@@ -1,4 +1,4 @@
-package rank.rankController;
+package rank;
 
 import java.io.IOException;
 import java.util.List;
@@ -10,7 +10,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import rank.Rank;
-import rank.rankService.RankService;
+
 
 @WebServlet("/rank")
 public class RankController extends HttpServlet {

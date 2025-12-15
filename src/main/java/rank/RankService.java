@@ -1,9 +1,9 @@
-package rank.rankService;
+package rank;
 
 import java.util.List;
 
 import rank.Rank;
-import rank.rankRepository.RankRepository;
+;
 
 public class RankService {
 	

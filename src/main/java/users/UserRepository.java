@@ -1,4 +1,4 @@
-package users.usersRepository;
+package users;
 
 import users.User;
 
@@ -6,7 +6,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.time.LocalDateTime;
-import Repository.OmokRepository;
+import repository.OmokRepository;
 
 public class UserRepository extends OmokRepository<User, String> {
 
@@ -70,15 +70,29 @@ public class UserRepository extends OmokRepository<User, String> {
 					return mapRow(rs);
 				}
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return null;
+		});
+	}
+	
+	// 로그인 아이디로 회원 조회
+	public User findBySignId(String signId) {
+		String sql = "SELECT * FROM omokdb.USERS WHERE USER_ID = ?";
+
+		return executeQuery(sql, pstmt -> pstmt.setString(1, signId), rs -> {
+			try {
+				if (rs.next()) {
+					return mapRow(rs);
+				}
+			} catch (SQLException e) {
 				e.printStackTrace();
 			}
 			return null;
 		});
 	}
 
-	// 닉네임 중복체크
-	@Override
+	// 닉네임으로 회원 조회
 	public User findByNickName(String nickname) {
 		String sql = "SELECT * FROM omokdb.USERS WHERE nickname = ?";
 
@@ -88,7 +102,6 @@ public class UserRepository extends OmokRepository<User, String> {
 					return mapRow(rs);
 				}
 			} catch (SQLException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			return null;

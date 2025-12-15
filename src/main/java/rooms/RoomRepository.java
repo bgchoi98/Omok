@@ -1,4 +1,4 @@
-package rooms.roomsRepository;
+package rooms;
 
 
 

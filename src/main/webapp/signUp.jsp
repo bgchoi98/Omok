@@ -156,7 +156,7 @@ $(document).ready(function() {
         if(value.trim() === "") return;
 
         $.ajax({
-            url: "/Omok/sign/signUp",
+            url: "/Omok_Mini/sign/signUp",
             method: "GET",
             data: { 
                 ajaxCheck: "true",   // ajax요청인지 구분

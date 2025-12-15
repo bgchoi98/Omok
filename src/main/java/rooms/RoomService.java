@@ -1,6 +1,6 @@
-package rooms.roomsService;
+package rooms;
 
-import rooms.roomsRepository.RoomRepository;
+import repository.OmokRepository;
 
 public class RoomService {
 

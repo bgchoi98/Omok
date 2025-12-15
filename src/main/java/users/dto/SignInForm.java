@@ -1,4 +1,4 @@
-package users;
+package users.dto;
 
 public class SignInForm {
 	private String userId;
@@ -20,5 +20,23 @@ public class SignInForm {
 		}
 		return result;
 	}
+	
+	public String getUserId() {
+	    return userId;
+	}
+
+	public void setUserId(String userId) {
+	    this.userId = userId;
+	}
+
+	public String getUserPw() {
+	    return userPw;
+	}
+
+	public void setUserPw(String userPw) {
+	    this.userPw = userPw;
+	}
+
+	
 
 }

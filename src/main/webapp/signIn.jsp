@@ -112,7 +112,11 @@
             </div>
             <div class="button-container">
                 <button type="submit" id="login-btn">로그인</button>
-                <button type="button" id="register-btn" onclick="location.href='${pageContext.request.contextPath}/signUp.jsp'">회원가입</button>
+                
+                <button type="button" id="register-btn" 
+				    onclick="location.href='<%=request.getContextPath()%>/sign/signUp'">
+				    회원가입
+				</button>
             </div>
             
         </form>

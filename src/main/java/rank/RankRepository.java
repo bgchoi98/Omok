@@ -1,10 +1,12 @@
-package rank.rankRepository;
+package rank;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import Repository.OmokRepository;
+import repository.OmokRepository;
+
+
 
 public class RankRepository extends OmokRepository {
 

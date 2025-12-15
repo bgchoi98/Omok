@@ -1,4 +1,4 @@
-package rooms.roomsController;
+package rooms;
 
 import java.io.IOException;
 import javax.servlet.ServletException;
@@ -7,7 +7,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import rooms.roomsService.RoomService;
+
 
 /**
  * Servlet implementation class RoomsServlet
@@ -18,7 +18,7 @@ import rooms.roomsService.RoomService;
 		"/room/code/create"
 
 })
-public class RoomsServlet extends HttpServlet {
+public class RoomController extends HttpServlet {
 	
 	private static final RoomService ROOMSERVICE = RoomService.getInstance();
 

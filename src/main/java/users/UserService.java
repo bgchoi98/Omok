@@ -1,8 +1,8 @@
-package users.usersService;
+package users;
 
-import users.SignUpForm;
+
 import users.User;
-import users.usersRepository.UserRepository;
+import users.dto.SignUpForm;
 
 public class UserService {
 
@@ -24,28 +24,22 @@ public class UserService {
         return instance;
     }
     
+    
     // 로그인 요청
-    public User login(String userId, String userPW) {
-        User user = USERREPOSITORY.findById(userId);
-        if (user == null) {
-        	return null;
-        }
-        if (!user.getUserPw().equals(userPW)) {
-            return null;
-        }
-        return user;
+    public User signIn(String userId, String userPW) {
+    	User findUser = USERREPOSITORY.findBySignId(userId);
+    	
+    	if (userId.equals(findUser.getUserId()) && userPW.equals(findUser.getUserPw())) {
+    		return findUser;
+    	} else {
+    		return null; // 로그인 실패 시 null 리턴
+    	}
     }
     
     // 회원가입 요청
-    public User SignUp(SignUpForm form) {	
-        if (!form.joinValidation()) {	// 서버단 유효성 검증
-        	return null;
-        }
-        // 검증 통과되면 form객체를 user객체로 변환
-        // 이렇게 하는게 맞는건진 잘 모르겠음 User타입으로 USERREPOSITORY에 save메서드가 USER타입으로 선언되어있어서 바꿈
-        User user = new User(form.getId(),form.getPw(),form.getEmail(),form.getNickname());
-        user = USERREPOSITORY.save(user);	// DB INSERT
-        return user;
+    public User signUp(User newUser) {	
+        User savedUser = USERREPOSITORY.save(newUser);	// DB INSERT
+        return savedUser;
     }
     
     // ID 중복체크
@@ -67,4 +61,9 @@ public class UserService {
         
         return false;
     }
+
+	public User findBySignId(String signId) {
+		
+		return USERREPOSITORY.findBySignId(signId);
+	}
 }

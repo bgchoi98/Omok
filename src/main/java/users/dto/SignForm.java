@@ -1,4 +1,4 @@
-package users;
+package users.dto;
 
 public class SignForm {
 	private String id;

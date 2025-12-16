@@ -107,6 +107,17 @@
             margin-bottom: 20px;
             font-size: 24px;
         }
+        
+        .bottom-center-btn {
+		    position: fixed;          
+		    bottom: 30px;             
+		    left: 50%;               
+		    transform: translateX(-50%); 
+		
+		    padding: 12px 24px;
+		    font-size: 16px;
+		    cursor: pointer;
+		}
     </style>
 </head>
 <body>
@@ -139,6 +150,17 @@
                 <button type="submit" id="withdraw-btn">회원탈퇴</button>
             </form>
         </div>
+        
+		<div>
+			<button
+    			type="button"
+    			id="register-btn"
+    			class="bottom-center-btn"
+    			onclick="location.href='<%=request.getContextPath() %>/rank'">
+    			랭킹 페이지
+			</button>
+		</div>        
+        
     </div>
 
 </body>

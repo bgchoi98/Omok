@@ -59,10 +59,10 @@ public class UserRepository extends OmokRepository<User, String> {
 	}
 
 	@Override
-	public User findById(String id) {
+	public User findById(int id) {
 		String sql = "SELECT * FROM omokdb.USERS WHERE seq_id = ?";
 
-		return executeQuery(sql, pstmt -> pstmt.setString(1, id), rs -> {
+		return executeQuery(sql, pstmt -> pstmt.setInt(1, id), rs -> {
 			try {
 				if (rs.next()) {
 					return mapRow(rs);

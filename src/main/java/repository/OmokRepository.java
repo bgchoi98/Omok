@@ -79,7 +79,7 @@ public abstract class OmokRepository <E, ID> {
     protected abstract E mapRow(ResultSet rs) throws SQLException;
 
     public abstract E save(E e);
-    public abstract E findById(ID id);
+    public abstract E findById(int id);
     public abstract List<E> findAll();
     public abstract int update(E e);
     public abstract int delete(ID id);

@@ -125,19 +125,18 @@ public class UserController extends HttpServlet {
 	            HttpSession session = req.getSession(false);
 	            if (session == null || session.getAttribute("signInUser") == null ) {
 	               res.sendRedirect(req.getContextPath() + "/sign/signIn?msg=logout");
-	               System.out.println("탈퇴3");
+	               
 	               return;
 
 	            }
-	            System.out.println("탈퇴2");
+	  
 	            User user = (User) session.getAttribute("signInUser");
 	            boolean isDeleted = USERSERVICE.withdraw(user.getUserId());
 	            
 	            if (isDeleted) {
 	               // 성공 시 세션 파기하고 메인으로
-	               System.out.println("탈퇴");
 	               session.invalidate();
-	               res.sendRedirect(req.getContextPath() + "/sign/signWithdraw");
+	               res.sendRedirect(req.getContextPath() + "/sign/signIn?msg=bye");
 	            } else {
 	               // 실패 시 예외처리
 	               res.sendRedirect(req.getContextPath() + "/main.jsp?error=fail");

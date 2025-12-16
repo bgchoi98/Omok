@@ -3,44 +3,44 @@ package users.dto;
 import java.time.LocalDateTime;
 
 public class SignUpForm {
-	 	private String id;
-	    private String pw;
+	 	private String userId;
+	    private String userPw;
 	    private String email;
 	    private String nickname;
 
-	    public SignUpForm(String id, String pw, String email, String nickname) {
-	        this.id = id;
-	        this.pw = pw;
+	    public SignUpForm(String userId, String userPw, String email, String nickname) {
+	        this.userId = userId;
+	        this.userPw = userPw;
 	        this.email = email;
 	        this.nickname = nickname;
 	    }
 
 	    // 서버단 검증
 	    public boolean joinValidation() {
-	        return isNotBlank(id)
-	            && isNotBlank(pw)
+	        return isNotBlank(userId)
+	            && isNotBlank(userPw)
 	            && isNotBlank(email)
 	            && isNotBlank(nickname);
 	    }
 
-	    private boolean isNotBlank(String s) {	// 검증로직 추후 확인
+	    private boolean isNotBlank(String s) {	
 	        return s != null && !s.trim().isEmpty();
 	    }
 
-		public String getId() {
-			return id;
+		public String getUserId() {
+			return userId;
 		}
 
-		public void setId(String id) {
-			this.id = id;
+		public void setUserId(String userId) {
+			this.userId = userId;
 		}
 
-		public String getPw() {
-			return pw;
+		public String getUserPw() {
+			return userPw;
 		}
 
-		public void setPw(String pw) {
-			this.pw = pw;
+		public void setUserPw(String userPw) {
+			this.userPw = userPw;
 		}
 
 		public String getEmail() {
@@ -58,6 +58,8 @@ public class SignUpForm {
 		public void setNickname(String nickname) {
 			this.nickname = nickname;
 		}
+
+		
 	    
 	    
 

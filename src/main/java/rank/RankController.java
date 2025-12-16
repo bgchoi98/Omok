@@ -21,7 +21,7 @@ public class RankController extends HttpServlet {
 		List<Rank> ranks = RANKSERVICE.findAll();
 		request.setAttribute("ranks", ranks);
 
-	    request.getRequestDispatcher("/WEB-INF/views/rank.jsp")
+	    request.getRequestDispatcher("/rank.jsp")
 	           .forward(request, response);
 	}
 	

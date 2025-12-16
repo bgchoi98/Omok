@@ -37,7 +37,7 @@ public class RoomRepository extends OmokRepository<Room, String> {
 	}
 
 	@Override
-	public Room findById(String id) {
+	public Room findById(int id) {
 		// TODO Auto-generated method stub
 		return null;
 	}

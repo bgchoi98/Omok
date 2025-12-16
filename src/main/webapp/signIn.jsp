@@ -20,7 +20,7 @@ pageEncoding="UTF-8"%>
           history.replaceState({}, null, location.pathname);
         } else if (msg === "register") {
           alert("성공적으로 회원가입 되었습니다.");
-          history.replaceState({}, null, loaction.pathname);
+          history.replaceState({}, null, location.pathname);
         }
       };
     </script>

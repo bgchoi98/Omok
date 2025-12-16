@@ -34,7 +34,7 @@ public class UserService {
     	
     	User findUser = USERREPOSITORY.findBySignId(userId);
     	
-    	if (findUser != null && userId.equals(findUser.getUserId()) && userPW.equals(findUser.getUserPw())) {
+    	if (findUser != null &&  userPW.equals(findUser.getUserPw())) {
     		return findUser;
     	} else {
     		return null; // 로그인 실패 시 null 리턴

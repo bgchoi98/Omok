@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.time.LocalDateTime;
 import repository.OmokRepository;
+import rank.*;
 
 public class UserRepository extends OmokRepository<User, String> {
 
@@ -51,13 +52,30 @@ public class UserRepository extends OmokRepository<User, String> {
 		});
 		
 		if (inserForm > 0) {	//insert 성공 시 vo객체 반환 (회원가입 요청한 데이터)
-			System.out.println("dasdsadsadsad");
+			RankRepository.getInstance().save(new Rank(findBySeq_Id(e.getUserId())));
 			return e;
 		}
 		
 		return null;
 	}
+	
+	// rank테이블 seq_id 자동 삽입용
+	public Long findBySeq_Id(String id) {
+		String sql = "SELECT * FROM omokdb.USERS WHERE user_id = ?";
 
+		return executeQuery(sql, pstmt -> pstmt.setString(1, id), rs -> {
+			try {
+				if (rs.next()) {
+					return rs.getLong("seq_id");
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			return null;
+		});
+	}
+	
+	
 	@Override
 	public User findById(int id) {
 		String sql = "SELECT * FROM omokdb.USERS WHERE seq_id = ?";

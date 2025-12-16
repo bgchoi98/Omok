@@ -1,5 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 pageEncoding="UTF-8"%>
+<%@ page import="consts.Constants" %>
 <!DOCTYPE html>
 <html>
   <head>
@@ -111,7 +112,7 @@ pageEncoding="UTF-8"%>
   <body>
     <div class="login-container">
       <form
-        action="${pageContext.request.contextPath}/sign/signIn"
+        action="${pageContext.request.contextPath}<%= Constants.SIGNIN %>"
         method="post"
       >
         <div class="input-group">
@@ -147,7 +148,7 @@ pageEncoding="UTF-8"%>
           <button
             type="button"
             id="register-btn"
-            onclick="location.href='<%=request.getContextPath() %>/sign/signUp'">회원가입</button>
+            onclick="location.href='<%=request.getContextPath() + Constants.SIGNUP %>'">회원가입</button>
         </div>
       </form>
     </div>

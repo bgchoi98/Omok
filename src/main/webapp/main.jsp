@@ -1,7 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="users.User" %>
+<%@ page import="consts.Constants" %>
 <%
-    User user = (User) session.getAttribute("signInUser");
+    User user = (User) session.getAttribute(Constants.SESSION_KEY);
     // 메인화면에 넘어올 때 세션에 값이 없다면 다시 로그인페이지로 리다이렉트
     if (user == null) {
         response.sendRedirect(request.getContextPath() + "/signIn.jsp");
@@ -138,13 +139,13 @@
                 로그아웃
             </button> -->
             
-            <form action="${pageContext.request.contextPath}/sign/signOut" method="post" 
+            <form action="${pageContext.request.contextPath}<%= Constants.SIGNOUT %>" method="post" 
                   class="signout-form"
                   onsubmit="return confirm('로그아웃 하시겠습니까?');">
                 <button type="submit" id="signout-btn">로그아웃</button>
             </form>
             
-            <form action="${pageContext.request.contextPath}/sign/signWithdraw" method="post" 
+            <form action="${pageContext.request.contextPath}<%= Constants.WITHDRAW %>" method="post" 
                   class="withdraw-form"
                   onsubmit="return confirm('정말로 탈퇴하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.');">
                 <button type="submit" id="withdraw-btn">회원탈퇴</button>

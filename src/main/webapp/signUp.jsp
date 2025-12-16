@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page import="consts.Constants" %>
 <!DOCTYPE html>
 <html>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> <!-- jQuery -->
@@ -93,7 +94,7 @@
 
 
 <div class="login-container">
-    <form action="${pageContext.request.contextPath}/sign/signUp" method="post">
+    <form action="${pageContext.request.contextPath}<%= Constants.SIGNUP %>" method="post">
         <div class="input-group">
             <label for="user_id">ID</label>
             <div class="input-with-msg">
@@ -156,7 +157,7 @@ $(document).ready(function() {
         if(value.trim() === "") return;
 
         $.ajax({
-            url: "/Omok_Mini/sign/signUp",
+            url: "<%=request.getContextPath() + Constants.SIGNUP %>",
             method: "GET",
             data: { 
                 ajaxCheck: "true",   // ajax요청인지 구분

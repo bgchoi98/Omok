@@ -15,6 +15,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import consts.Constants;
+
 
 
 public class SignInCheckFilter extends HttpFilter implements Filter {
@@ -34,9 +36,9 @@ public class SignInCheckFilter extends HttpFilter implements Filter {
 	            HttpSession session = httpRequest.getSession(false);
 
 	            if (session == null ||
-	            		session.getAttribute("signInUser") == null) { // 세션에 signMember 말고 다른 이름으로 넣는다면 변경 필요
+	            		session.getAttribute(Constants.SESSION_KEY) == null) { // 세션에 signMember 말고 다른 이름으로 넣는다면 변경 필요
 
-	                httpResponse.sendRedirect(httpRequest.getContextPath() + "/sign/signIn");
+	                httpResponse.sendRedirect(httpRequest.getContextPath() + Constants.SIGNIN);
 	                return;
 	            }
 	        }
@@ -50,8 +52,8 @@ public class SignInCheckFilter extends HttpFilter implements Filter {
 	    
 	    return !(
 	            uri.equals(ctx + "/") ||
-	            uri.equals(ctx + "/sign/signIn") ||
-	            uri.equals(ctx + "/sign/signUp") ||
+	            uri.equals(ctx + Constants.SIGNIN) ||
+	            uri.equals(ctx + Constants.SIGNUP) ||
 	            uri.startsWith(ctx + "/css/") ||
 	            uri.startsWith(ctx + "/js/")
 	        );

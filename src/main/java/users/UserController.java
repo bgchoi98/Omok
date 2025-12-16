@@ -14,16 +14,17 @@ import javax.servlet.http.HttpSession;
 import users.User;
 import users.dto.SignInForm;
 import users.dto.SignUpForm;
+import consts.Constants;
 
 /**
  * Servlet implementation class UsersServlet
  */
 @WebServlet(urlPatterns = {
-		"/sign" ,
-		"/sign/signUp",
-		"/sign/signIn",
-		"/sign/signOut",
-		"/sign/signWithdraw"
+		Constants.SIGN,
+		Constants.SIGNUP,
+		Constants.SIGNIN,
+		Constants.SIGNOUT,
+		Constants.WITHDRAW
 
 })
 public class UserController extends HttpServlet {
@@ -34,7 +35,7 @@ public class UserController extends HttpServlet {
 	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		String uri = req.getRequestURI().substring(req.getContextPath().length());   
 
-		if (uri.equals("/sign/signUp")) {
+		if (uri.equals(Constants.SIGNUP)) {
 			// 회원 가입 기능 구현
 		    if ("true".equals(req.getParameter("ajaxCheck"))) { // 아이디, 닉네임 비동기 중복체크 (파라미터가 아이디/닉네임으로 민감한정보 아닐거로 예상되어 GET방식으로 조회함 아님 수정)
 		        String type = req.getParameter("type");      // id / nickname
@@ -52,7 +53,7 @@ public class UserController extends HttpServlet {
 		        return; // AJAX 요청이면 여기서 종료
 		    }
 		    req.getRequestDispatcher("/signUp.jsp").forward(req, res); //AJAX가 아닐 경우
-		} else if (uri.equals("/sign/signIn")) {
+		} else if (uri.equals(Constants.SIGNIN)) {
 			// 로그인 창으로 포워딩
 			req.getRequestDispatcher("/signIn.jsp").forward(req, res);
 		} 
@@ -62,7 +63,7 @@ public class UserController extends HttpServlet {
 		req.setCharacterEncoding("UTF-8");
 		String uri = req.getRequestURI().substring(req.getContextPath().length());         
 	
-		if (uri.equals("/sign/signUp")) {
+		if (uri.equals(Constants.SIGNUP)) {
 			// 회원 가입 기능 구현
 			
 			String id = req.getParameter("user_id");
@@ -79,13 +80,13 @@ public class UserController extends HttpServlet {
 				User savedUser = USERSERVICE.signUp(user);
 				System.out.println(savedUser.toString()); // 테스트용 출력 (회원가입 정보)
 				
-				res.sendRedirect(req.getContextPath() + "/sign/signIn?msg=register");
+				res.sendRedirect(req.getContextPath() + Constants.SIGNIN + "?msg=register");
 			} else {
 				req.setAttribute("errorMessage", "입력해주세요");
 			}
 			
 			
-		} else if (uri.equals("/sign/signIn")) {
+		} else if (uri.equals(Constants.SIGNIN)) {
 	         // 로그인 기능 구현
 			
 	         String id = req.getParameter("user_id");
@@ -98,7 +99,7 @@ public class UserController extends HttpServlet {
 	        	 if (signedInUser != null) {
 	        	     // 로그인 성공 
 	        	     HttpSession session = req.getSession();
-	        	     session.setAttribute("signInUser", signedInUser);
+	        	     session.setAttribute(Constants.SESSION_KEY, signedInUser);
 	        	     res.sendRedirect(req.getContextPath() + "/main.jsp"); // PRG 패턴
 	        	 } else {
 	        		req.setAttribute("errorMessage", "아이디와 비밀번호 입력이 잘못되었습니다.");
@@ -108,7 +109,7 @@ public class UserController extends HttpServlet {
 	            req.setAttribute("errorMessage", "아이디와 비밀번호를 모두 입력해주세요.");
 	            req.getRequestDispatcher("/signIn.jsp").forward(req, res);
 	         }
-	      } else if (uri.equals("/sign/signOut")) {
+	      } else if (uri.equals(Constants.SIGNOUT)) {
 				// 로그 아웃 기능 구현
 	    	  
 				HttpSession session = req.getSession(false); // 기존 세션이 존재하는지 확인 (없으면 null 반환)
@@ -118,25 +119,25 @@ public class UserController extends HttpServlet {
 				}
 				
 				// 로그아웃 후 로그인 페이지로 다시 돌아가기
-				res.sendRedirect(req.getContextPath() + "/sign/signIn?msg=logout");
-			} else if (uri.equals("/sign/signWithdraw")) {
+				res.sendRedirect(req.getContextPath() + Constants.SIGNIN + "?msg=logout");
+			} else if (uri.equals(Constants.WITHDRAW)) {
 				// 회원 탈퇴 기능 구현 
 	            
 	            HttpSession session = req.getSession(false);
-	            if (session == null || session.getAttribute("signInUser") == null ) {
-	               res.sendRedirect(req.getContextPath() + "/sign/signIn?msg=logout");
+	            if (session == null || session.getAttribute(Constants.SESSION_KEY) == null ) {
+	               res.sendRedirect(req.getContextPath() + Constants.SIGNIN + "?msg=logout");
 	               
 	               return;
 
 	            }
 	  
-	            User user = (User) session.getAttribute("signInUser");
+	            User user = (User) session.getAttribute(Constants.SESSION_KEY);
 	            boolean isDeleted = USERSERVICE.withdraw(user.getUserId());
 	            
 	            if (isDeleted) {
 	               // 성공 시 세션 파기하고 메인으로
 	               session.invalidate();
-	               res.sendRedirect(req.getContextPath() + "/sign/signIn?msg=bye");
+	               res.sendRedirect(req.getContextPath() + Constants.SIGNIN + "?msg=bye");
 	            } else {
 	               // 실패 시 예외처리
 	               res.sendRedirect(req.getContextPath() + "/main.jsp?error=fail");

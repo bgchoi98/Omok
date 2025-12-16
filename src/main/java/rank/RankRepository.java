@@ -8,7 +8,7 @@ import repository.OmokRepository;
 
 
 
-public class RankRepository extends OmokRepository {
+public class RankRepository extends OmokRepository<Rank, String> {
 
 	private static volatile RankRepository instance;
 
@@ -26,41 +26,40 @@ public class RankRepository extends OmokRepository {
     }
 
 	@Override
-	protected Object mapRow(ResultSet rs) throws SQLException {
+	protected Rank mapRow(ResultSet rs) throws SQLException {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Object save(Object e) {
+	public Rank save(Rank e) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Object findById(Object id) {
+	public Rank findById(String id) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public List findAll() {
+	public List<Rank> findAll() {
 		// TODO Auto-generated method stub
-		// 정렬해서 리턴, 해당 메서드만 구현하기
-		
 		return null;
 	}
 
 	@Override
-	public int update(Object e) {
+	public int update(Rank e) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public int delete(Object id) {
+	public int delete(String id) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
+
 }
 

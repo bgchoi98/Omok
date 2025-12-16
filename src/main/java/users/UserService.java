@@ -49,7 +49,7 @@ public class UserService {
     
     // ID 중복체크
     public boolean isIdExist(String userID) {	
-        User user = USERREPOSITORY.findById(userID);
+        User user = USERREPOSITORY.findBySignId(userID);
         if (user == null) { // 중복된 ID가 없을때
         	return true;
         }

@@ -27,19 +27,39 @@ public class SignUpForm {
 	        return s != null && !s.trim().isEmpty();
 	    }
 
-	    public String getId() {
-	        return id;
-	    }
+		public String getId() {
+			return id;
+		}
 
-	    public String getPw() {
-	        return pw;
-	    }
+		public void setId(String id) {
+			this.id = id;
+		}
 
-	    public String getEmail() {
-	        return email;
-	    }
+		public String getPw() {
+			return pw;
+		}
 
-	    public String getNickname() {
-	        return nickname;
-	    }
+		public void setPw(String pw) {
+			this.pw = pw;
+		}
+
+		public String getEmail() {
+			return email;
+		}
+
+		public void setEmail(String email) {
+			this.email = email;
+		}
+
+		public String getNickname() {
+			return nickname;
+		}
+
+		public void setNickname(String nickname) {
+			this.nickname = nickname;
+		}
+	    
+	    
+
+	    
 }

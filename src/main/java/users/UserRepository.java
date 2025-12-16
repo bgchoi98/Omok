@@ -28,14 +28,12 @@ public class UserRepository extends OmokRepository<User, String> {
 
 	@Override
 	protected User mapRow(ResultSet rs) throws SQLException {
-		User user = new User();
-		user.setSeqId(rs.getInt("SEQ_ID"));
-		user.setUserId(rs.getString("USER_ID"));
-		user.setUserPw(rs.getString("USER_PW"));
-		user.setEmail(rs.getString("EMAIL"));
-		user.setNickname(rs.getString("NICKNAME"));
-
-		return user;
+		return new User(
+				rs.getString("USER_ID")
+			,   rs.getString("USER_PW")
+			,   rs.getString("EMAIL")
+			,   rs.getString("NICKNAME")
+			);
 	}
 
 	// 기존에 상원님이 만들어 두신거 (회원가입으로 처리함)
@@ -62,7 +60,7 @@ public class UserRepository extends OmokRepository<User, String> {
 
 	@Override
 	public User findById(String id) {
-		String sql = "SELECT * FROM omokdb.USERS WHERE user_id = ?";
+		String sql = "SELECT * FROM omokdb.USERS WHERE seq_id = ?";
 
 		return executeQuery(sql, pstmt -> pstmt.setString(1, id), rs -> {
 			try {
@@ -123,7 +121,7 @@ public class UserRepository extends OmokRepository<User, String> {
 	@Override  
     public int delete(String id) {
        //String sql = "DELETE FROM USERS WHERE user_id = ?";
-       String sql = "UPDATE USERS SET deleted_at = NOW() WHERE user_id = ?";
+       String sql = "UPDATE USERS SET deleted_at = NOW() WHERE user_id = ?"; // soft Delete
       
        // 회원 삭제(탈퇴) 쿼리
        return executeUpdate(sql, pstmt -> {

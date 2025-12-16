@@ -165,10 +165,10 @@
         	<table>
         	 <tr>
         		<th>랭킹 순위</th>
-        	 <%
+          <%
             for (int i = 0; i < limit; i++) {
                 Rank r = ranks.get(i);
-        %>
+          %>
             <tr>
                 <td><%= i + 1 %></td>
                 <td><%= r.getNickName() %></td>

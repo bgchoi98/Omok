@@ -1,5 +1,6 @@
 package rooms;
 
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
@@ -26,14 +27,41 @@ public class RoomRepository extends OmokRepository<Room, String> {
 
 	@Override
 	protected Room mapRow(ResultSet rs) throws SQLException {
-		// TODO Auto-generated method stub
-		return null;
+		return new Room( rs.getInt("ROOM_SEQ")
+				       , rs.getDate("ROOM_CREATED_AT")
+				       , rs.getLong("OWNER_USER_SEQ")
+				       , rs.getLong("GUEST_USER_SEQ")
+				       , RoomStatusEnum.valueOf(rs.getString("ROOM_STATUS"))
+				    );
 	}
 
 	@Override
-	public Room save(Room e) {
-		// TODO Auto-generated method stub
+	public Room save(Room room) {
+			String sql = 
+					     "INSERT INTO ROOMS (ROOM_CREATED_AT, OWNER_USER_SEQ, GUEST_USER_SEQ, ROOM_STATUS) "
+					   + "VALUES (NOW(), ?, NULL, 'WAIT')";
+		    executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
+		    	@Override
+		    	public void accept(PreparedStatement pstmt) throws SQLException {
+		    		pstmt.setLong(1, room.getOwnerUserSeq());
+		    		pstmt.setLong(2, room.getGuestUserSeq());
+		    	}
+		    });
 		return null;
+	}
+	
+	public int joinRoom(Room room) {
+		String sql =
+				     "UPDATE ROOMS SET GUEST_USER_SEQ = ?, ROOM_STATUS = 'PLAYING' "
+				   + "WHERE ROOM_SEQ = ?";
+		int result = executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
+				@Override
+				public void accept(PreparedStatement pstmt) throws SQLException {
+					pstmt.setLong(1, room.getGuestUserSeq());
+					pstmt.setInt(2, room.getRoomSeq());
+				}
+			});
+		return result;
 	}
 
 	@Override

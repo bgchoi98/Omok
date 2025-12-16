@@ -27,13 +27,17 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 
 	@Override
 	protected Rank mapRow(ResultSet rs) throws SQLException {
-		Rank rank = new Rank(rs.getLong("USERS_SEQ_ID"), rs.getInt("WIN"), rs.getInt("LOSE"), rs.getString("NICKNAME"));
-		return rank;
+		return new Rank( rs.getLong("USERS_SEQ_ID")
+				       , rs.getInt("WIN")
+				       , rs.getInt("LOSE")
+				       , rs.getString("NICKNAME")
+				    );
 	}
 
 	@Override
 	public Rank save(Rank rank) { // 회원가입시 기본값 저장
-		String sql = "INSERT INTO RANKS (USERS_SEQ_ID, WIN, LOSE, RATE) "
+		String sql = 
+				     "INSERT INTO RANKS (USERS_SEQ_ID, WIN, LOSE, RATE) "
 				   + "VALUES (?,0,0,0)";
 		executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
 			@Override
@@ -47,11 +51,11 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 	@Override
 	public Rank findById(int seqId) {
 		String sql = 
-				"SELECT "
-				+ "R.USERS_SEQ_ID, R.WIN, R.LOSE, R.RATE, U.NICKNAME "
-				+ "FROM RANKS R INNER JOIN USERS U "
-				+ "ON R.USERS_SEQ_ID = U.SEQ_ID "
-				+ "WHERE U.SEQ_ID = ?";
+				     "SELECT "
+				   + "R.USERS_SEQ_ID, R.WIN, R.LOSE, R.RATE, U.NICKNAME "
+				   + "FROM RANKS R INNER JOIN USERS U "
+				   + "ON R.USERS_SEQ_ID = U.SEQ_ID "
+				   + "WHERE U.SEQ_ID = ?";
 		
 		return executeQuery(sql, new SQLConsumer<PreparedStatement>() {
 			@Override
@@ -81,12 +85,12 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 	@Override
 	public List<Rank> findAll() {
 		String sql = 
-					"SELECT "
-					+ "R.USERS_SEQ_ID, R.WIN, R.LOSE, R.RATE, U.NICKNAME "
-					+ "FROM RANKS R INNER JOIN USERS U "
-					+ "ON R.USERS_SEQ_ID = U.SEQ_ID "
-					+ "WHERE (R.WIN + R.LOSE) > 0 "
-					+ "ORDER BY R.RATE DESC, R.WIN DESC";
+					 "SELECT "
+				   + "R.USERS_SEQ_ID, R.WIN, R.LOSE, R.RATE, U.NICKNAME "
+				   + "FROM RANKS R INNER JOIN USERS U "
+				   + "ON R.USERS_SEQ_ID = U.SEQ_ID "
+				   + "WHERE (R.WIN + R.LOSE) > 0 "
+				   + "ORDER BY R.RATE DESC, R.WIN DESC";
 				
 			return executeQuery(sql, null, 
 					new java.util.function.Function<ResultSet, List<Rank>>() {

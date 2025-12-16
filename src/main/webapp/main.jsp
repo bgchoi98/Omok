@@ -1,6 +1,8 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="users.User" %>
 <%@ page import="consts.Constants" %>
+<%@ page import="java.util.List" %>
+<%@ page import="rank.Rank" %>
 <%
     User user = (User) session.getAttribute(Constants.SESSION_KEY);
     // 메인화면에 넘어올 때 세션에 값이 없다면 다시 로그인페이지로 리다이렉트
@@ -122,7 +124,14 @@
     </style>
 </head>
 <body>
+<%
+    List<Rank> ranks = (List<Rank>) request.getAttribute("ranks");
+    if (ranks == null) {
+        ranks = java.util.Collections.emptyList(); //null이면 0으로 
+    }
 
+    int limit = Math.min(10, ranks.size());	//상위 10개만
+%>
     <div class="main-container">
         <h1>메인 로비</h1>
         <h2><%= user.getNickname() %>님, 안녕하세요!</h2>
@@ -150,6 +159,24 @@
                   onsubmit="return confirm('정말로 탈퇴하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.');">
                 <button type="submit" id="withdraw-btn">회원탈퇴</button>
             </form>
+        </div>
+        
+        <div>
+        	<table>
+        	 <tr>
+        		<th>랭킹 순위</th>
+        	 <%
+            for (int i = 0; i < limit; i++) {
+                Rank r = ranks.get(i);
+        %>
+            <tr>
+                <td><%= i + 1 %></td>
+                <td><%= r.getNickName() %></td>
+            </tr>
+        <%
+            }
+        %>
+        	</table>
         </div>
         
 		<div>

@@ -88,7 +88,6 @@ public class UserController extends HttpServlet {
 			
 		} else if (uri.equals(Constants.SIGNIN)) {
 	         // 로그인 기능 구현
-			
 	         String id = req.getParameter("user_id");
 	         String pw = req.getParameter("user_pw");
 	         SignInForm signInForm = new SignInForm(id, pw);

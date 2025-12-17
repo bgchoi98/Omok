@@ -40,7 +40,7 @@ public class RoomRepository extends OmokRepository<Room, String> {
 			String sql = 
 					     "INSERT INTO ROOMS (ROOM_CREATED_AT, OWNER_USER_SEQ, GUEST_USER_SEQ, ROOM_STATUS) "
 					   + "VALUES (NOW(), ?, NULL, 'WAIT')";
-		    executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
+		   executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
 		    	@Override
 		    	public void accept(PreparedStatement pstmt) throws SQLException {
 		    		pstmt.setLong(1, room.getOwnerUserSeq());
@@ -54,14 +54,14 @@ public class RoomRepository extends OmokRepository<Room, String> {
 		String sql =
 				     "UPDATE ROOMS SET GUEST_USER_SEQ = ?, ROOM_STATUS = 'PLAYING' "
 				   + "WHERE ROOM_SEQ = ?";
-		int result = executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
+			executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
 				@Override
 				public void accept(PreparedStatement pstmt) throws SQLException {
 					pstmt.setLong(1, room.getGuestUserSeq());
 					pstmt.setInt(2, room.getRoomSeq());
 				}
 			});
-		return result;
+		return 0;
 	}
 
 	@Override

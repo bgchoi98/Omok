@@ -1,9 +1,6 @@
 package users;
 
 
-import users.User;
-import users.dto.SignUpForm;
-
 public class UserService {
 
 	private static final UserRepository USERREPOSITORY = UserRepository.getInstance();

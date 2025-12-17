@@ -1,6 +1,6 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
 pageEncoding="UTF-8"%>
-<%@ page import="consts.Constants" %>
+<%@ page import="util.Constants" %>
 <!DOCTYPE html>
 <html>
   <head>
@@ -111,44 +111,29 @@ pageEncoding="UTF-8"%>
   </head>
   <body>
     <div class="login-container">
-      <form
-        action="${pageContext.request.contextPath}<%= Constants.SIGNIN %>"
-        method="post"
-      >
+      <form action="${pageContext.request.contextPath}<%= Constants.SIGNIN %>" method="post">
         <div class="input-group">
           <label for="user_id">ID</label>
-          <input
-            type="text"
-            id="user_id"
-            name="user_id"
-            placeholder="아이디"
-            required
-          />
+          <input type="text" id="user_id" name="user_id" placeholder="아이디" required/>
         </div>
         <div class="input-group">
           <label for="user_pw">PW</label>
-          <input
-            type="password"
-            id="user_pw"
-            name="user_pw"
-            placeholder="비밀번호"
-            required
-          />
+          <input type="password" id="user_pw" name="user_pw" placeholder="비밀번호" required/>
         </div>
         <div>
           <% String error = (String) request.getAttribute("errorMessage");
-          if(error != null) { %>
+             if (error != null) {
+          %>
           <div style="color: red; font-size: 13px; margin-top: 10px">
-            <%=error%>
+          <%=error%>
           </div>
-          <%} %>
+          <% 
+             } 
+          %>
         </div>
         <div class="button-container">
           <button type="submit" id="login-btn">로그인</button>
-          <button
-            type="button"
-            id="register-btn"
-            onclick="location.href='<%=request.getContextPath() + Constants.SIGNUP %>'">회원가입</button>
+          <button type="button" id="register-btn" onclick="location.href='<%=request.getContextPath() + Constants.SIGNUP %>'">회원가입</button>
         </div>
       </form>
     </div>

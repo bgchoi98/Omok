@@ -1,12 +1,13 @@
 package users;
 
 import users.User;
+import util.OmokRepository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.time.LocalDateTime;
-import repository.OmokRepository;
+
 import rank.*;
 
 public class UserRepository extends OmokRepository<User, String> {

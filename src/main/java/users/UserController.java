@@ -1,7 +1,6 @@
 package users;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -11,10 +10,9 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 
-import users.User;
 import users.dto.SignInForm;
 import users.dto.SignUpForm;
-import consts.Constants;
+import util.Constants;
 
 /**
  * Servlet implementation class UsersServlet
@@ -24,7 +22,8 @@ import consts.Constants;
 		Constants.SIGNUP,
 		Constants.SIGNIN,
 		Constants.SIGNOUT,
-		Constants.WITHDRAW
+		Constants.WITHDRAW,
+		Constants.MAIN
 
 })
 public class UserController extends HttpServlet {
@@ -52,11 +51,19 @@ public class UserController extends HttpServlet {
 		        res.getWriter().write(isAvailable ? "true" : "false");
 		        return; // AJAX 요청이면 여기서 종료
 		    }
-		    req.getRequestDispatcher("/signUp.jsp").forward(req, res); //AJAX가 아닐 경우
+		    req.getRequestDispatcher(Constants.VIEW_SIGNUP).forward(req, res); //AJAX가 아닐 경우
 		} else if (uri.equals(Constants.SIGNIN)) {
 			// 로그인 창으로 포워딩
-			req.getRequestDispatcher("/signIn.jsp").forward(req, res);
-		} 
+			req.getRequestDispatcher(Constants.VIEW_SIGNIN).forward(req, res);
+		} else if (uri.equals(Constants.MAIN)) {
+			HttpSession session = req.getSession(false);
+			
+			if (session == null || session.getAttribute(Constants.SESSION_KEY) == null) {
+				res.sendRedirect(req.getContextPath() + Constants.SIGNIN);
+				return;
+			}
+			req.getRequestDispatcher(Constants.VIEW_MAIN).forward(req, res);
+		}
 	} 
 	
 	protected void doPost(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
@@ -99,14 +106,14 @@ public class UserController extends HttpServlet {
 	        	     // 로그인 성공 
 	        	     HttpSession session = req.getSession();
 	        	     session.setAttribute(Constants.SESSION_KEY, signedInUser);
-	        	     res.sendRedirect(req.getContextPath() + "/main.jsp"); // PRG 패턴
+	        	     res.sendRedirect(req.getContextPath() + Constants.MAIN); // PRG 패턴
 	        	 } else {
 	        		req.setAttribute("errorMessage", "아이디와 비밀번호 입력이 잘못되었습니다.");
-	        		req.getRequestDispatcher("/signIn.jsp").forward(req, res);
+	        		req.getRequestDispatcher(Constants.VIEW_SIGNIN).forward(req, res);
 	        	}
 	         } else {
 	            req.setAttribute("errorMessage", "아이디와 비밀번호를 모두 입력해주세요.");
-	            req.getRequestDispatcher("/signIn.jsp").forward(req, res);
+	            req.getRequestDispatcher(Constants.VIEW_SIGNIN).forward(req, res);
 	         }
 	      } else if (uri.equals(Constants.SIGNOUT)) {
 				// 로그 아웃 기능 구현
@@ -139,7 +146,7 @@ public class UserController extends HttpServlet {
 	               res.sendRedirect(req.getContextPath() + Constants.SIGNIN + "?msg=bye");
 	            } else {
 	               // 실패 시 예외처리
-	               res.sendRedirect(req.getContextPath() + "/main.jsp?error=fail");
+	               res.sendRedirect(req.getContextPath() + Constants.VIEW_MAIN +"?error=fail");
 	            }
 	         } 
 		}	

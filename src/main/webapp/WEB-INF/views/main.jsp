@@ -1,16 +1,16 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <%@ page import="users.User" %>
-<%@ page import="consts.Constants" %>
+<%@ page import="util.Constants" %>
 <%@ page import="java.util.List" %>
 <%@ page import="rank.Rank" %>
-<%
+  <%
     User user = (User) session.getAttribute(Constants.SESSION_KEY);
     // 메인화면에 넘어올 때 세션에 값이 없다면 다시 로그인페이지로 리다이렉트
     if (user == null) {
-        response.sendRedirect(request.getContextPath() + "/signIn.jsp");
+        response.sendRedirect(request.getContextPath() + Constants.SIGNIN);
         return;
     }
-%>  
+%>
 <!DOCTYPE html>
 <html>
 <head>
@@ -165,31 +165,24 @@
         	<table>
         	 <tr>
         		<th>랭킹 순위</th>
-          <%
-            for (int i = 0; i < limit; i++) {
-                Rank r = ranks.get(i);
-          %>
-            <tr>
+                <%
+                  for (int i = 0; i < limit; i++) {
+                  Rank rank = ranks.get(i);
+                 %>
+             <tr>
                 <td><%= i + 1 %></td>
-                <td><%= r.getNickName() %></td>
+                <td><%= rank.getNickName() %></td>
             </tr>
-        <%
-            }
-        %>
+                 <%
+                    }
+                 %>
         	</table>
         </div>
-        
 		<div>
-			<button
-    			type="button"
-    			id="register-btn"
-    			class="bottom-center-btn"
-    			onclick="location.href='<%=request.getContextPath() %>/rank'">
+			<button type="button" id="register-btn" class="bottom-center-btn" onclick="location.href='<%=request.getContextPath() %>/rank'">
     			랭킹 페이지
 			</button>
 		</div>        
-        
     </div>
-
 </body>
 </html>

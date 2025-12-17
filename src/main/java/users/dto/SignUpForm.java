@@ -1,6 +1,5 @@
 package users.dto;
 
-import java.time.LocalDateTime;
 
 public class SignUpForm {
 	 	private String userId;

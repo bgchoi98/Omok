@@ -6,7 +6,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import repository.*;
+import util.OmokRepository;
 
 public class RankRepository extends OmokRepository<Rank, Integer> {
 

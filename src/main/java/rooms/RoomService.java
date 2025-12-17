@@ -1,6 +1,6 @@
 package rooms;
 
-import repository.OmokRepository;
+import util.OmokRepository;
 
 public class RoomService {
 

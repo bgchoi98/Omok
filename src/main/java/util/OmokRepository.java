@@ -1,5 +1,5 @@
 
-package repository;
+package util;
 
 
 import java.util.List;

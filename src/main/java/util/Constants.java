@@ -1,4 +1,4 @@
-package consts;
+package util;
 public class Constants {
 	
 	// root
@@ -14,7 +14,14 @@ public class Constants {
 	public static final String SIGNOUT = "/sign/signOut";
 	public static final String SIGNUP = "/sign/signUp";
 	public static final String WITHDRAW = "/sign/signWithdraw";
+	public static final String MAIN = "/main";
 	
+	
+	// JSP View paths (WEB-INF 안쪽)
+    public static final String VIEW_SIGNIN = "/WEB-INF/views/signIn.jsp";
+    public static final String VIEW_SIGNUP = "/WEB-INF/views/signUp.jsp";
+    public static final String VIEW_MAIN = "/WEB-INF/views/main.jsp";
+    public static final String VIEW_MYPAGE = "/WEB-INF/views/mypage.jsp";
 	
 	// rank
 	public static final String RANK = "/rank";

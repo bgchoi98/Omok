@@ -1,7 +1,5 @@
 package users;
 
-import java.sql.Date;
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 
 public class User {
@@ -15,8 +13,7 @@ public class User {
 
     public User() {}
 
-    public User(String userId, String userPw, String email,
-                String nickname) {
+    public User(String userId, String userPw, String email, String nickname) {
         this.userId = userId;	
         this.userPw = userPw;
         this.email = email;

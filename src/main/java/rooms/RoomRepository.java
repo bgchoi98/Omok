@@ -5,7 +5,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
-import repository.OmokRepository;
+import util.OmokRepository;
 
 public class RoomRepository extends OmokRepository<Room, String> {
 

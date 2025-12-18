@@ -55,7 +55,8 @@ public class SignInCheckFilter extends HttpFilter implements Filter {
 	            uri.equals(ctx + Constants.SIGNIN) ||
 	            uri.equals(ctx + Constants.SIGNUP) ||
 	            uri.startsWith(ctx + "/css/") ||
-	            uri.startsWith(ctx + "/js/")
+	            uri.startsWith(ctx + "/js/") ||
+	            uri.startsWith(ctx + "/assets")
 	        );
 	}
 }

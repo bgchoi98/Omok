@@ -10,14 +10,16 @@ public class Room {
 	private Long guestUserSeq;
 	private RoomStatusEnum roomStatus;
 	
-	public Room(int roomSeq, Date roomCreatedAt, Long ownerUserSeq, Long guestUserSeq, RoomStatusEnum roomStatus) {
+	public Room(int roomSeq, java.util.Date date, Long ownerUserSeq, Long guestUserSeq, RoomStatusEnum roomStatus) {
 		this.roomSeq = roomSeq;
-		this.roomCreatedAt = roomCreatedAt;
+		this.roomCreatedAt = (Date) date;
 		this.ownerUserSeq = ownerUserSeq;
 		this.guestUserSeq = guestUserSeq;
 		this.roomStatus = roomStatus;
 	}
 	
+
+
 	public int getRoomSeq() {
 		return roomSeq;
 	}

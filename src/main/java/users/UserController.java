@@ -22,9 +22,7 @@ import util.Constants;
 		Constants.SIGNUP,
 		Constants.SIGNIN,
 		Constants.SIGNOUT,
-		Constants.WITHDRAW,
-		Constants.MAIN
-
+		Constants.WITHDRAW
 })
 public class UserController extends HttpServlet {
 	
@@ -55,14 +53,6 @@ public class UserController extends HttpServlet {
 		} else if (uri.equals(Constants.SIGNIN)) {
 			// 로그인 창으로 포워딩
 			req.getRequestDispatcher(Constants.VIEW_SIGNIN).forward(req, res);
-		} else if (uri.equals(Constants.MAIN)) {
-			HttpSession session = req.getSession(false);
-			
-			if (session == null || session.getAttribute(Constants.SESSION_KEY) == null) {
-				res.sendRedirect(req.getContextPath() + Constants.SIGNIN);
-				return;
-			}
-			req.getRequestDispatcher(Constants.VIEW_MAIN).forward(req, res);
 		}
 	} 
 	

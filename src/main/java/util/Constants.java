@@ -14,7 +14,6 @@ public class Constants {
 	public static final String SIGNOUT = "/sign/signOut";
 	public static final String SIGNUP = "/sign/signUp";
 	public static final String WITHDRAW = "/sign/signWithdraw";
-	public static final String MAIN = "/main";
 	
 	
 	// JSP View paths (WEB-INF 안쪽)
@@ -27,13 +26,9 @@ public class Constants {
 	public static final String RANK = "/rank";
 	
 	
-	// room
-	public static final String RANDOM_CREATE = "/room/random/create";
-	public static final String RANDOM_START = "/room/random/start";
-	
-	public static final String CODE_CREATE = "/room/code/create";
-	public static final String RESULT = "/room/result";
-	
+	// main
+	public static final String MAIN = "/main";
+	public static final String GAME = "/main/{roomId}";
 	
 	
 }

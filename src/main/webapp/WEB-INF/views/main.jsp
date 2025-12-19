@@ -325,7 +325,7 @@
         // 웹소켓 연결
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = protocol + '//' + window.location.host + '<%= request.getContextPath() %>/roomList';
+            const wsUrl = protocol + '//' + window.location.host + '<%= request.getContextPath() %>/lobby';
             
             debugLog('웹소켓 연결 시도: ' + wsUrl);
             

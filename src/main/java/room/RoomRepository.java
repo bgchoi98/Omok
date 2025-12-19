@@ -42,17 +42,24 @@ public class RoomRepository {
 
 
 
-	public Room createRoom(LobbyUser lobbyUser) {
+    // 방 생성
+	public Room save(LobbyUser lobbyUser) {
 		
+		// 1. 로비 유저가 게임 유저로 변경됨 
 		GameUser gameUser = new GameUser(lobbyUser);
 		
+		// 2. 새로운 방이 생성되며 방의 상태가 대기로 된다.
 		Room savedRoom = new Room(
 				RoomStatus.WAITING
 		);
+		
+		// 3. 방 번호 넣기
 		long currentSeq = savedRoom.getRoomSeq();
 		
+		// 4. 방 객체 속 게임 유저 리스트에 게임 유저를 추가
 		savedRoom.getGameUsers().add(gameUser);
 		
+		// 5. 맵에 방 번호, 방을 key - value 로 넣는다
 		rooms.put(currentSeq, savedRoom);
 		return savedRoom;
 	}
@@ -65,8 +72,8 @@ public class RoomRepository {
 		return new ArrayList<>(rooms.values());
 	}
 
-	public Room findById(Long id) {
-		return rooms.get(id);
+	public Room findById(Long roomId) {
+		return rooms.get(roomId);
 	}
 	
 

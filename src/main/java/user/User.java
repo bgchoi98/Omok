@@ -3,7 +3,7 @@ package user;
 import java.time.LocalDateTime;
 
 public class User {
-	private Integer userSeq;
+
     private String userId;           // USER_ID
     private String userPw;           // USER_PW
     private String email;            // EMAIL
@@ -14,8 +14,8 @@ public class User {
     public User() {}
 
  // User.java
-    public User(Integer userSeq, String userId, String userPw, String email, String nickname) {
-        this.userSeq = userSeq;  
+    public User(String userId, String userPw, String email, String nickname) {
+
         this.userId = userId;
         this.userPw = userPw;
         this.email = email;
@@ -23,9 +23,7 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    public Integer getUserSeq() {
-        return userSeq;
-    }
+
 
     public String getUserId() {
         return userId;

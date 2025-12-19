@@ -74,6 +74,10 @@ public class UserService {
 		return USERREPOSITORY.findById(id);
 	}
 	
+	public User findByNickName(String nickName) {
+		return USERREPOSITORY.findByNickName(nickName);
+	}
+	
     public boolean withdraw(String userId) {
         int result = USERREPOSITORY.delete(userId);
         return result > 0;

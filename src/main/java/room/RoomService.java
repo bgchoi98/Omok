@@ -8,6 +8,7 @@ import javax.websocket.Session;
 import com.google.gson.Gson;
 
 import game.GameUser;
+import game.Observer;
 import util.webSocketDTOs.MessageType;
 import util.webSocketDTOs.WebSocketMessage;
 
@@ -35,21 +36,26 @@ public class RoomService {
     }
     		
     public Room createRoom(LobbyUser lobbyUser) {
-    	Room room = ROOMREPOSITORY.createRoom(lobbyUser); 
+    	Room room = ROOMREPOSITORY.save(lobbyUser); 
     	broadcastRoomList();
     	return room;
     }
+    
+    public void observe(LobbyUser lobbyUser, Room room) {
+    	Observer observer = new Observer(lobbyUser);
+    	room.getObservers().add(observer);
+    }
 
     
-    public void sendRoomListToLobbyUser(LobbyUser lobbyUser) {
+    public void sendRoomListToLobbyUser(Session session, LobbyUser lobbyUser) {
         try {
             String json = createRoomListJson(); // 룸 리스트들을 클라이언트로 담아 전달 
-            Session session = lobbyUser.getSession();
             session.getBasicRemote().sendText(json);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    
     private String createRoomListJson() {
         List<Room> rooms = ROOMREPOSITORY.findAll();
         return gson.toJson(
@@ -67,13 +73,15 @@ public class RoomService {
         }
     }
     
-    public boolean checkRoom(Long roomId, LobbyUser lobbyUser) {
-        Room room = ROOMREPOSITORY.findById(roomId);
-        if (room == null) return false;
+    public void joinRoom(Room room, LobbyUser lobbyUser) {
+        
+        if (room == null) {
+        	return;
+        }
 
         synchronized (room) {
             if (room.getGameUsers().size() >= 2) {
-                return false;
+            	return;
             }
             
             GameUser gameUser = new GameUser(lobbyUser);
@@ -82,16 +90,17 @@ public class RoomService {
             if (room.getGameUsers().size() == 2) {
                 room.setRoomStatus(RoomStatus.PLAYING);
                 // 두 명 다 찼으니 플레이어 상태 갱신
-
-                return true; // 두 명 다 찼음
-            }
+            } 
         }
-        return true;
     }
 
 	public void deleteRoom(long seqId) {
 		ROOMREPOSITORY.deleteRoom(seqId);
 		broadcastRoomList();
+	}
+	
+	public Room findRoom(Long roomId) {
+		return ROOMREPOSITORY.findById(roomId);
 	}
 	
 	public void addSession(Session session) {

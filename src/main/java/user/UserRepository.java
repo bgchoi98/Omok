@@ -29,8 +29,8 @@ public class UserRepository extends OmokRepository<User, String> {
 
 	@Override
 	protected User mapRow(ResultSet rs) throws SQLException {
-	    return new User( rs.getInt("SEQ_ID")        // ⭐ SEQ_ID 추가
-	                   , rs.getString("USER_ID")
+	    return new User(        
+	                   rs.getString("USER_ID")
 	                   , rs.getString("USER_PW")
 	                   , rs.getString("EMAIL")
 	                   , rs.getString("NICKNAME")

@@ -22,7 +22,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background-image: url('${pageContext.request.contextPath}/assets/images/main/mainBg.png');
+            background-image: url('<%= request.getContextPath() %>/assets/images/main/mainBg.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -104,7 +104,7 @@
         .room-panel-container {
             position: fixed;
             top: 50%;
-            left: 50%;
+            left: 45%;
             transform: translate(-50%, -50%);
             z-index: 10;
         }
@@ -113,14 +113,31 @@
             position: relative;
             width: 800px;
             height: 600px;
-            background-image: url('${pageContext.request.contextPath}/assets/images/main/RoomBox.png');
+            padding: 80px 60px 120px 60px;
+        }
+
+        /* RoomBox 배경 (::before로 opacity만 적용) */
+        .room-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('<%= request.getContextPath() %>/assets/images/main/RoomBox.png');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
-            padding: 80px 60px 60px 60px;
+            opacity: 0.75;
+            transition: opacity 0.3s ease;
+            z-index: -1;
         }
 
-        /* 방 그리드 (3x2) */
+        .room-panel:hover::before {
+            opacity: 1.0;
+        }
+
+        /* 방 그리드 (2x3) */
         .rooms-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -130,31 +147,32 @@
             padding: 20px;
         }
 
-        /* 개별 방 슬롯 */
-        .room-slot {
+        /* 개별 방 카드 */
+        .room-card {
+            position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: space-between;
-            gap: 10px;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.3s ease, filter 0.3s ease;
+        }
+
+        .room-card:hover {
+            transform: scale(1.04);
+            filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.4));
         }
 
         .room-frame {
             position: relative;
             width: 100%;
-            flex: 1;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            cursor: pointer;
-            transition: transform 0.3s ease;
         }
 
-        .room-frame:hover {
-            transform: scale(1.05);
-        }
-
-        .room-frame img {
+        .room-frame-img {
             width: 100%;
             height: 100%;
             object-fit: contain;
@@ -178,61 +196,83 @@
         }
 
         .room-status {
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
         }
 
-        /* 방 버튼들 */
-        .room-buttons {
+        .room-status.waiting {
+            color: #4da6ff;
+        }
+
+        .room-status.playing {
+            color: #ff4d4d;
+        }
+
+        .room-players {
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        /* 빈 방 표시 */
+        .empty-room {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .empty-room:hover {
+            transform: none;
+            filter: none;
+        }
+
+        .empty-message {
+            font-size: 20px;
+            color: #fff;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            font-weight: bold;
+        }
+
+        /* 페이지 네비게이션 (RoomBox 내부) */
+        .page-navigation {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            gap: 10px;
-            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            z-index: 1;
         }
 
-        .room-btn {
+        .nav-arrow {
             cursor: pointer;
-            transition: transform 0.2s ease;
-            border: none;
-            background: none;
-            padding: 0;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 1;
         }
 
-        .room-btn:hover {
+        .nav-arrow:hover:not(.disabled) {
             transform: scale(1.1);
         }
 
-        .room-btn img {
-            width: 60px;
-            height: auto;
+        .nav-arrow.disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            pointer-events: none;
         }
 
-        /* 화살표 버튼 (패널 우측 중간) */
-        .arrow-btn {
-            position: absolute;
-            right: -40px;
-            top: 50%;
-            transform: translateY(-50%);
-            cursor: pointer;
-            transition: transform 0.3s ease;
-            z-index: 20;
-        }
-
-        .arrow-btn:hover {
-            transform: translateY(-50%) scale(1.1);
-        }
-
-        .arrow-btn img {
+        .nav-arrow img {
             width: 50px;
             height: auto;
         }
 
-        /* 방 만들기 버튼 (패널 우하단) */
+        .arrow-left img {
+            transform: scaleX(-1);
+        }
+
+        /* 방 만들기 버튼 */
         .make-room-btn {
-            position: absolute;
-            right: -20px;
-            bottom: 20px;
             cursor: pointer;
             transition: transform 0.3s ease;
-            z-index: 20;
         }
 
         .make-room-btn:hover {
@@ -252,6 +292,9 @@
             cursor: pointer;
             transition: transform 0.3s ease;
             z-index: 100;
+            background: none;
+            border: none;
+            padding: 0;
         }
 
         .config-icon:hover {
@@ -261,6 +304,159 @@
         .config-icon img {
             width: 60px;
             height: auto;
+        }
+
+        /* 설정 팝업 */
+        .config-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 9998;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .config-popup.show {
+            display: flex !important;
+        }
+
+        .config-content {
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            min-width: 400px;
+        }
+
+        .config-header {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #333;
+        }
+
+        .config-section {
+            margin-bottom: 25px;
+        }
+
+        .config-label {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #555;
+        }
+
+        .volume-control {
+            margin-top: 10px;
+        }
+
+        .volume-track {
+            position: relative;
+            width: 100%;
+            height: 40px;
+            background: linear-gradient(to right, #ddd 10%, #667eea 10%, #667eea 90%, #ddd 90%);
+            border-radius: 20px;
+            cursor: pointer;
+            overflow: visible;
+        }
+
+        .volume-groove {
+            position: absolute;
+            left: 10%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 80%;
+            height: 8px;
+            background-color: #667eea;
+            border-radius: 4px;
+        }
+
+        .volume-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 4px;
+            transition: width 0.1s ease;
+        }
+
+        .volume-thumb {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border: 3px solid #667eea;
+            border-radius: 50%;
+            cursor: grab;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            transition: left 0.1s ease;
+        }
+
+        .volume-thumb:active {
+            cursor: grabbing;
+        }
+
+        .volume-percentage {
+            text-align: center;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .config-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .config-btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+
+        .config-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-logout {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .btn-logout:hover {
+            background-color: #e68900;
+        }
+
+        .btn-withdrawal {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .btn-withdrawal:hover {
+            background-color: #da190b;
+        }
+
+        .btn-close {
+            background-color: #9e9e9e;
+            color: white;
+        }
+
+        .btn-close:hover {
+            background-color: #757575;
         }
 
         /* 연결 상태 표시 */
@@ -311,31 +507,15 @@
             font-size: 12px;
             overflow-y: auto;
             z-index: 1000;
+            display: none;
+        }
+
+        .debug-console.show {
+            display: block !important;
         }
 
         .debug-console div {
             margin: 2px 0;
-        }
-
-        /* 빈 슬롯 스타일 */
-        .empty-slot .room-frame {
-            opacity: 0.6;
-        }
-
-        /* 애니메이션 */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
-        .room-slot.new {
-            animation: fadeIn 0.3s ease;
         }
     </style>
 </head>
@@ -348,352 +528,501 @@
         </div>
     </div>
 
+    <!-- 설정 팝업 -->
+    <div id="configPopup" class="config-popup">
+        <div class="config-content">
+            <div class="config-header">설정</div>
+
+            <div class="config-section">
+                <div class="config-label">볼륨 조절</div>
+                <div class="volume-control">
+                    <div id="volumeTrack" class="volume-track">
+                        <div class="volume-groove">
+                            <div id="volumeFill" class="volume-fill"></div>
+                        </div>
+                        <div id="volumeThumb" class="volume-thumb"></div>
+                    </div>
+                    <div id="volumePercentage" class="volume-percentage">50%</div>
+                </div>
+            </div>
+
+            <div class="config-buttons">
+                <button class="config-btn btn-logout" onclick="handleLogout()">로그아웃</button>
+                <button class="config-btn btn-withdrawal" onclick="handleWithdrawal()">회원탈퇴</button>
+                <button class="config-btn btn-close" onclick="closeConfigPopup()">닫기</button>
+            </div>
+        </div>
+    </div>
+
     <!-- 연결 상태 표시 -->
     <div id="connectionStatus" class="connection-status status-disconnected">연결 중...</div>
 
     <!-- 사용자 정보 -->
     <div class="user-info">
-        👤 <%= user.getNickname() %>님 환영합니다!
+        <%= user.getNickname() %>님 환영합니다!
     </div>
 
     <!-- 우측 랭킹 트리 -->
-    <aside class="ranking-tree">
-        <a href="${pageContext.request.contextPath}/rank">
-            <img src="${pageContext.request.contextPath}/assets/images/main/RankingTree.png" alt="랭킹 페이지">
-        </a>
+    <aside class="ranking-tree" onclick="goToRanking()">
+        <img src="<%= request.getContextPath() %>/assets/images/main/RankingTree.png" alt="랭킹 페이지">
     </aside>
 
     <!-- 중앙 방 패널 -->
     <main class="room-panel-container">
         <div class="room-panel">
-            <!-- 방 그리드 (3x2) -->
+            <!-- 방 그리드 (2x3) -->
             <div id="roomsGrid" class="rooms-grid">
                 <!-- 방 목록이 여기에 동적으로 생성됩니다 -->
             </div>
 
-            <!-- 화살표 버튼 (우측 중간) -->
-            <button class="arrow-btn" onclick="requestRoomList()">
-                <img src="${pageContext.request.contextPath}/assets/images/main/Arrow.png" alt="새로고침">
-            </button>
-
-            <!-- 방 만들기 버튼 (우하단) -->
-            <button class="make-room-btn" id="createRoomBtn" onclick="createRoom()">
-                <img src="${pageContext.request.contextPath}/assets/images/main/MakeRoomBtn.png" alt="방 만들기">
-            </button>
+            <!-- 페이지 네비게이션 -->
+            <div class="page-navigation">
+                <div id="prevBtn" class="nav-arrow arrow-left" onclick="changePage(-1)">
+                    <img src="<%= request.getContextPath() %>/assets/images/main/Arrow.png" alt="이전 페이지">
+                </div>
+                <div class="make-room-btn" onclick="createRoom()">
+                    <img src="<%= request.getContextPath() %>/assets/images/main/MakeRoomBtn.png" alt="방 만들기">
+                </div>
+                <div id="nextBtn" class="nav-arrow" onclick="changePage(1)">
+                    <img src="<%= request.getContextPath() %>/assets/images/main/Arrow.png" alt="다음 페이지">
+                </div>
+            </div>
         </div>
     </main>
 
     <!-- 설정 아이콘 (우하단 고정) -->
-    <button class="config-icon" onclick="alert('설정 기능 준비중입니다.')">
-        <img src="${pageContext.request.contextPath}/assets/images/main/configureIcon.png" alt="설정">
+    <button class="config-icon" onclick="openConfigPopup()">
+        <img src="<%= request.getContextPath() %>/assets/images/main/configureIcon.png" alt="설정">
     </button>
 
     <!-- 디버그 콘솔 -->
     <div class="debug-console" id="debugConsole"></div>
 
     <script>
+        // ========== 전역 변수 설정 ==========
+        const CTX = '<%= request.getContextPath() %>';
+        const ASSET = CTX + '/assets/images/main/';
+
         let websocket = null;
-        const MAX_ROOMS = 6; // 3x2 그리드
-        let currentRooms = [];
+        const ROOMS_PER_PAGE = 6;
+        let allRooms = [];
+        let currentPageIndex = 0;
         let isCreatingRoom = false;
+        let roomFrameMap = new Map();
+        let currentVolume = 0.5;
+        let isDraggingVolume = false;
 
-        // 방 프레임 이미지 순서 (3x2)
-        const roomFrames = [
-            'Room_3.png', 'Room_2.png', 'Room_1.png',  // 1행
-            'Room_1.png', 'Room_2.png', 'Room_3.png'   // 2행
-        ];
+        // URL 파라미터에서 debug 모드 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const debugMode = urlParams.get('debug') === '1';
 
-        // 디버그 로그 함수
+        // ========== 유틸리티 함수 ==========
         function debugLog(message) {
+            if (!debugMode) return;
             const console = document.getElementById('debugConsole');
             const now = new Date().toLocaleTimeString();
             const logEntry = document.createElement('div');
-            logEntry.textContent = `[${now}] ${message}`;
+            logEntry.textContent = '[' + now + '] ' + message;
             console.appendChild(logEntry);
             console.scrollTop = console.scrollHeight;
-
-            // 콘솔에도 출력
             window.console.log(message);
         }
 
-        // 페이지 로드 시 웹소켓 연결
+        function playSfx(name) {
+            debugLog('SFX 재생 시도: ' + name);
+        }
+
+        function startBgm() {
+            debugLog('BGM 시작 시도');
+        }
+
+        // ========== 페이지 초기화 ==========
         window.onload = function() {
             debugLog('페이지 로드 완료');
+            if (debugMode) {
+                document.getElementById('debugConsole').classList.add('show');
+                debugLog('디버그 모드 활성화');
+            }
+            initVolumeControl();
+            loadVolumeFromStorage();
             connectWebSocket();
+            startBgm();
         };
 
-        // 웹소켓 연결
+        // ========== 볼륨 컨트롤 ==========
+        function initVolumeControl() {
+            const track = document.getElementById('volumeTrack');
+            const thumb = document.getElementById('volumeThumb');
+
+            track.addEventListener('mousedown', function(e) {
+                updateVolumeFromMouse(e, track);
+                isDraggingVolume = true;
+            });
+
+            thumb.addEventListener('mousedown', function(e) {
+                e.stopPropagation();
+                isDraggingVolume = true;
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (isDraggingVolume) {
+                    updateVolumeFromMouse(e, track);
+                }
+            });
+
+            document.addEventListener('mouseup', function() {
+                isDraggingVolume = false;
+            });
+        }
+
+        function updateVolumeFromMouse(e, track) {
+            const rect = track.getBoundingClientRect();
+            const trackWidth = rect.width;
+            const clickX = e.clientX - rect.left;
+            const minX = trackWidth * 0.1;
+            const maxX = trackWidth * 0.9;
+            const usableWidth = maxX - minX;
+            let volume = (clickX - minX) / usableWidth;
+            volume = Math.max(0, Math.min(1, volume));
+            currentVolume = volume;
+            updateVolumeUI();
+            setBgmVolume(currentVolume);
+        }
+
+        function updateVolumeUI() {
+            const fill = document.getElementById('volumeFill');
+            const thumb = document.getElementById('volumeThumb');
+            const percentage = document.getElementById('volumePercentage');
+            const volumePercent = Math.round(currentVolume * 100);
+            fill.style.width = (currentVolume * 100) + '%';
+            thumb.style.left = (10 + currentVolume * 80) + '%';
+            percentage.textContent = volumePercent + '%';
+        }
+
+        function loadVolumeFromStorage() {
+            const savedVolume = localStorage.getItem('omok_volume');
+            if (savedVolume !== null) {
+                currentVolume = parseFloat(savedVolume);
+                updateVolumeUI();
+                debugLog('저장된 볼륨 불러옴: ' + Math.round(currentVolume * 100) + '%');
+            }
+        }
+
+        function setBgmVolume(volume) {
+            localStorage.setItem('omok_volume', volume.toString());
+            debugLog('볼륨 설정: ' + Math.round(volume * 100) + '%');
+        }
+
+        // ========== UI 제어 ==========
+        function openConfigPopup() {
+            playSfx('click');
+            document.getElementById('configPopup').classList.add('show');
+        }
+
+        function closeConfigPopup() {
+            playSfx('click');
+            document.getElementById('configPopup').classList.remove('show');
+        }
+
+        function handleLogout() {
+            playSfx('click');
+            if (confirm('정말 로그아웃 하시겠습니까?')) {
+                debugLog('로그아웃 시도');
+                alert('로그아웃 기능은 준비중입니다.');
+            }
+        }
+
+        function handleWithdrawal() {
+            playSfx('click');
+            const password = prompt('회원탈퇴를 진행하려면 비밀번호를 입력하세요:');
+            if (password) {
+                if (confirm('정말 회원탈퇴 하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+                    debugLog('회원탈퇴 시도 (비밀번호 확인됨)');
+                    alert('회원탈퇴 기능은 준비중입니다.');
+                }
+            }
+        }
+
+        function goToRanking() {
+            playSfx('click');
+            window.location.href = CTX + '/rank';
+        }
+
+        function showLoading() {
+            debugLog('로딩 팝업 표시');
+            document.getElementById('loadingOverlay').classList.add('show');
+        }
+
+        function hideLoading() {
+            debugLog('로딩 팝업 숨김');
+            document.getElementById('loadingOverlay').classList.remove('show');
+        }
+
+        // ========== 웹소켓 연결 ==========
         function connectWebSocket() {
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = protocol + '//' + window.location.host + '<%= request.getContextPath() %>/lobby';
-
+            const wsUrl = protocol + '//' + window.location.host + CTX + '/lobby';
             debugLog('웹소켓 연결 시도: ' + wsUrl);
 
             try {
                 websocket = new WebSocket(wsUrl);
 
                 websocket.onopen = function() {
-                    debugLog('✅ 웹소켓 연결 성공!');
+                    debugLog('웹소켓 연결 성공!');
                     updateConnectionStatus(true);
-                    // 연결 후 즉시 방 목록 요청
                     setTimeout(requestRoomList, 100);
                 };
 
                 websocket.onmessage = function(event) {
-                    debugLog('📩 메시지 수신: ' + event.data);
+                    debugLog('메시지 수신: ' + event.data);
                     handleMessage(event.data);
                 };
 
                 websocket.onerror = function(error) {
-                    debugLog('❌ 웹소켓 에러');
+                    debugLog('웹소켓 에러');
                     console.error('웹소켓 에러:', error);
                     updateConnectionStatus(false);
                 };
 
                 websocket.onclose = function(event) {
-                    debugLog('🔌 웹소켓 연결 종료 (코드: ' + event.code + ')');
+                    debugLog('웹소켓 연결 종료 (코드: ' + event.code + ')');
                     updateConnectionStatus(false);
-                    // 3초 후 재연결 시도
                     setTimeout(function() {
                         debugLog('재연결 시도...');
                         connectWebSocket();
                     }, 3000);
                 };
             } catch (error) {
-                debugLog('❌ 웹소켓 연결 실패: ' + error.message);
+                debugLog('웹소켓 연결 실패: ' + error.message);
                 updateConnectionStatus(false);
             }
         }
 
-        // 연결 상태 업데이트
         function updateConnectionStatus(isConnected) {
             const statusElement = document.getElementById('connectionStatus');
-
             if (isConnected) {
-                statusElement.textContent = '🟢 연결됨';
+                statusElement.textContent = '연결됨';
                 statusElement.className = 'connection-status status-connected';
             } else {
-                statusElement.textContent = '🔴 연결 끊김';
+                statusElement.textContent = '연결 끊김';
                 statusElement.className = 'connection-status status-disconnected';
             }
-
-            // 버튼은 항상 활성화 (클릭 시 연결 여부 체크)
-            document.getElementById('createRoomBtn').disabled = false;
         }
 
-        // 방 목록 요청
         function requestRoomList() {
             if (websocket && websocket.readyState === WebSocket.OPEN) {
-                const message = {
-                    type: 'ROOMLIST'
-                };
-                debugLog('📤 방 목록 요청: ' + JSON.stringify(message));
+                const message = { type: 'ROOMLIST' };
+                debugLog('방 목록 요청: ' + JSON.stringify(message));
                 websocket.send(JSON.stringify(message));
             } else {
-                debugLog('⚠️ 웹소켓이 열려있지 않음');
+                debugLog('웹소켓이 열려있지 않음');
             }
         }
 
-        // 메시지 처리
         function handleMessage(data) {
             try {
                 const message = JSON.parse(data);
-                debugLog('📦 메시지 파싱 성공: type=' + message.type);
-                debugLog('📦 전체 메시지 내용: ' + JSON.stringify(message));
+                debugLog('메시지 파싱 성공: type=' + message.type);
 
                 if (message.type === 'ROOMLIST') {
-                    debugLog('🏠 방 목록 데이터: ' + JSON.stringify(message.data));
-                    debugLog('🏠 방 목록 타입: ' + typeof message.data);
-                    debugLog('🏠 배열 여부: ' + Array.isArray(message.data));
-
+                    debugLog('방 목록 데이터: ' + JSON.stringify(message.data));
                     updateRoomList(message.data);
-
-                    // 방 생성 후 로딩 팝업 숨김
                     if (isCreatingRoom) {
-                        debugLog('✅ 방 생성 완료! 로딩 숨김');
+                        debugLog('방 생성 완료! 로딩 숨김');
                         hideLoading();
                         isCreatingRoom = false;
                     }
                 } else if (message.type === 'ERROR') {
-                    debugLog('❌ 에러 메시지: ' + JSON.stringify(message.data));
+                    debugLog('에러 메시지: ' + JSON.stringify(message.data));
                     alert('에러 발생: ' + JSON.stringify(message.data));
                     hideLoading();
                     isCreatingRoom = false;
                 } else {
-                    debugLog('⚠️ 알 수 없는 메시지 타입: ' + message.type);
+                    debugLog('알 수 없는 메시지 타입: ' + message.type);
                 }
             } catch (error) {
-                debugLog('❌ 메시지 파싱 에러: ' + error.message);
+                debugLog('메시지 파싱 에러: ' + error.message);
                 console.error('메시지 파싱 에러:', error, 'Data:', data);
-                alert('메시지 파싱 에러: ' + error.message + '\n\n원본 데이터: ' + data);
                 hideLoading();
             }
         }
 
-        // 방 목록 업데이트
+        // ========== 방 목록 관리 ==========
         function updateRoomList(rooms) {
             if (!rooms) {
-                debugLog('⚠️ 방 목록이 null 또는 undefined');
-                currentRooms = [];
+                debugLog('방 목록이 null 또는 undefined');
+                allRooms = [];
             } else if (Array.isArray(rooms)) {
-                debugLog('✅ 방 목록 배열 수신: ' + rooms.length + '개');
-                currentRooms = rooms;
+                debugLog('방 목록 배열 수신: ' + rooms.length + '개');
+                allRooms = rooms;
             } else {
-                debugLog('⚠️ 방 목록이 배열이 아님: ' + typeof rooms);
-                currentRooms = [];
+                debugLog('방 목록이 배열이 아님: ' + typeof rooms);
+                allRooms = [];
             }
-
-            // 최대 6개로 제한 (3x2 그리드)
-            if (currentRooms.length > MAX_ROOMS) {
-                currentRooms = currentRooms.slice(0, MAX_ROOMS);
-            }
-
-            renderRooms();
+            currentPageIndex = 0;
+            renderCurrentPage();
         }
 
-        // 방 목록 렌더링
-        function renderRooms() {
+        function renderCurrentPage() {
+            const startIndex = currentPageIndex * ROOMS_PER_PAGE;
+            const endIndex = Math.min(startIndex + ROOMS_PER_PAGE, allRooms.length);
+            const currentPageRooms = allRooms.slice(startIndex, endIndex);
+            debugLog('현재 페이지 렌더링: ' + (currentPageIndex + 1) + '페이지, ' + currentPageRooms.length + '개 방');
+            renderRooms(currentPageRooms);
+            updateNavButtons();
+        }
+
+        function renderRooms(rooms) {
             const roomsGrid = document.getElementById('roomsGrid');
             roomsGrid.innerHTML = '';
 
-            debugLog('🎨 방 렌더링: ' + currentRooms.length + '개');
+            if (rooms.length === 0) {
+                const emptyMessage = document.createElement('div');
+                emptyMessage.style.gridColumn = '1 / -1';
+                emptyMessage.style.gridRow = '1 / -1';
+                emptyMessage.style.display = 'flex';
+                emptyMessage.style.alignItems = 'center';
+                emptyMessage.style.justifyContent = 'center';
+                emptyMessage.className = 'empty-message';
+                emptyMessage.innerHTML = '<h2>방을 만드세요</h2>';
+                roomsGrid.appendChild(emptyMessage);
+                return;
+            }
 
-            // 방 카드 생성 (최대 6개, 3x2 그리드)
-            for (let i = 0; i < MAX_ROOMS; i++) {
-                if (i < currentRooms.length) {
-                    const room = currentRooms[i];
-                    const roomSlot = createRoomSlot(room, i);
-                    roomsGrid.appendChild(roomSlot);
+            for (let i = 0; i < ROOMS_PER_PAGE; i++) {
+                if (i < rooms.length) {
+                    const room = rooms[i];
+                    const roomCard = createRoomCard(room);
+                    roomsGrid.appendChild(roomCard);
                 } else {
-                    const emptySlot = createEmptySlot(i);
-                    roomsGrid.appendChild(emptySlot);
+                    const emptyCard = createEmptyCard();
+                    roomsGrid.appendChild(emptyCard);
                 }
             }
         }
 
-        // 방 슬롯 생성 (프레임 + 버튼)
-        function createRoomSlot(room, index) {
-            const slot = document.createElement('div');
-            slot.className = 'room-slot new';
+        function createRoomCard(room) {
+            const card = document.createElement('div');
+            card.className = 'room-card';
 
-            // 방 프레임
+            const roomKey = room.roomSeq || room.roomId || room.id || 0;
+            if (!roomFrameMap.has(roomKey)) {
+                roomFrameMap.set(roomKey, Math.floor(Math.random() * 9) + 1);
+            }
+            const frameNum = roomFrameMap.get(roomKey);
+
             const frame = document.createElement('div');
             frame.className = 'room-frame';
 
             const frameImg = document.createElement('img');
-            frameImg.src = '${pageContext.request.contextPath}/assets/images/main/' + roomFrames[index];
-            frameImg.alt = '방 프레임';
+            frameImg.className = 'room-frame-img';
+            frameImg.src = ASSET + 'Room_' + frameNum + '.png';
+            frameImg.onerror = function() {
+                debugLog('Room_' + frameNum + '.png 로딩 실패, Room_1.png로 fallback');
+                frameImg.src = ASSET + 'Room_1.png';
+            };
 
-            // 방 정보
             const info = document.createElement('div');
             info.className = 'room-info';
 
             const roomNumber = document.createElement('div');
             roomNumber.className = 'room-number';
-            roomNumber.textContent = '방 #' + room.roomSeq;
+            roomNumber.textContent = 'Room ' + (room.roomSeq || room.roomId || room.id || '?');
 
             const roomStatus = document.createElement('div');
             roomStatus.className = 'room-status';
-            roomStatus.textContent = getRoomStatusText(room.roomStatus);
+            const status = room.roomStatus || room.status || 'UNKNOWN';
+            if (status === 'WAIT' || status === 'Waiting') {
+                roomStatus.textContent = 'Waiting';
+                roomStatus.classList.add('waiting');
+            } else if (status === 'PLAYING' || status === 'Playing') {
+                roomStatus.textContent = 'Playing';
+                roomStatus.classList.add('playing');
+            } else {
+                roomStatus.textContent = status;
+            }
+
+            const roomPlayers = document.createElement('div');
+            roomPlayers.className = 'room-players';
+            const playerCount = (room.players && room.players.length) || 0;
+            roomPlayers.textContent = playerCount + '/2';
 
             info.appendChild(roomNumber);
             info.appendChild(roomStatus);
+            info.appendChild(roomPlayers);
 
             frame.appendChild(frameImg);
             frame.appendChild(info);
+            card.appendChild(frame);
 
-            // 버튼들
-            const buttons = document.createElement('div');
-            buttons.className = 'room-buttons';
-
-            // 입장 버튼
-            const enterBtn = document.createElement('button');
-            enterBtn.className = 'room-btn';
-            enterBtn.onclick = function() {
-                enterRoom(room.roomSeq);
+            card.onclick = function() {
+                playSfx('click');
+                if (status === 'PLAYING' || status === 'Playing') {
+                    watchRoom(roomKey);
+                } else {
+                    enterRoom(roomKey);
+                }
             };
-            const enterImg = document.createElement('img');
-            enterImg.src = '${pageContext.request.contextPath}/assets/images/main/goIn.png';
-            enterImg.alt = '입장';
-            enterBtn.appendChild(enterImg);
 
-            // 관전 버튼
-            const watchBtn = document.createElement('button');
-            watchBtn.className = 'room-btn';
-            watchBtn.onclick = function() {
-                watchRoom(room.roomSeq);
-            };
-            const watchImg = document.createElement('img');
-            watchImg.src = '${pageContext.request.contextPath}/assets/images/main/whitness.png';
-            watchImg.alt = '관전';
-            watchBtn.appendChild(watchImg);
-
-            buttons.appendChild(enterBtn);
-            buttons.appendChild(watchBtn);
-
-            slot.appendChild(frame);
-            slot.appendChild(buttons);
-
-            return slot;
+            return card;
         }
 
-        // 빈 슬롯 생성
-        function createEmptySlot(index) {
-            const slot = document.createElement('div');
-            slot.className = 'room-slot empty-slot';
+        function createEmptyCard() {
+            const card = document.createElement('div');
+            card.className = 'room-card empty-room';
 
             const frame = document.createElement('div');
             frame.className = 'room-frame';
 
             const frameImg = document.createElement('img');
-            frameImg.src = '${pageContext.request.contextPath}/assets/images/main/' + roomFrames[index];
-            frameImg.alt = '빈 방';
+            frameImg.className = 'room-frame-img';
+            frameImg.src = ASSET + 'Room_1.png';
 
             frame.appendChild(frameImg);
-            slot.appendChild(frame);
+            card.appendChild(frame);
 
-            return slot;
+            return card;
         }
 
-        // 방 상태 텍스트 변환
-        function getRoomStatusText(status) {
-            switch(status) {
-                case 'WAIT': return '대기중 ⏳';
-                case 'PLAYING': return '게임중 🎮';
-                case 'FINISHED': return '종료됨 ✅';
-                default: return status;
+        function updateNavButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const totalPages = Math.ceil(allRooms.length / ROOMS_PER_PAGE) || 1;
+
+            if (currentPageIndex === 0) {
+                prevBtn.classList.add('disabled');
+            } else {
+                prevBtn.classList.remove('disabled');
+            }
+
+            if (currentPageIndex >= totalPages - 1) {
+                nextBtn.classList.add('disabled');
+            } else {
+                nextBtn.classList.remove('disabled');
             }
         }
 
-        // 로딩 팝업 표시
-        function showLoading() {
-            debugLog('🔄 로딩 팝업 표시');
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.add('show');
-            overlay.style.display = 'flex';
-            document.getElementById('createRoomBtn').disabled = true;
+        function changePage(direction) {
+            playSfx('page');
+            const totalPages = Math.ceil(allRooms.length / ROOMS_PER_PAGE) || 1;
+            const newPageIndex = currentPageIndex + direction;
+
+            if (newPageIndex >= 0 && newPageIndex < totalPages) {
+                currentPageIndex = newPageIndex;
+                renderCurrentPage();
+            }
         }
 
-        // 로딩 팝업 숨김
-        function hideLoading() {
-            debugLog('✅ 로딩 팝업 숨김');
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.remove('show');
-            overlay.style.display = 'none';
-            document.getElementById('createRoomBtn').disabled = false;
-        }
-
-        // 방 생성
+        // ========== 방 생성/입장/관전 ==========
         function createRoom() {
-            debugLog('🎮 방 생성 버튼 클릭');
+            playSfx('create');
+            debugLog('방 생성 버튼 클릭');
 
-            // 일단 로딩 팝업부터 표시
             showLoading();
             isCreatingRoom = true;
 
-            // 웹소켓 연결 확인
             if (!websocket || websocket.readyState !== WebSocket.OPEN) {
-                debugLog('❌ 웹소켓 연결 안됨');
+                debugLog('웹소켓 연결 안됨');
                 setTimeout(function() {
                     hideLoading();
                     isCreatingRoom = false;
@@ -702,16 +1031,7 @@
                 return;
             }
 
-            // 방 개수 확인
-            if (currentRooms.length >= MAX_ROOMS) {
-                hideLoading();
-                isCreatingRoom = false;
-                alert('최대 ' + MAX_ROOMS + '개의 방만 생성할 수 있습니다!');
-                return;
-            }
-
             try {
-                // userId를 숫자로 변환 (간단한 해시)
                 const userId = '<%= user.getUserId() %>';
                 let hash = 0;
                 for (let i = 0; i < userId.length; i++) {
@@ -726,66 +1046,43 @@
                     }
                 };
 
-                debugLog('📤 방 생성 요청 전송: ' + JSON.stringify(message));
+                debugLog('방 생성 요청 전송: ' + JSON.stringify(message));
                 websocket.send(JSON.stringify(message));
 
-                // 5초 후 타임아웃
                 setTimeout(function() {
                     if (isCreatingRoom) {
                         hideLoading();
                         isCreatingRoom = false;
-                        debugLog('⏱️ 방 생성 타임아웃');
+                        debugLog('방 생성 타임아웃');
                         alert('방 생성 시간이 초과되었습니다. 다시 시도해주세요.');
                     }
                 }, 5000);
             } catch (error) {
-                debugLog('❌ 방 생성 에러: ' + error.message);
+                debugLog('방 생성 에러: ' + error.message);
                 hideLoading();
                 isCreatingRoom = false;
                 alert('방 생성 중 오류가 발생했습니다: ' + error.message);
             }
         }
 
-        // 방 입장
-        function enterRoom(roomSeq) {
-            debugLog('🚪 방 #' + roomSeq + ' 입장 시도');
-            if (confirm('방 #' + roomSeq + '에 입장하시겠습니까?')) {
-                // TODO: 실제 입장 로직 구현
-                alert('방 입장 기능은 준비중입니다. (방 #' + roomSeq + ')');
+        function enterRoom(roomKey) {
+            debugLog('방 #' + roomKey + ' 입장 시도');
+            if (confirm('방 #' + roomKey + '에 입장하시겠습니까?')) {
+                alert('방 입장 기능은 준비중입니다.');
             }
         }
 
-        // 방 관전
-        function watchRoom(roomSeq) {
-            debugLog('👀 방 #' + roomSeq + ' 관전 시도');
-            if (confirm('방 #' + roomSeq + '를 관전하시겠습니까?')) {
-                // TODO: 실제 관전 로직 구현
-                alert('관전 기능은 준비중입니다. (방 #' + roomSeq + ')');
+        function watchRoom(roomKey) {
+            debugLog('방 #' + roomKey + ' 관전 시도');
+            if (confirm('방 #' + roomKey + '를 관전하시겠습니까?')) {
+                alert('관전 기능은 준비중입니다.');
             }
         }
 
-        // 방 삭제 (개발용 - 기존 기능 유지)
-        function deleteRoom(roomSeq) {
-            if (confirm('방 #' + roomSeq + '를 삭제하시겠습니까?')) {
-                if (websocket && websocket.readyState === WebSocket.OPEN) {
-                    const message = {
-                        type: 'DELETE_ROOM',
-                        data: {
-                            roomSeq: roomSeq
-                        }
-                    };
-                    debugLog('📤 방 삭제 요청: ' + JSON.stringify(message));
-                    websocket.send(JSON.stringify(message));
-                } else {
-                    alert('웹소켓이 연결되지 않았습니다.');
-                }
-            }
-        }
-
-        // 페이지 종료 시 웹소켓 닫기
+        // ========== 페이지 종료 처리 ==========
         window.onbeforeunload = function() {
             if (websocket) {
-                debugLog('🔌 웹소켓 연결 종료');
+                debugLog('웹소켓 연결 종료');
                 websocket.close();
             }
         };

@@ -1,6 +1,3 @@
-cd ~/workspace/test-dir/Omok_Mini
-
-cat > .vscode/tasks.json <<'EOF'
 {
   "version": "2.0.0",
   "tasks": [
@@ -10,16 +7,19 @@ cat > .vscode/tasks.json <<'EOF'
       "command": "bash",
       "args": [
         "-lc",
-        "cd \"${workspaceFolder}\" && mkdir -p src/main/webapp/WEB-INF/classes && SERVLET_API=\"$HOME/tomcat9/lib/servlet-api.jar\"; WS_API=\"$HOME/tomcat9/lib/websocket-api.jar\"; if [ ! -f \"$SERVLET_API\" ]; then echo \"ERROR: $SERVLET_API not found\"; exit 1; fi; if [ ! -f \"$WS_API\" ]; then echo \"ERROR: $WS_API not found\"; exit 1; fi; LIBS=$(find src/main/webapp/WEB-INF/lib -name \"*.jar\" 2>/dev/null | tr \"\\n\" \":\"); SOURCES=$(find src/main/java -name \"*.java\" 2>/dev/null); if [ -z \"$SOURCES\" ]; then echo \"No Java sources under src/main/java\"; exit 0; fi; javac --release 8 -encoding UTF-8 -cp \"$SERVLET_API:$WS_API:$LIBS\" -d src/main/webapp/WEB-INF/classes $SOURCES"
+        "cd '${workspaceFolder}' && ./scripts/build.sh"
       ],
       "group": {
         "kind": "build",
         "isDefault": true
       },
-      "problemMatcher": "$javac"
+      "problemMatcher": "$javac",
+      "presentation": {
+        "echo": true,
+        "reveal": "always",
+        "focus": false,
+        "panel": "shared"
+      }
     }
   ]
 }
-EOF
-
-

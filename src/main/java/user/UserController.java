@@ -72,7 +72,7 @@ public class UserController extends HttpServlet {
 			boolean isValid = joinform.joinValidation();
 			
 			if (isValid) {
-				User user = new User(id, pw, email, nickname);
+				User user = new User(null, id, pw, email, nickname);
 				User savedUser = USERSERVICE.signUp(user);
 				System.out.println(savedUser.toString()); // 테스트용 출력 (회원가입 정보)
 				

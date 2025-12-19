@@ -1,4 +1,4 @@
-package util.websocket.dto;
+package util.webSocketDTOs;
 
 // 웹소켓 처리 메시지 타입
 public enum MessageType {

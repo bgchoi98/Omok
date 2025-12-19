@@ -1,4 +1,4 @@
-package users.dto;
+package user.dto;
 
 
 public class SignUpForm {

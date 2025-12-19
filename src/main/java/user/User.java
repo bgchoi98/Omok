@@ -1,9 +1,9 @@
-package users;
+package user;
 
 import java.time.LocalDateTime;
 
 public class User {
-
+	private Integer userSeq;
     private String userId;           // USER_ID
     private String userPw;           // USER_PW
     private String email;            // EMAIL
@@ -13,14 +13,19 @@ public class User {
 
     public User() {}
 
-    public User(String userId, String userPw, String email, String nickname) {
-        this.userId = userId;	
+ // User.java
+    public User(Integer userSeq, String userId, String userPw, String email, String nickname) {
+        this.userSeq = userSeq;  
+        this.userId = userId;
         this.userPw = userPw;
         this.email = email;
-        this.createdAt = LocalDateTime.now();
         this.nickname = nickname;
+        this.createdAt = LocalDateTime.now();
     }
 
+    public Integer getUserSeq() {
+        return userSeq;
+    }
 
     public String getUserId() {
         return userId;

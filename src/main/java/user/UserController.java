@@ -1,4 +1,4 @@
-package users;
+package user;
 
 import java.io.IOException;
 
@@ -9,9 +9,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-
-import users.dto.SignInForm;
-import users.dto.SignUpForm;
+import user.dto.SignInForm;
+import user.dto.SignUpForm;
 import util.Constants;
 
 /**

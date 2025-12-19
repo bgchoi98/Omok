@@ -1,4 +1,4 @@
-package util.websocket.game;
+package game;
 
 public class GameWebSocket {
 

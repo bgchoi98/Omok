@@ -1,4 +1,4 @@
-package util.websocket.dto;
+package util.webSocketDTOs;
 
 import javax.servlet.http.HttpSession;
 import javax.websocket.HandshakeResponse;

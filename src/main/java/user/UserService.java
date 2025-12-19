@@ -1,4 +1,4 @@
-package users;
+package user;
 
 
 public class UserService {
@@ -43,6 +43,7 @@ public class UserService {
         User savedUser = USERREPOSITORY.save(newUser);	// DB INSERT
         return savedUser;
     }
+
     
     // ID 중복체크
     public boolean isIdExist(String userID) {	
@@ -67,6 +68,10 @@ public class UserService {
 	public User findBySignId(String signId) {
 		
 		return USERREPOSITORY.findBySignId(signId);
+	}
+	
+	public User findById(int id) {
+		return USERREPOSITORY.findById(id);
 	}
 	
     public boolean withdraw(String userId) {

@@ -1,6 +1,5 @@
-package users;
+package user;
 
-import users.User;
 import util.OmokRepository;
 
 import java.sql.ResultSet;
@@ -9,6 +8,7 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 import rank.*;
+import user.User;
 
 public class UserRepository extends OmokRepository<User, String> {
 
@@ -29,11 +29,12 @@ public class UserRepository extends OmokRepository<User, String> {
 
 	@Override
 	protected User mapRow(ResultSet rs) throws SQLException {
-		return new User( rs.getString("USER_ID")
-			           , rs.getString("USER_PW")
-			           , rs.getString("EMAIL")
-			           , rs.getString("NICKNAME")
-			        );
+	    return new User( rs.getInt("SEQ_ID")        // ⭐ SEQ_ID 추가
+	                   , rs.getString("USER_ID")
+	                   , rs.getString("USER_PW")
+	                   , rs.getString("EMAIL")
+	                   , rs.getString("NICKNAME")
+	                );
 	}
 
 	// 기존에 상원님이 만들어 두신거 (회원가입으로 처리함)

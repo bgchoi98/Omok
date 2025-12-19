@@ -1,4 +1,4 @@
-package util.websocket.waiting;
+package room;
 
 import java.io.IOException;
 
@@ -15,28 +15,30 @@ import javax.websocket.server.ServerEndpoint;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
-import rooms.Room;
-import rooms.RoomStatusEnum;
-import users.User;
+import user.User;
+import user.UserService;
 import util.Constants;
-import util.websocket.dto.GetHttpSessionConfigurator;
-import util.websocket.dto.MessageType;
-import util.websocket.dto.WebSocketMessage;
+import util.webSocketDTOs.GetHttpSessionConfigurator;
+import util.webSocketDTOs.MessageType;
+import util.webSocketDTOs.WebSocketMessage;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @ServerEndpoint(
-	    value = "/roomList",
+	    value = "/lobby",
 	    configurator = GetHttpSessionConfigurator.class
 	    // HTTP 세션(HttpSession)을 WebSocket으로 넘기기 위해 쓰는 장치
 	)
 
-public class WaitingWebSocket {
+public class RoomWebSocket {
 	
-	private static final Logger log = LoggerFactory.getLogger(WaitingWebSocket.class);
+	private static final Logger log = LoggerFactory.getLogger(RoomWebSocket.class);
 
 	private final Gson gson = new Gson();
-    private final WaitingService waitingService = WaitingService.getInstance();
+	
+    private final RoomService roomService = RoomService.getInstance();
+    private final UserService userService = UserService.getInstance();
 	
 	@OnOpen
 	public void onOpen(Session session, EndpointConfig config) {
@@ -58,15 +60,13 @@ public class WaitingWebSocket {
             return;
         }
         
-        // 세션에 User 저장, 대기 화면에서 세션은 '사용자' 단위
+        LobbyUser lobbyUser = new LobbyUser(user.getNickname(), session);
+        
+        roomService.addSession(session); // 세션 저장
+        roomService.sendRoomListToLobbyUser(lobbyUser); // 세션(사용자)에게 룸리스트 전달
+        
         session.getUserProperties().put("user", user);
-
-        
-        waitingService.addSession(session); // 세션을 RoomList 화면에 추가
-        waitingService.sendRoomListToSession(session); // 세션(사용자)에게 룸리스트 전달
-        
-        
-        log.info("WaitingRoom connected userId={}", user.getUserId());
+        log.info("LobbyUser connected userId={}", lobbyUser.getNickName());
 	}
 	
 	@OnMessage
@@ -85,20 +85,24 @@ public class WaitingWebSocket {
            
             switch (type) {
             case "ROOMLIST":
-                waitingService.sendRoomListToSession(session);
+            	LobbyUser roomListLobbyUser = new LobbyUser(user.getNickname(), session);
+            	roomService.sendRoomListToLobbyUser(roomListLobbyUser);
                 log.info("onMessage work : {}", type);
                 break;
             case "CREATE_ROOM":
                 JsonObject createData = json.getAsJsonObject("data");
-                long ownerUserSeq = createData.get("ownerUserSeq").getAsLong();
-                Room newRoom = new Room(0, null, ownerUserSeq, null, RoomStatusEnum.WAIT);
-                waitingService.createRoom(newRoom);
+                int userSeq = createData.get("UserSeq").getAsInt();
+                
+                User findUser = userService.findById(userSeq);
+                
+                LobbyUser createRoomLobbyUser = new LobbyUser(findUser.getNickname(), session);
+                roomService.createRoom(createRoomLobbyUser);
                 break;
 
             case "DELETE_ROOM":
                 JsonObject deleteData = json.getAsJsonObject("data");
-                int roomSeq = deleteData.get("roomSeq").getAsInt();
-                waitingService.deleteRoom(String.valueOf(roomSeq));
+                long roomSeq = deleteData.get("roomSeq").getAsLong();
+                roomService.deleteRoom(roomSeq);
                 break;
             default:
             	log.info("Unkown message type : " + type);
@@ -120,7 +124,7 @@ public class WaitingWebSocket {
         }
 	        
         // RoomService에서 대기실에 연결된 웹소켓 세션만 제거
-        waitingService.removeSession(session);
+        roomService.removeSession(session);
 	}
 	
 	@OnError

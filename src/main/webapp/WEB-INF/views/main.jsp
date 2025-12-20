@@ -916,10 +916,10 @@
 
             const frameImg = document.createElement('img');
             frameImg.className = 'room-frame-img';
-            frameImg.src = ASSET + 'Room_' + frameNum + '.png';
+            frameImg.src = ASSET + 'room_' + frameNum + '.png';
             frameImg.onerror = function() {
-                debugLog('Room_' + frameNum + '.png 로딩 실패, Room_1.png로 fallback');
-                frameImg.src = ASSET + 'Room_1.png';
+                debugLog('room_' + frameNum + '.png 로딩 실패, room_1.png로 fallback');
+                frameImg.src = ASSET + 'room_1.png';
             };
 
             const info = document.createElement('div');
@@ -976,7 +976,7 @@
 
             const frameImg = document.createElement('img');
             frameImg.className = 'room-frame-img';
-            frameImg.src = ASSET + 'Room_1.png';
+            frameImg.src = ASSET + 'room_1.png';
 
             frame.appendChild(frameImg);
             card.appendChild(frame);

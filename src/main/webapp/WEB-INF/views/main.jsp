@@ -20,6 +20,16 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --room-panel-width: clamp(900px, 85vw, 1200px);
+            --room-panel-height: clamp(600px, 75vh, 720px);
+            --tree-w: clamp(200px, 18vw, 280px);
+            --config-w: clamp(80px, 7vw, 120px);
+            --nav-arrow-w: clamp(60px, 5vw, 90px);
+            --make-w: clamp(120px, 10vw, 180px);
+            --grid-gap: clamp(20px, 2.5vw, 34px);
+        }
+
         body {
             font-family: 'Arial', sans-serif;
             background-image: url('<%= request.getContextPath() %>/assets/images/main/mainBg.png');
@@ -82,8 +92,8 @@
         /* 우측 랭킹 트리 */
         .ranking-tree {
             position: fixed;
-            right: 30px;
-            top: 50%;
+            right: 55px;
+            top: 56%;
             transform: translateY(-50%);
             z-index: 100;
             cursor: pointer;
@@ -95,7 +105,7 @@
         }
 
         .ranking-tree img {
-            width: 180px;
+            width: var(--tree-w);
             height: auto;
             filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3));
         }
@@ -104,16 +114,19 @@
         .room-panel-container {
             position: fixed;
             top: 50%;
-            left: 45%;
+            left: 44%;
             transform: translate(-50%, -50%);
             z-index: 10;
         }
 
         .room-panel {
             position: relative;
-            width: 800px;
-            height: 600px;
-            padding: 80px 60px 120px 60px;
+            display: flex;
+            flex-direction: column;
+            width: var(--room-panel-width);
+            height: var(--room-panel-height);
+            padding: 85px 95px 80px;
+            overflow: visible;
         }
 
         /* RoomBox 배경 (::before로 opacity만 적용) */
@@ -125,10 +138,10 @@
             width: 100%;
             height: 100%;
             background-image: url('<%= request.getContextPath() %>/assets/images/main/RoomBox.png');
-            background-size: contain;
+            background-size: 100% 100%;
             background-position: center;
             background-repeat: no-repeat;
-            opacity: 0.75;
+            opacity: 0.85;
             transition: opacity 0.3s ease;
             z-index: -1;
         }
@@ -142,9 +155,10 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(2, 1fr);
-            gap: 20px;
-            height: 100%;
-            padding: 20px;
+            gap: var(--grid-gap);
+            flex: 1;
+            padding: 0;
+            z-index: 2;
         }
 
         /* 개별 방 카드 */
@@ -154,6 +168,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            height: 100%;
             cursor: pointer;
             transition: transform 0.3s ease, filter 0.3s ease;
         }
@@ -235,13 +250,13 @@
         /* 페이지 네비게이션 (RoomBox 내부) */
         .page-navigation {
             position: absolute;
-            bottom: 20px;
+            bottom: 40px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             align-items: center;
-            gap: 30px;
-            z-index: 1;
+            gap: 40px;
+            z-index: 3;
         }
 
         .nav-arrow {
@@ -255,18 +270,14 @@
         }
 
         .nav-arrow.disabled {
-            opacity: 0.3;
+            opacity: 0.6;
             cursor: not-allowed;
             pointer-events: none;
         }
 
         .nav-arrow img {
-            width: 50px;
+            width: var(--nav-arrow-w);
             height: auto;
-        }
-
-        .arrow-left img {
-            transform: scaleX(-1);
         }
 
         /* 방 만들기 버튼 */
@@ -280,7 +291,7 @@
         }
 
         .make-room-btn img {
-            width: 120px;
+            width: var(--make-w);
             height: auto;
         }
 
@@ -302,7 +313,7 @@
         }
 
         .config-icon img {
-            width: 60px;
+            width: var(--config-w);
             height: auto;
         }
 
@@ -517,6 +528,8 @@
         .debug-console div {
             margin: 2px 0;
         }
+
+        /* 반응형 대응: CSS 변수의 clamp로 자동 처리됨 */
     </style>
 </head>
 <body>
@@ -578,7 +591,7 @@
             <!-- 페이지 네비게이션 -->
             <div class="page-navigation">
                 <div id="prevBtn" class="nav-arrow arrow-left" onclick="changePage(-1)">
-                    <img src="<%= request.getContextPath() %>/assets/images/main/Arrow.png" alt="이전 페이지">
+                    <img src="<%= request.getContextPath() %>/assets/images/main/Arrow_left.png" alt="이전 페이지">
                 </div>
                 <div class="make-room-btn" onclick="createRoom()">
                     <img src="<%= request.getContextPath() %>/assets/images/main/MakeRoomBtn.png" alt="방 만들기">

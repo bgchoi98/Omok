@@ -5,19 +5,23 @@ import java.util.List;
 
 import game.GameUser;
 import game.Observer;
+import game.GameState;
 
 public class Room {
-	
+
 	private static Long roomSeqGenerator = 1L;
 	private Long roomSeq;
 
 	private List<GameUser> gameUsers = new ArrayList<>();
 	private List<Observer> observers = new ArrayList<>();
-	
+
 	private RoomStatus roomStatus;
-	
+
 	// 방장 닉네임 추가
 	private String hostNickname;
+
+	// 게임 상태
+	private GameState gameState;
 
 	/**
 	 * Room 생성자
@@ -85,5 +89,21 @@ public class Room {
 	 */
 	public boolean canJoin() {
 		return roomStatus == RoomStatus.WAITING && !isFull();
+	}
+
+	/**
+	 * 게임 상태 조회
+	 * @return 게임 상태
+	 */
+	public GameState getGameState() {
+		return gameState;
+	}
+
+	/**
+	 * 게임 상태 설정
+	 * @param gameState 게임 상태
+	 */
+	public void setGameState(GameState gameState) {
+		this.gameState = gameState;
 	}
 }

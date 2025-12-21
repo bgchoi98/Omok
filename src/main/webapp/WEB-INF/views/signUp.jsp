@@ -4,7 +4,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Invitation - Sign Up</title>
+  <title>Sign Up</title>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
@@ -157,7 +157,7 @@
     >
 
     <div class="form-content">
-      <h1 class="header-title">Invitation</h1>
+      <h1 class="header-title"></h1>
 
       <form
         id="signupForm"

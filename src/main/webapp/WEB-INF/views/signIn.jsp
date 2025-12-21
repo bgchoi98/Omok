@@ -10,7 +10,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>산타의 오목방 - 로그인</title>
+  <title>Login</title>
 
   <style>
     :root {
@@ -362,51 +362,86 @@
   </style>
 
   <script>
-    window.onload = function () {
-      const urlParams = new URLSearchParams(window.location.search);
-      if (urlParams.get("msg") === "logout") alert("로그아웃 되었습니다.");
+  window.onload = function () {
+	  const urlParams = new URLSearchParams(window.location.search);
 
-      const startBtn = document.getElementById('startBtn');
-      const scene = document.getElementById('scene');
-      const zoomWrapper = document.querySelector('.zoom-wrapper');
-      const door = document.querySelector('.door');
+	  const startBtn = document.getElementById('startBtn');
+	  const scene = document.getElementById('scene');
+	  const zoomWrapper = document.querySelector('.zoom-wrapper');
+	  const door = document.querySelector('.door');
 
-      const soundFootsteps = new Audio('<%=ctx%>/assets/sounds/footsteps.mp3');
-      const soundOpen = new Audio('<%=ctx%>/assets/sounds/open.mp3');
-      const soundBgm = new Audio('<%=ctx%>/assets/sounds/bgm.mp3');
-      soundBgm.loop = true; soundBgm.volume = 0.3;
+	  const soundFootsteps = new Audio('<%=ctx%>/assets/sounds/footsteps.mp3');
+	  const soundOpen = new Audio('<%=ctx%>/assets/sounds/open.mp3');
+	  const soundBgm = new Audio('<%=ctx%>/assets/sounds/bgm.mp3');
+	  soundBgm.loop = true; soundBgm.volume = 0.3;
 
-      let sequenceStarted = false;
+	  let sequenceStarted = false;
 
-      zoomWrapper.addEventListener('animationend', (e) => {
-        if (e.animationName !== 'walk') return;
-        const finalTransform = getComputedStyle(zoomWrapper).transform;
-        zoomWrapper.style.transform = finalTransform;
-        zoomWrapper.style.animation = 'none';
+	  // ✅ (1) 로그인 실패 / 회원가입 / 탈퇴 후에는 "press to start"로 안 가고 바로 폼 상태로 고정
+	  function openLoginUIImmediately() {
+	    // walk 애니메이션 없이 도착한 상태로 고정 (walk 100% 상태와 동일하게)
+	    zoomWrapper.style.animation = 'none';
+	    zoomWrapper.style.transform = 'scale(2.5) translateY(9.5%) rotateZ(0deg)';
 
-        scene.classList.remove('walking');
-        scene.classList.add('arrived');
+	    scene.classList.remove('walking');
+	    scene.classList.add('arrived', 'door-open', 'form-ready');
 
-        soundFootsteps.pause();
-        soundFootsteps.currentTime = 0;
+	    // 혹시라도 버튼이 눌리는 것 방지
+	    sequenceStarted = true;
 
-        scene.classList.add('door-open');
-        soundOpen.play().catch(()=>{});
-      }, { once: true });
+	    // bgm 틀고 싶으면
+	    soundBgm.play().catch(()=>{});
+	  }
 
-      door.addEventListener('transitionend', (e) => {
-        if (e.propertyName !== 'transform') return;
-        scene.classList.add('form-ready');
-        soundBgm.play().catch(()=>{});
-      }, { once: true });
+	  // ✅ (2) 서버에서 내려온 에러 메시지가 있으면 팝업 + 폼 유지
+	  const errorEl = document.querySelector('.error-msg');
+	  if (errorEl && errorEl.textContent.trim().length > 0) {
+	    openLoginUIImmediately();
+	    alert(errorEl.textContent.trim()); // "아이디와 비밀번호 입력이 잘못되었습니다."
+	  }
 
-      startBtn.addEventListener('click', () => {
-        if (sequenceStarted) return;
-        sequenceStarted = true;
-        scene.classList.add('walking');
-        soundFootsteps.play().catch(()=>{});
-      });
-    };
+	  // ✅ (3) 로그아웃/가입/탈퇴 메시지 팝업
+	  const msg = urlParams.get("msg");
+	  if (msg === "logout") alert("로그아웃 되었습니다.");
+	  if (msg === "register") {
+	    openLoginUIImmediately();
+	    alert("회원가입이 완료되었습니다. 로그인 해주세요.");
+	  }
+	  if (msg === "bye") {
+	    openLoginUIImmediately();
+	    alert("탈퇴가 완료되었습니다.");
+	  }
+
+	  // ====== 이하 기존 로직 그대로 ======
+	  zoomWrapper.addEventListener('animationend', (e) => {
+	    if (e.animationName !== 'walk') return;
+	    const finalTransform = getComputedStyle(zoomWrapper).transform;
+	    zoomWrapper.style.transform = finalTransform;
+	    zoomWrapper.style.animation = 'none';
+
+	    scene.classList.remove('walking');
+	    scene.classList.add('arrived');
+
+	    soundFootsteps.pause();
+	    soundFootsteps.currentTime = 0;
+
+	    scene.classList.add('door-open');
+	    soundOpen.play().catch(()=>{});
+	  }, { once: true });
+
+	  door.addEventListener('transitionend', (e) => {
+	    if (e.propertyName !== 'transform') return;
+	    scene.classList.add('form-ready');
+	    soundBgm.play().catch(()=>{});
+	  }, { once: true });
+
+	  startBtn.addEventListener('click', () => {
+	    if (sequenceStarted) return;
+	    sequenceStarted = true;
+	    scene.classList.add('walking');
+	    soundFootsteps.play().catch(()=>{});
+	  });
+	};
   </script>
 </head>
 

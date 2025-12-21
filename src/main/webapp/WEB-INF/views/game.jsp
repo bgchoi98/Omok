@@ -13,7 +13,11 @@
     String nickName = "Guest";
     int win = 0;
     int lose = 0;
-    try { nickName = user.getNickname(); } catch (Exception ignore) {}
+    try { 
+        nickName = user.getNickname(); 
+        // win = user.getWin();
+        // lose = user.getLose();
+    } catch (Exception ignore) {}
 %>
 <!DOCTYPE html>
 <html lang="ko">
@@ -23,302 +27,325 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    /* ===== Global ===== */
+    /* ===== 튜닝용 변수 (여기서 1px 단위 미세 조정 가능) ===== */
+    :root {
+      /* board.png(460x455) 기준 격자 시작점과 크기 비율 */
+      --grid-left: 9.13%;   /* 좌측 여백 비율 */
+      --grid-top: 3.52%;    /* 상단 여백 비율 */
+      --grid-width: 81.52%; /* 격자 전체 너비 비율 */
+      --grid-height: 94.07%;/* 격자 전체 높이 비율 */
+
+      /* 미세 조정 (화면에서 살짝 밀리면 숫자를 1px, -1px 등으로 변경) */
+      --grid-nudge-x: 0px;
+      --grid-nudge-y: 0px;
+    }
+
+    /* ===== Global Setting ===== */
     * { box-sizing: border-box; }
     body {
       margin: 0;
       width: 100vw;
       height: 100vh;
       overflow: hidden;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
+      font-family: 'Arial', sans-serif;
       user-select: none;
-    }
-
-    .game-bg {
-      position: fixed;
-      inset: 0;
       background: url('<%=CTX%>/assets/images/game/gameBg.png') no-repeat center/cover;
-      z-index: -1;
     }
 
-    /* ===== Layout: 좌(보드) / 우(패널) ===== */
+    /* ===== Main Layout (Grid) ===== */
     .layout {
-      position: relative;
-      width: 100%;
-      height: 100%;
       display: grid;
-      grid-template-columns: minmax(620px, 1fr) minmax(380px, 520px);
-      gap: 18px;
-      padding: 22px;
-      align-items: stretch; /* ✅ 양쪽 세로 꽉 채움 */
+      grid-template-columns: 1fr 400px;
+      height: 100%;
+      padding: 20px;
+      gap: 20px;
     }
 
-    @media (max-width: 1100px) {
-      .layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-        height: auto;
-        overflow: auto;
-      }
-      body { overflow: auto; }
-    }
-
-    /* ===== Left: Board only ===== */
+    /* ===== Left: Board Area ===== */
     .left-col {
       display: flex;
-      align-items: center;
       justify-content: center;
-      min-height: 0;
-    }
-
-    /* ===== Board (img + overlay) ===== */
-    .board-wrap {
+      align-items: center;
       position: relative;
-      width: min(880px, 78vmin);
-      aspect-ratio: 1 / 1;
-      filter: drop-shadow(0 18px 34px rgba(0,0,0,0.42));
     }
 
-    .board-img {
-      position: absolute;
-      inset: 0;
+    /* [1] 보드 프레임 (460 x 455 비율 유지) */
+    .board-frame-wrap {
+      position: relative;
+      height: min(90vh, 90vw);
+      aspect-ratio: 460 / 455; 
+      filter: drop-shadow(0 15px 35px rgba(0,0,0,0.5));
+    }
+
+    .board-frame-img {
       width: 100%;
       height: 100%;
-      object-fit: contain;
+      object-fit: fill;
       pointer-events: none;
+      z-index: 1;
     }
 
-    .board-hit {
+    /* [2] 격자판 배치 영역 (수정됨) 
+       - 기존: 중앙 정렬
+       - 변경: CSS 변수 기반 절대 좌표 배치 (직사각형 대응)
+    */
+    .board-inner-area {
       position: absolute;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      cursor: pointer;
+      left: calc(var(--grid-left) + var(--grid-nudge-x));
+      top: calc(var(--grid-top) + var(--grid-nudge-y));
+      width: var(--grid-width);
+      height: var(--grid-height);
+      z-index: 2;
     }
 
+    /* board.png 자체에 선이 있다면, 이 이미지는 숨김 처리 */
+    .grid-img {
+      display: none; 
+      /* 만약 별도 격자 이미지를 써야 한다면 display: block; width:100%; height:100%; fill; */
+    }
+
+    /* [3] 클릭 및 돌 배치 레이어 */
+    .board-hit {
+      position: relative; /* 자식(돌)의 기준점이 됨 */
+      width: 100%; 
+      height: 100%;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    /* 돌 스타일 */
     .stone, .ghost-stone {
       position: absolute;
-      transform: translate(-50%, -50%);
+      /* 중요: 돌의 중심점이 좌표가 되도록 변환 */
+      transform: translate(-50%, -50%); 
       pointer-events: none;
-      filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+      filter: drop-shadow(3px 4px 4px rgba(0,0,0,0.4));
       will-change: transform;
     }
 
     .ghost-stone {
-      opacity: 0.55;
+      opacity: 0.6;
       display: none;
+      z-index: 11;
     }
 
-    /* ===== Right: (top exit) + (chat) + (bottom players+config) ===== */
+    /* ===== Right Panel (Control) ===== */
     .right-col {
-      height: 100%;
       display: flex;
       flex-direction: column;
-      gap: 14px;
-      min-height: 0;
+      gap: 15px;
+      height: 100%;
+      justify-content: center;
     }
 
     .right-top {
       display: flex;
       justify-content: flex-end;
-      align-items: flex-start;
+      height: 50px;
     }
-
     .exit-btn {
-      width: 110px;
-      height: auto;
+      height: 100%;
       cursor: pointer;
-      transition: transform 0.18s ease;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.25));
+      transition: transform 0.2s;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
     }
-    .exit-btn:hover { transform: scale(1.06); }
+    .exit-btn:hover { transform: scale(1.05); }
 
     .chat-panel {
+      flex: 1;
       position: relative;
-      flex: 1;              /* ✅ 중간에서 늘어나는 영역 */
-      min-height: 420px;
-      background: url('<%=CTX%>/assets/images/game/chatBox.png') no-repeat center/contain;
-      filter: drop-shadow(0 10px 22px rgba(0,0,0,0.25));
+      background: url('<%=CTX%>/assets/images/game/chatBox.png') no-repeat center/100% 100%;
+      min-height: 250px;
+      filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
     }
-
     .chat-scroll {
       position: absolute;
-      inset: 10% 10% 18% 10%;
-      overflow: auto;
-      padding: 8px 10px;
-      font-size: 18px;
+      top: 12%; bottom: 15%;
+      left: 10%; right: 10%;
+      overflow-y: auto;
+      padding-right: 5px;
+      font-size: 15px;
+      font-weight: bold;
+      color: #3e2723;
       line-height: 1.5;
-      color: #2f2f2f;
+    }
+    .chat-scroll::-webkit-scrollbar { width: 6px; }
+    .chat-scroll::-webkit-scrollbar-thumb { background: rgba(62, 39, 35, 0.5); border-radius: 10px; }
+
+    .right-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    /* ✅ 아래: 플레이어1 / 플레이어2 / 설정 버튼 */
-    .right-bottom {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 12px;
-      align-items: end;
+    .players-container {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
     }
 
     .player-box {
-      height: 120px;
-      background: url('<%=CTX%>/assets/images/game/playerBox.png') no-repeat center/contain;
+      flex: 1;
+      height: 90px;
+      background: url('<%=CTX%>/assets/images/game/playerBox.png') no-repeat center/100% 100%;
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding-left: 100px;
-      color: #333;
-      font-weight: 800;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.28));
-      transition: transform 0.18s ease;
+      padding-left: 75px; 
+      padding-right: 10px;
+      color: #3e2723;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+      transition: transform 0.2s;
     }
-    .player-box:hover { transform: scale(1.02); }
 
     .player-name {
-      font-size: 1.05rem;
-      margin-bottom: 6px;
-      color: #4e342e;
+      font-size: 15px;
+      font-weight: 800;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
     .player-score {
-      font-size: 0.92rem;
-      color: #6b6b6b;
-      font-weight: 700;
+      font-size: 11px;
+      margin-top: 4px;
+      opacity: 0.8;
     }
 
     .turn-active {
-      filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.9)) !important;
+      transform: scale(1.05);
+      filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.9)) !important;
     }
 
+    .config-area {
+      display: flex;
+      justify-content: flex-end;
+      padding-right: 5px;
+    }
     .config-btn {
-      width: 64px;
-      height: auto;
+      width: 45px;
       cursor: pointer;
-      transition: transform 0.25s ease;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.25));
-      margin-bottom: 8px; /* 버튼 살짝 위로 */
+      transition: transform 0.3s;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
     }
-    .config-btn:hover { transform: rotate(90deg); }
+    .config-btn:hover { transform: rotate(30deg) scale(1.1); }
 
-    /* ===== Config Popup ===== */
+    /* ===== Popup ===== */
     .dim-layer {
       position: fixed;
       inset: 0;
-      background: rgba(0, 0, 0, 0.65);
+      background: rgba(0, 0, 0, 0.6);
       display: none;
       z-index: 100;
     }
-
     .config-popup {
       position: fixed;
-      left: 50%;
-      top: 50%;
+      top: 50%; left: 50%;
       transform: translate(-50%, -50%);
-      width: min(420px, 92vw);
-      height: min(320px, 70vh);
+      width: 400px; height: 320px;
       background: url('<%=CTX%>/assets/images/main/ConfigPopUp/configureBox.png') no-repeat center/contain;
-      z-index: 101;
-      display: none; /* show -> flex */
+      display: none;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
+      z-index: 101;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,0.5));
     }
-
-    .config-inner {
-      width: 80%;
-      text-align: center;
-    }
-
     .close-popup-btn {
       position: absolute;
-      top: 14px;
-      right: 18px;
-      width: 40px;
-      height: 40px;
-      border: none;
-      border-radius: 12px;
+      top: 45px; right: 30px;
+      width: 30px; height: 30px;
+      background: #8d6e63;
+      border: 2px solid #5d4037;
+      color: white;
+      font-weight: bold;
       cursor: pointer;
-      background: rgba(0,0,0,0.45);
-      color: #fff;
-      font-size: 18px;
-      font-weight: 900;
+      border-radius: 4px;
+    }
+    .popup-content {
+      margin-top: 20px;
+      text-align: center;
+    }
+    .surrender-btn {
+      padding: 10px 20px;
+      background: #5d4037;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .surrender-btn:hover { background: #3e2723; transform: scale(1.05); }
+
+    @media (max-width: 1000px) {
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 1fr;
+        overflow-y: auto;
+      }
+      body { overflow: auto; }
+      .left-col { margin-bottom: 20px; }
+      .right-col { height: auto; }
     }
   </style>
 </head>
 
 <body>
-  <div class="game-bg" aria-hidden="true"></div>
+  <div class="game-bg"></div>
 
-  <main class="layout">
-    <!-- LEFT : Board -->
-    <section class="left-col">
-      <div class="board-wrap" id="boardWrap" aria-label="Omok Board">
-        <img
-          id="boardImg"
-          class="board-img"
-          src="<%=CTX%>/assets/images/game/board.png"
-          alt=""
-          aria-hidden="true"
-        />
-
-        <div class="board-hit" id="boardHit" role="application" aria-label="Board Interaction Layer">
-          <img
-            id="ghostStone"
-            class="ghost-stone"
-            src="<%=CTX%>/assets/images/game/stone_1.png"
-            alt=""
-            aria-hidden="true"
-          />
+  <div class="layout">
+    <div class="left-col">
+      <div class="board-frame-wrap" id="boardFrame">
+        <img src="<%=CTX%>/assets/images/game/board.png" class="board-frame-img" alt="Frame" />
+        
+        <div class="board-inner-area" id="boardInner">
+          <img src="<%=CTX%>/assets/images/game/gameBoard.png" class="grid-img" alt="Grid" />
+          
+          <div id="boardHit" class="board-hit">
+            <img id="ghostStone" class="ghost-stone" src="<%=CTX%>/assets/images/game/stone_1.png" alt="" />
+          </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- RIGHT : Exit(top) / Chat(mid) / Players+Config(bottom) -->
-    <aside class="right-col">
+    <div class="right-col">
       <div class="right-top">
-        <img
-          src="<%=CTX%>/assets/images/game/getOut.png"
-          class="exit-btn"
-          id="exitBtn"
-          alt="Exit"
-        />
+        <img id="exitBtn" class="exit-btn" src="<%=CTX%>/assets/images/game/getOut.png" alt="Exit" />
       </div>
 
-      <div class="chat-panel" aria-label="Chat panel">
+      <div class="chat-panel">
         <div class="chat-scroll" id="chatScroll">
-          <div style="color:red; font-weight:800;">Hi</div>
-          <div style="color:blue; font-weight:800;">Hi</div>
-          <div style="color:red; font-weight:800;">Ok.</div>
-          <div style="color:blue; font-weight:800;">Nice to Meet you</div>
+          <div><span style="color:#d32f2f;">System:</span> 게임에 입장했습니다.</div>
+          <div><span style="color:#d32f2f;">System:</span> 즐거운 대국 되세요!</div>
         </div>
       </div>
 
       <div class="right-bottom">
-        <div class="player-box turn-active" id="p1Box">
-          <div class="player-name"><%= nickName %></div>
-          <div class="player-score">Wins: <%= win %> / Loses: <%= lose %></div>
+        <div class="players-container">
+          <div class="player-box turn-active" id="p1Box">
+            <div class="player-name"><%= nickName %></div>
+            <div class="player-score">Wins: <%= win %></div>
+          </div>
+          <div class="player-box" id="p2Box">
+            <div class="player-name">Waiting...</div>
+            <div class="player-score">-</div>
+          </div>
         </div>
-
-        <div class="player-box" id="p2Box">
-          <div class="player-name">Waiting...</div>
-          <div class="player-score">-</div>
+        
+        <div class="config-area">
+          <img id="configBtn" class="config-btn" src="<%=CTX%>/assets/images/game/configureIcon.png" alt="Config" />
         </div>
-
-        <img
-          src="<%=CTX%>/assets/images/game/configureIcon.png"
-          class="config-btn"
-          id="configBtn"
-          alt="Config"
-        />
       </div>
-    </aside>
-  </main>
+    </div>
+  </div>
 
-  <!-- Config Popup -->
-  <div class="dim-layer" id="dimLayer"></div>
-  <div class="config-popup" id="configPopup" role="dialog" aria-modal="true" aria-label="Game Settings">
-    <button class="close-popup-btn" id="closePopupBtn" type="button">X</button>
-    <div class="config-inner">
-      <h2 style="color:#4e342e; margin: 0 0 14px;">Game Settings</h2>
-      <button id="surrenderBtn" type="button" style="padding:10px 20px; cursor:pointer;">
-        Surrender / Exit
-      </button>
+  <div id="dimLayer" class="dim-layer"></div>
+  <div id="configPopup" class="config-popup">
+    <button id="closePopupBtn" class="close-popup-btn">X</button>
+    <div class="popup-content">
+      <h2 style="color:#3e2723; margin-bottom: 20px;">Game Settings</h2>
+      <button id="surrenderBtn" class="surrender-btn">기권 / 나가기</button>
     </div>
   </div>
 
@@ -329,84 +356,116 @@
       white: CTX + "/assets/images/game/stone_2.png",
     };
 
-    // ✅ 돌 위치/크기 조정은 여기만 만지면 됨
-    const BOARD_TUNE = {
-      size: 19,
-      padXRatio: 0.06,
-      padYRatio: 0.06,
-      offsetX: 0,
-      offsetY: 0,
-      stoneScale: 0.85,
-    };
+    // 오목판 격자 (15줄 = 14칸 간격)
+    const BOARD_SIZE = 15; 
+    const LINES = 14; 
 
-    let turn = 1;
+    let turn = 1; // 1: 흑, 2: 백
     let gameActive = true;
-    let boardState = Array.from({ length: BOARD_TUNE.size }, () => Array(BOARD_TUNE.size).fill(0));
+    let boardState = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
 
-    const boardWrap = document.getElementById("boardWrap");
-    const boardImg  = document.getElementById("boardImg");
-    const boardHit  = document.getElementById("boardHit");
-    const ghostEl   = document.getElementById("ghostStone");
-    const p1Box     = document.getElementById("p1Box");
-    const p2Box     = document.getElementById("p2Box");
+    const boardHit   = document.getElementById("boardHit");
+    const ghostEl    = document.getElementById("ghostStone");
+    const p1Box      = document.getElementById("p1Box");
+    const p2Box      = document.getElementById("p2Box");
 
-    const exitBtn        = document.getElementById("exitBtn");
-    const configBtn      = document.getElementById("configBtn");
-    const dimLayer       = document.getElementById("dimLayer");
-    const configPopup    = document.getElementById("configPopup");
-    const closePopupBtn  = document.getElementById("closePopupBtn");
-    const surrenderBtn   = document.getElementById("surrenderBtn");
+    // 가로/세로 간격을 각각 저장 (직사각형 격자 대응)
+    let gapX = 0;
+    let gapY = 0;
+    let stoneSize = 0;
 
-    const metrics = {
-      hitW: 0, hitH: 0,
-      padX: 0, padY: 0,
-      cellX: 0, cellY: 0,
-      stone: 32,
-    };
+    // 1. 그리드 수치 계산 (가로/세로 독립 계산)
+    function recalcMetrics() {
+      const width = boardHit.clientWidth;
+      const height = boardHit.clientHeight;
 
-    function syncHitAreaToBoardImage() {
-      const wrapRect = boardWrap.getBoundingClientRect();
-      const imgRect  = boardImg.getBoundingClientRect();
-
-      const left = imgRect.left - wrapRect.left;
-      const top  = imgRect.top  - wrapRect.top;
-
-      boardHit.style.left = left + "px";
-      boardHit.style.top  = top + "px";
-      boardHit.style.width  = imgRect.width + "px";
-      boardHit.style.height = imgRect.height + "px";
-
-      metrics.hitW = imgRect.width;
-      metrics.hitH = imgRect.height;
+      // 가로, 세로 간격 독립 계산
+      gapX = width / LINES;
+      gapY = height / LINES;
+      
+      // 돌 크기는 칸의 약 92% (가로/세로 중 작은 쪽 기준)
+      stoneSize = Math.min(gapX, gapY) * 0.92; 
+      
+      ghostEl.style.width = stoneSize + "px";
+      ghostEl.style.height = stoneSize + "px";
     }
 
-    function recalcGridMetrics() {
-      metrics.padX = Math.round(metrics.hitW * BOARD_TUNE.padXRatio) + BOARD_TUNE.offsetX;
-      metrics.padY = Math.round(metrics.hitH * BOARD_TUNE.padYRatio) + BOARD_TUNE.offsetY;
+    // 2. 좌표 변환 (Pixel -> Grid Index)
+    function getGridPos(e) {
+      const rect = boardHit.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-      metrics.cellX = (metrics.hitW - metrics.padX * 2) / (BOARD_TUNE.size - 1);
-      metrics.cellY = (metrics.hitH - metrics.padY * 2) / (BOARD_TUNE.size - 1);
+      // X는 gapX로, Y는 gapY로 나눔
+      const col = Math.round(x / gapX);
+      const row = Math.round(y / gapY);
 
-      const cellMin = Math.min(metrics.cellX, metrics.cellY);
-      metrics.stone = Math.max(18, Math.round(cellMin * BOARD_TUNE.stoneScale));
-    }
-
-    function pxToGrid(x, y) {
-      const col = Math.round((x - metrics.padX) / metrics.cellX);
-      const row = Math.round((y - metrics.padY) / metrics.cellY);
-      if (col < 0 || col >= BOARD_TUNE.size || row < 0 || row >= BOARD_TUNE.size) return null;
+      // 범위 체크 (0 ~ 14)
+      if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) {
+        return null;
+      }
       return { row, col };
     }
 
-    function gridToPx(row, col) {
-      return {
-        x: metrics.padX + col * metrics.cellX,
-        y: metrics.padY + row * metrics.cellY,
-      };
+    // 3. 요소 위치 설정 헬퍼 (Grid Index -> Pixel)
+    function setElementPos(element, row, col) {
+      element.style.left = (col * gapX) + "px";
+      element.style.top  = (row * gapY) + "px";
     }
 
-    function setTurn(nextTurn) {
-      turn = nextTurn;
+    // 4. 돌 놓기 (UI)
+    function placeStone(row, col, player) {
+      const stone = document.createElement("img");
+      stone.src = (player === 1) ? IMG.black : IMG.white;
+      stone.className = "stone";
+      
+      stone.style.width = stoneSize + "px";
+      stone.style.height = stoneSize + "px";
+
+      // 위치 설정 (X/Y 개별 간격 적용)
+      setElementPos(stone, row, col);
+
+      // 랜덤 회전 (자연스럽게)
+      const deg = Math.random() * 40 - 20;
+      stone.style.transform = `translate(-50%, -50%) rotate(${deg}deg)`;
+
+      boardHit.appendChild(stone);
+    }
+
+    // 5. 마우스 이동 (Ghost Stone)
+    function onMouseMove(e) {
+      if (!gameActive) return;
+      const pos = getGridPos(e);
+      
+      if (!pos || boardState[pos.row][pos.col] !== 0) {
+        ghostEl.style.display = "none";
+        return;
+      }
+
+      ghostEl.style.display = "block";
+      ghostEl.src = (turn === 1) ? IMG.black : IMG.white;
+      
+      // 고스트 스톤 위치 업데이트
+      setElementPos(ghostEl, pos.row, pos.col);
+    }
+
+    // 6. 클릭 (착수)
+    function onBoardClick(e) {
+      if (!gameActive) return;
+      const pos = getGridPos(e);
+
+      if (!pos || boardState[pos.row][pos.col] !== 0) return;
+
+      boardState[pos.row][pos.col] = turn;
+      placeStone(pos.row, pos.col, turn);
+
+      turn = (turn === 1) ? 2 : 1;
+      updateTurnUI();
+      // 클릭 후 마우스가 제자리에 있을 때 고스트 갱신
+      onMouseMove(e);
+    }
+
+    function updateTurnUI() {
       if (turn === 1) {
         p1Box.classList.add("turn-active");
         p2Box.classList.remove("turn-active");
@@ -416,115 +475,29 @@
       }
     }
 
-    function showGhost(row, col) {
-      const { x, y } = gridToPx(row, col);
-      ghostEl.style.left = x + "px";
-      ghostEl.style.top  = y + "px";
-      ghostEl.style.width  = metrics.stone + "px";
-      ghostEl.style.height = metrics.stone + "px";
-      ghostEl.src = (turn === 1) ? IMG.black : IMG.white;
-      ghostEl.style.display = "block";
-    }
+    window.addEventListener("load", () => {
+      // 레이아웃 확정 후 계산을 위해 프레임 요청
+      requestAnimationFrame(() => {
+        recalcMetrics();
+      });
+      window.addEventListener("resize", recalcMetrics);
 
-    function hideGhost() { ghostEl.style.display = "none"; }
-
-    function createStone(row, col, player) {
-      const stone = document.createElement("img");
-      stone.className = "stone";
-      stone.alt = "";
-      stone.setAttribute("aria-hidden", "true");
-      stone.src = (player === 1) ? IMG.black : IMG.white;
-
-      const { x, y } = gridToPx(row, col);
-      stone.style.left = x + "px";
-      stone.style.top  = y + "px";
-      stone.style.width  = metrics.stone + "px";
-      stone.style.height = metrics.stone + "px";
-
-      const rotation = Math.random() * 360;
-      stone.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-
-      boardHit.appendChild(stone);
-    }
-
-    function onBoardMove(e) {
-      if (!gameActive) return;
-      const rect = boardHit.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const pos = pxToGrid(x, y);
-      if (!pos) return hideGhost();
-
-      const { row, col } = pos;
-      if (boardState[row][col] !== 0) return hideGhost();
-      showGhost(row, col);
-    }
-
-    function onBoardLeave() { hideGhost(); }
-
-    function onBoardClick(e) {
-      if (!gameActive) return;
-
-      const rect = boardHit.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const pos = pxToGrid(x, y);
-      if (!pos) return;
-
-      const { row, col } = pos;
-      if (boardState[row][col] !== 0) return;
-
-      boardState[row][col] = turn;
-      createStone(row, col, turn);
-
-      setTurn(turn === 1 ? 2 : 1);
-      onBoardMove(e);
-    }
-
-    function openConfig() {
-      dimLayer.style.display = "block";
-      configPopup.style.display = "flex";
-    }
-
-    function closeConfig() {
-      dimLayer.style.display = "none";
-      configPopup.style.display = "none";
-    }
-
-    function exitGame() {
-      if (!confirm("정말 나갈까요?")) return;
-      location.href = CTX + "/main";
-    }
-
-    function recalcAll() {
-      syncHitAreaToBoardImage();
-      recalcGridMetrics();
-      hideGhost();
-    }
-
-    function init() {
-      setTurn(1);
-
-      if (boardImg.complete) recalcAll();
-      else boardImg.addEventListener("load", recalcAll);
-
-      boardHit.addEventListener("mousemove", onBoardMove);
-      boardHit.addEventListener("mouseleave", onBoardLeave);
+      boardHit.addEventListener("mousemove", onMouseMove);
+      boardHit.addEventListener("mouseleave", () => { ghostEl.style.display = "none"; });
       boardHit.addEventListener("click", onBoardClick);
 
-      configBtn.addEventListener("click", openConfig);
-      dimLayer.addEventListener("click", closeConfig);
-      closePopupBtn.addEventListener("click", closeConfig);
+      // 팝업 로직
+      const dim = document.getElementById("dimLayer");
+      const popup = document.getElementById("configPopup");
+      document.getElementById("configBtn").onclick = () => { dim.style.display="block"; popup.style.display="flex"; };
+      const close = () => { dim.style.display="none"; popup.style.display="none"; };
+      document.getElementById("closePopupBtn").onclick = close;
+      dim.onclick = close;
 
-      exitBtn.addEventListener("click", exitGame);
-      surrenderBtn.addEventListener("click", exitGame);
-
-      window.addEventListener("resize", recalcAll);
-    }
-
-    document.addEventListener("DOMContentLoaded", init);
+      const exitFunc = () => { if(confirm("정말 나가시겠습니까?")) location.href = CTX + "/main"; };
+      document.getElementById("exitBtn").onclick = exitFunc;
+      document.getElementById("surrenderBtn").onclick = exitFunc;
+    });
   </script>
 </body>
 </html>

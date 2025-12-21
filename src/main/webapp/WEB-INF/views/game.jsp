@@ -331,12 +331,12 @@
 
     // ✅ 돌 위치/크기 조정은 여기만 만지면 됨
     const BOARD_TUNE = {
-      size: 19,
-      padXRatio: 0.06,
-      padYRatio: 0.06,
+      size: 15,
+      padXRatio: 0.095,
+      padYRatio: 0.095,
       offsetX: 0,
       offsetY: 0,
-      stoneScale: 0.85,
+      stoneScale: 0.90,
     };
 
     let turn = 1;

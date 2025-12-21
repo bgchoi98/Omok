@@ -196,7 +196,7 @@ public class RoomWebSocket {
             		observeResponse.addProperty("message", "관전을 시작합니다.");
             		session.getAsyncRemote().sendText(gson.toJson(observeResponse));
             	} else {
-            		sendError(session, "관전에 실패했습니다. (게임이 진행 중이 아닙니다)");
+            		sendError(session, "관전인원이 꽉 찼습니다. (최대 5명)");
             	}
             	break;
             	

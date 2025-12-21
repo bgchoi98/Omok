@@ -74,7 +74,8 @@
         .room-status { font-size: 16px; font-weight: bold; }
         .room-status.waiting { color: #4da6ff; }
         .room-status.playing { color: #ff4d4d; }
-        .room-players { font-size: 12px; margin-top: 3px; }
+        .room-players { font-size: 20px; margin-top: 3px; }
+        .room-observers { font-size: 20px; margin-top: 5px; }		
         .empty-room { opacity: 0.5; cursor: default; }
         .empty-room:hover { transform: none; filter: none; }
         .empty-message { font-size: 20px; color: #fff; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); font-weight: bold; }
@@ -693,14 +694,17 @@
             roomPlayers.className = 'room-players';
             const playerCount = (room.gameUsers && room.gameUsers.length) || 0;
             roomPlayers.textContent = playerCount + '/2';
-
-            // 옵저버 추가 임시
+         	// 게임중일경우 display none
+            if (playerCount === 2) {
+                roomPlayers.style.display = 'none';
+            }
+            // 옵저버 추가
             const roomObservers = document.createElement('div');
             roomObservers.className = 'room-observers';
             const observerCount = (room.observers && room.observers.length) || 0;
-            roomObservers.textContent = observerCount + '/2';
+            roomObservers.textContent = '관전자  ' + observerCount + '/5	';
 
-            info.appendChild(roomNumber);
+            info.appendChild(roomNumber);	
             info.appendChild(roomStatus);
             info.appendChild(roomPlayers);
             

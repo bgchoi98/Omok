@@ -91,11 +91,13 @@ public class RoomService {
     		return false;
     	}
     	
-    	Observer observer = new Observer(lobbyUser);
+    	Observer observer = new Observer(lobbyUser);    	
+    	// 관전자 인원수 제한 ?
+    	if (room.getObservers().size() >= 2) {
+    		return false;
+    	}
     	room.getObservers().add(observer);
     	
-    	// 관전자 인원수 제한 ?
-    	// if *(room.getObservers().size > 2 )
     	return true;
     }
 

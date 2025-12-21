@@ -1,7 +1,9 @@
 package game;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.http.HttpSession;
@@ -28,9 +30,7 @@ import util.webSocketDTOs.GetHttpSessionConfigurator;
 import util.webSocketDTOs.MessageType;
 import util.webSocketDTOs.WebSocketMessage;
 
-/**
- * 게임 웹소켓 엔드포인트
- */
+
 @ServerEndpoint(
     value = "/game",
     configurator = GetHttpSessionConfigurator.class
@@ -43,9 +43,19 @@ public class GameWebSocket {
 	private final GameService gameService = GameService.getInstance();
 	private final RoomRepository roomRepository = RoomRepository.getInstance();
 	
-	// 게임 중인 세션 관리: roomSeq -> (nickname -> Session)
-	private static Map<Long, Map<String, Session>> gameRooms = new ConcurrentHashMap<>();
+	
+	// 각 방들과 그에 해당하는 웹소켓 세션들: roomSeq -> Set<Session>
+	private static Map<Long, Set<Session>> roomSessions = new ConcurrentHashMap<>();
+	
+	// 세션으로 닉네임 조회, session -> nickname
+	private static Map<Session, String> sessionNicknameMap = new ConcurrentHashMap<>();
 
+	// 세션으로 현재 들어가있는 방 조회, session -> roomSeq
+	private static Map<Session, Long> sessionRoomMap = new ConcurrentHashMap<>();
+
+
+
+	// 게임 방에 들어왔을 때
 	@OnOpen
 	public void onOpen(Session session, EndpointConfig config) {
 		// HTTP 세션에서 User 가져오기
@@ -58,6 +68,7 @@ public class GameWebSocket {
             return;
         }
         
+        // HTTP 세션 정보로 유저 신원 조회
         User user = (User) httpSession.getAttribute(Constants.SESSION_KEY);
         
         // 유저 검증
@@ -69,10 +80,12 @@ public class GameWebSocket {
         // 세션에 유저 정보 저장
         session.getUserProperties().put("user", user);
         session.getUserProperties().put("nickname", user.getNickname());
+     
         
         log.info("Game WebSocket connected: {}", user.getNickname());
 	}
 	
+	// 게임 방 속 게임 유저, 관전자가 행동을 수행했을 때
 	@OnMessage
 	public void onMessage(String message, Session session) {
 		try {
@@ -82,6 +95,8 @@ public class GameWebSocket {
 				return;
 			}
 			
+			// 파싱
+			// 프론트에서 받아와야 할 데이터 : roomSeq,
 			String nickname = user.getNickname();
 			JsonObject json = gson.fromJson(message, JsonObject.class);
 			String type = json.get("type").getAsString();
@@ -90,16 +105,19 @@ public class GameWebSocket {
 			
 			switch (type) {
 			
+			// 1. 게임 방 참여 (게임 플레이어, 관전)
 			case "JOIN_GAME":
-				handleJoinGame(session, json, nickname);
+				joinGame(session, json, nickname);
 				break;
 				
+			// 2. 돌 착수
 			case "MAKE_MOVE":
-				handleMakeMove(session, json, nickname);
+				makeMove(session, json, nickname);
 				break;
-				
+			
+			// 3. 채팅
 			case "CHAT":
-				handleChat(session, json, nickname);
+				chat(session, json, nickname);
 				break;
 				
 			default:
@@ -114,85 +132,165 @@ public class GameWebSocket {
 		}
 	}
 	
-	/**
-	 * 게임 참여 (플레이어 또는 관전자)
-	 */
-	private void handleJoinGame(Session session, JsonObject json, String nickname) {
+	// game.jsp -> main.jsp 로 이동 시 (게임 종료 혹은 관전 나가기, 게임 탈주)
+	@OnClose
+	public void onClose(Session session) {
+		
+	    // 맵에서 nickname, roomSeq 가져오기
+	    String nickname = sessionNicknameMap.get(session);
+	    Long roomSeq = sessionRoomMap.get(session);
+
+	    if (nickname != null && roomSeq != null) {
+	        // 방에 해당하는 모든 세션들 조회
+	        Set<Session> sessions = roomSessions.get(roomSeq);
+	        if (sessions != null) {
+	        	// 나간 사람의 웹소켓 세션 삭제
+	            sessions.remove(session);
+	            
+	            // 방에 웹소켓 세션이 하나도 없을 경우 방 삭제
+	            if (sessions.isEmpty()) {
+	                roomSessions.remove(roomSeq);
+	            }
+	        }
+
+	    }
+
+	    // 세션 관련 정보 제거
+	    sessionNicknameMap.remove(session);
+	    sessionRoomMap.remove(session);
+	}
+
+	
+	@OnError
+	public void onError(Session session, Throwable t) {
+		String nickname = (String) session.getUserProperties().get("nickname");
+		log.error("Game WebSocket error for user {}: {}", nickname != null ? nickname : "unknown", t.getMessage(), t);
+	}
+	
+	// 1. 게임 방 참여 (게임 플레이어, 관전)
+	private void joinGame(Session session, JsonObject json, String nickname) {
+		
+		// 프론트에서 json 으로 roomSeq을 받아와야 한다.
 		if (!json.has("roomSeq")) {
 			sendError(session, "방 번호가 없습니다.");
 			return;
 		}
 		
 		Long roomSeq = json.get("roomSeq").getAsLong();
-		Room room = roomRepository.findById(roomSeq);
+		Room room = roomRepository.findById(roomSeq); // json 으로 받아온 roomSeq 을 통해 Room 을 리포지토리에서 조회
 		
 		if (room == null) {
 			sendError(session, "방을 찾을 수 없습니다.");
 			return;
 		}
 		
-		// roomSeq를 세션에 저장
+		// roomSeq를 웹소켓 세션에 저장 => 이 시점에 웹 소켓 세션에는 User, userNickName, roomSeq 총 3개의 데이터가 들어있다.
 		session.getUserProperties().put("roomSeq", roomSeq);
 		
-		// 해당 방의 세션 맵 가져오기 또는 생성
-		Map<String, Session> roomSessions = gameRooms.computeIfAbsent(roomSeq, k -> new ConcurrentHashMap<>());
-		
-		// 기존 세션이 있으면 닫기 (재접속 처리)
-		Session oldSession = roomSessions.get(nickname);
-		if (oldSession != null && oldSession.isOpen() && !oldSession.equals(session)) {
-			log.info("Replacing old session for {} in room {}", nickname, roomSeq);
-			closeSession(oldSession, "Reconnected from another session");
+		// 세션 관리 
+		Set<Session> sessions = roomSessions.get(roomSeq);
+		if (sessions == null) {
+		    synchronized (roomSessions) {
+		        sessions = roomSessions.get(roomSeq);
+		        // 처음 들어온 유저라면
+		        if (sessions == null) {
+		            sessions = ConcurrentHashMap.newKeySet();
+		            roomSessions.put(roomSeq, sessions);
+		        }
+		    }
 		}
 		
+		// 기존 세션이 있으면 닫기 (재접속 처리) , 나간 사람이 다시 들어올 경우
+		Iterator<Session> iterator = sessions.iterator();
+		while (iterator.hasNext()) {
+		    Session s = iterator.next();
+		    String oldNickname = sessionNicknameMap.get(s);
+		    if (nickname.equals(oldNickname) && s.isOpen() && !s.equals(session)) {
+		        closeSession(s, "Reconnected from another session");
+		        iterator.remove();  
+		        sessionNicknameMap.remove(s);
+		        sessionRoomMap.remove(s);
+		        break;
+		    }
+		}
+		
+
 		// 새 세션 등록
-		roomSessions.put(nickname, session);
+		sessions.add(session);
+		sessionNicknameMap.put(session, nickname);
+		sessionRoomMap.put(session, roomSeq);
 		
-		// 게임 시작 (아직 시작 안했으면)
-		boolean gameStarted = gameService.startGame(roomSeq);
+
+		// 게임 검증
+	    boolean gameStarted = gameService.startGame(roomSeq);
+	    
+	    if (gameStarted) {
+	        log.info("Game started for room {}", roomSeq);
+	    } else {
+	        log.info("Game not started or already started for room {}", roomSeq);
+	    }
+	    
+	    GameState gameState = gameService.getGameState(roomSeq);
+	    
+	    boolean isGameUser = gameService.isGameUser(roomSeq, nickname);
+	    boolean isObserver = gameService.isObserver(roomSeq, nickname);
+
+	    if (gameState == null) {
+	        // 게임이 아직 시작되지 않았을 경우
+	        if (isGameUser) {
+	            // 대기 중인 플레이어에게 응답
+	            JsonObject response = new JsonObject();
+	            response.addProperty("type", "WAITING_FOR_PLAYER");
+	            response.addProperty("roomSeq", roomSeq);
+	            response.addProperty("message", "상대방을 기다리는 중입니다...");
+	            
+	            session.getAsyncRemote().sendText(gson.toJson(response));
+	            log.info("{} is waiting for another player in room {}", nickname, roomSeq);
+	            return;
+	        } else {
+	            // 관전자가 게임 시작 전 방에 들어오려 함 => 프론트 단에서 잡아두기 때문에 발생 가능성은 거의 없음
+	            sendError(session, "아직 게임이 시작되지 않았습니다.");
+	            
+	            // 등록했던 세션 제거
+	            sessions.remove(session);
+	            sessionNicknameMap.remove(session);
+	            sessionRoomMap.remove(session);
+	            return;
+	        }
+	    }
 		
-		// 게임 상태 조회
-		GameState gameState = gameService.getGameState(roomSeq);
+		// 프론트에 JSON 객체 전달
+	    JsonObject response = new JsonObject();
+	    response.addProperty("type", "JOIN_GAME_SUCCESS");
+	    response.addProperty("roomSeq", roomSeq);
+	    response.addProperty("isPlayer", isGameUser);
+	    response.addProperty("isObserver", isObserver);
+	    response.addProperty("blackPlayer", gameState.getBlackPlayer());
+	    response.addProperty("whitePlayer", gameState.getWhitePlayer());
+	    response.addProperty("currentTurn", gameState.getCurrentTurn());
+	    response.addProperty("boardSize", GameState.getBoardSize());
+	    
+	    // 객체 배열은 add
+	    response.add("board", gson.toJsonTree(gameState.getBoard()));
+	    
+	    if (isGameUser) {
+	        int stone = gameState.getPlayerStone(nickname);
+	        response.addProperty("myStone", stone);
+	    }
+	    
 		
-		if (gameState == null) {
-			sendError(session, "게임 상태를 불러올 수 없습니다.");
-			return;
-		}
-		
-		// 플레이어인지 관전자인지 확인
-		boolean isPlayer = gameService.isPlayer(roomSeq, nickname);
-		boolean isObserver = gameService.isObserver(roomSeq, nickname);
-		
-		// 참여 성공 응답
-		JsonObject response = new JsonObject();
-		response.addProperty("type", "JOIN_GAME_SUCCESS");
-		response.addProperty("roomSeq", roomSeq);
-		response.addProperty("isPlayer", isPlayer);
-		response.addProperty("isObserver", isObserver);
-		response.addProperty("blackPlayer", gameState.getBlackPlayer());
-		response.addProperty("whitePlayer", gameState.getWhitePlayer());
-		response.addProperty("currentTurn", gameState.getCurrentTurn());
-		response.addProperty("boardSize", GameState.getBoardSize());
-		
-		// 보드 상태 전송 (2차원 배열을 JSON으로 변환)
-		response.add("board", gson.toJsonTree(gameState.getBoard()));
-		
-		if (isPlayer) {
-			int stone = gameState.getPlayerStone(nickname);
-			response.addProperty("myStone", stone);  // 1: 흑돌, 2: 백돌
-		}
-		
+		// 비동기로 클라이언트에 전달 (실시간 전달)
 		session.getAsyncRemote().sendText(gson.toJson(response));
 		
-		log.info("{} joined game room {} as {}", nickname, roomSeq, isPlayer ? "player" : "observer");
+		log.info("{} joined game room {} as {}", nickname, roomSeq, isGameUser ? "gameUser" : "observer");
 		
-		// 같은 방의 다른 사람들에게 입장 알림
-		broadcastToRoom(roomSeq, createNotification("USER_JOINED", nickname + "님이 " + (isPlayer ? "게임에" : "관전에") + " 참여했습니다."), session);
+		// 브로드캐스팅
+		broadcastToRoom(roomSeq, createNotification("USER_JOINED", nickname + "님이 " + (isGameUser ? "게임에" : "관전에") + " 참여했습니다."), session);
 	}
 	
-	/**
-	 * 착수 처리
-	 */
-	private void handleMakeMove(Session session, JsonObject json, String nickname) {
+
+	// 돌 착수 처리
+	private void makeMove(Session session, JsonObject json, String nickname) {
 		Long roomSeq = (Long) session.getUserProperties().get("roomSeq");
 		
 		if (roomSeq == null) {
@@ -209,7 +307,7 @@ public class GameWebSocket {
 		int col = json.get("col").getAsInt();
 		
 		// 플레이어인지 확인
-		if (!gameService.isPlayer(roomSeq, nickname)) {
+		if (!gameService.isGameUser(roomSeq, nickname)) {
 			sendError(session, "플레이어만 착수할 수 있습니다.");
 			return;
 		}
@@ -247,14 +345,13 @@ public class GameWebSocket {
 		
 		// 게임 종료 확인
 		if (gameState.isGameOver()) {
-			handleGameOver(roomSeq, gameState);
+			gameOver(roomSeq, gameState);
 		}
 	}
 	
-	/**
-	 * 채팅 처리
-	 */
-	private void handleChat(Session session, JsonObject json, String nickname) {
+
+	// onMessage - chat 처리
+	private void chat(Session session, JsonObject json, String nickname) {
 		Long roomSeq = (Long) session.getUserProperties().get("roomSeq");
 		
 		if (roomSeq == null) {
@@ -284,7 +381,7 @@ public class GameWebSocket {
 	/**
 	 * 게임 종료 처리
 	 */
-	private void handleGameOver(Long roomSeq, GameState gameState) {
+	private void gameOver(Long roomSeq, GameState gameState) {
 		String winner = gameState.getWinner();
 		
 		JsonObject gameOverMsg = new JsonObject();
@@ -304,33 +401,29 @@ public class GameWebSocket {
 		log.info("Game over in room {}: winner = {}", roomSeq, winner);
 	}
 	
-	/**
-	 * 특정 방의 모든 세션에 메시지 브로드캐스트
-	 * @param roomSeq 방 번호
-	 * @param message 메시지
-	 * @param except 제외할 세션 (null이면 모두에게 전송)
-	 */
+	// 브로드캐스트
 	private void broadcastToRoom(Long roomSeq, String message, Session except) {
-		Map<String, Session> roomSessions = gameRooms.get(roomSeq);
-		
-		if (roomSessions == null) {
-			return;
-		}
-		
-		for (Session s : roomSessions.values()) {
-			if (s != null && s.isOpen() && !s.equals(except)) {
-				try {
-					s.getAsyncRemote().sendText(message);
-				} catch (Exception e) {
-					log.error("Error broadcasting to session", e);
-				}
-			}
-		}
+	    // roomSessions는 Map<Long, Set<Session>> 타입
+	    Set<Session> sessions = roomSessions.get(roomSeq);
+	    
+	    if (sessions == null) {
+	        return;
+	    }
+	    
+	    // Set<Session>을 순회
+	    for (Session s : sessions) {
+	        if (s != null && s.isOpen() && !s.equals(except)) {
+	            try {
+	                s.getAsyncRemote().sendText(message);
+	            } catch (Exception e) {
+	                log.error("Error broadcasting to session", e);
+	            }
+	        }
+	    }
 	}
 	
-	/**
-	 * 알림 메시지 생성
-	 */
+
+	// 프론트에 전달하는 알림 메시지
 	private String createNotification(String notificationType, String message) {
 		JsonObject notification = new JsonObject();
 		notification.addProperty("type", "NOTIFICATION");
@@ -339,38 +432,10 @@ public class GameWebSocket {
 		return gson.toJson(notification);
 	}
 	
-	@OnClose
-	public void onClose(Session session) {
-		String nickname = (String) session.getUserProperties().get("nickname");
-		Long roomSeq = (Long) session.getUserProperties().get("roomSeq");
-		
-		if (nickname != null && roomSeq != null) {
-			Map<String, Session> roomSessions = gameRooms.get(roomSeq);
-			if (roomSessions != null) {
-				roomSessions.remove(nickname);
-				
-				// 방이 비었으면 맵에서 제거
-				if (roomSessions.isEmpty()) {
-					gameRooms.remove(roomSeq);
-				}
-				
-				log.info("{} disconnected from game room {}", nickname, roomSeq);
-				
-				// 다른 사람들에게 퇴장 알림
-				broadcastToRoom(roomSeq, createNotification("USER_LEFT", nickname + "님이 나갔습니다."), null);
-			}
-		}
-	}
+
 	
-	@OnError
-	public void onError(Session session, Throwable t) {
-		String nickname = (String) session.getUserProperties().get("nickname");
-		log.error("Game WebSocket error for user {}: {}", nickname != null ? nickname : "unknown", t.getMessage(), t);
-	}
-	
-	/**
-	 * 웹소켓 세션 닫기
-	 */
+
+	// 웹소켓 세션 종료
 	private void closeSession(Session session, String reason) {
 		try {
 			if (session.isOpen()) {
@@ -384,9 +449,8 @@ public class GameWebSocket {
 		}
 	}
 	
-	/**
-	 * 에러 메시지 전송
-	 */
+
+	// 프론트에 에러 메시지 전송
 	private void sendError(Session session, String errorMsg) {
 		WebSocketMessage message = new WebSocketMessage(MessageType.ERROR, null, errorMsg);
 		try {

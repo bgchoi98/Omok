@@ -453,6 +453,8 @@
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
             const wsUrl = protocol + '//' + window.location.host + CTX + '/lobby';
             try {
+                // Initialize room list on lobby entry
+                allRooms = [];
                 websocket = new WebSocket(wsUrl);
                 websocket.onopen = function() { updateConnectionStatus(true); };
                 websocket.onmessage = function(event) { handleMessage(event.data); };
@@ -480,17 +482,26 @@
         function handleMessage(data) {
             try {
                 const message = JSON.parse(data);
-                creatingRoomKey = message.roomSeq;
+                const type = message.type;
+                const payload = message.data ?? message;  // Compatibility: handle both {type, data} and flat structure
 
-                if (message.type === 'ROOMLIST') {
-                    updateRoomList(message.data);
+                if (type === 'ROOMLIST') {
+                    // Only update room list when ROOMLIST is received
+                    updateRoomList(payload);
                     if (isCreatingRoom) isCreatingRoom = false;
-                } else if (message.type === 'ERROR') {
-                    alert('에러 발생: ' + JSON.stringify(message.data));
+                } else if (type === 'ROOM_CREATED') {
+                    // Room creation success - store roomSeq
+                    creatingRoomKey = payload.roomSeq || message.roomSeq;
+                    console.log('Room created, roomSeq:', creatingRoomKey);
+                    // Keep loading overlay until START message arrives
+                } else if (type === 'ERROR') {
+                    alert('에러 발생: ' + JSON.stringify(payload));
                     hideLoading();
                     isCreatingRoom = false;
-                } else if (message.type === 'START') {
+                } else if (type === 'START') {
                     window.location.href = "main/game?roomSeq=" + message.roomId;
+                } else {
+                    console.warn('Unknown WS type:', type, message);
                 }
             } catch (error) {
                 console.error('메시지 파싱 에러:', error);
@@ -499,10 +510,11 @@
         }
 
         function updateRoomList(rooms) {
+            // Clear and rebuild room list entirely to prevent stale data
             if (!rooms) allRooms = [];
             else if (Array.isArray(rooms)) allRooms = rooms;
             else allRooms = [];
-            
+
             currentPageIndex = 0;
             renderCurrentPage();
         }
@@ -517,6 +529,7 @@
 
         function renderRooms(rooms) {
             const roomsGrid = document.getElementById('roomsGrid');
+            // Clear entire grid to prevent stale room cards
             roomsGrid.innerHTML = '';
 
             if (rooms.length === 0) {
@@ -681,14 +694,17 @@
         }
 
         function enterRoom(roomKey) {
+            console.log("[DIAG] enterRoom called - roomKey:", roomKey);
+
             if (!websocket || websocket.readyState !== WebSocket.OPEN) {
                 alert('서버와 연결되어 있지 않습니다.');
                 return;
             }
             if (confirm('방 #' + roomKey + '에 입장하시겠습니까?')) {
                 const message = { type: 'JOIN_ROOM', roomId: roomKey };
+                console.log("[DIAG] Sending JOIN_ROOM - roomKey:", roomKey, "message:", message);
                 websocket.send(JSON.stringify(message));
-            } 
+            }
         }
         
         function DELETE_ROOM() {
@@ -702,12 +718,15 @@
         }
 
         function watchRoom(roomKey) {
+             console.log("[DIAG] watchRoom called - roomKey:", roomKey);
+
              if (!websocket || websocket.readyState !== WebSocket.OPEN) {
                  alert('서버와 연결되어 있지 않습니다.');
                  return;
              }
              if (confirm('방 #' + roomKey + '을 관전 하시겠습니까?')) {
                  const message = { type: 'OBSERVE_ROOM', roomId : roomKey };
+                 console.log("[DIAG] Sending OBSERVE_ROOM - roomKey:", roomKey, "message:", message);
                  websocket.send(JSON.stringify(message));
              }
         }

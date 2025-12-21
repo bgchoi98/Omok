@@ -153,7 +153,7 @@ body {
 .chat-scroll {
 	position: absolute;
 	top: 12%;
-	bottom: 15%;
+	bottom: 25%;
 	left: 10%;
 	right: 10%;
 	overflow-y: auto;
@@ -171,6 +171,38 @@ body {
 .chat-scroll::-webkit-scrollbar-thumb {
 	background: rgba(62, 39, 35, 0.5);
 	border-radius: 10px;
+}
+
+.chat-input-area {
+	position: absolute;
+	bottom: 8%;
+	left: 10%;
+	right: 10%;
+	display: flex;
+	gap: 5px;
+}
+
+.chat-input {
+	flex: 1;
+	padding: 6px 10px;
+	border: 2px solid #8d6e63;
+	border-radius: 4px;
+	font-size: 14px;
+	background: rgba(255, 255, 255, 0.9);
+}
+
+.chat-send-btn {
+	padding: 6px 15px;
+	background: #5d4037;
+	color: white;
+	border: none;
+	border-radius: 4px;
+	font-weight: bold;
+	cursor: pointer;
+}
+
+.chat-send-btn:hover {
+	background: #3e2723;
 }
 
 .right-bottom {
@@ -359,6 +391,10 @@ body {
 						<span style="color: #d32f2f;">System:</span> 즐거운 대국 되세요!
 					</div>
 				</div>
+				<div class="chat-input-area">
+					<input type="text" id="chatInput" class="chat-input" placeholder="메시지 입력..." maxlength="100" />
+					<button id="chatSendBtn" class="chat-send-btn">전송</button>
+				</div>
 			</div>
 
 			<div class="right-bottom">
@@ -400,12 +436,22 @@ body {
     };
 
     // 오목판 격자 (15줄 = 14칸 간격)
-    const BOARD_SIZE = 15; 
-    const LINES = 14; 
+    const BOARD_SIZE = 15;
+    const LINES = 14;
 
     let turn = 1; // 1: 흑, 2: 백
     let gameActive = true;
     let boardState = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
+
+    // Role state variables (for player/observer distinction)
+    let isPlayer = false;
+    let isObserver = false;
+    let myStone = 0;  // 1 or 2, 0 if observer
+    let blackPlayerName = "";
+    let whitePlayerName = "";
+    let myNickname = "<%=nickName%>";
+    let inputLocked = false;
+    let gameEnded = false;
 
     const boardHit   = document.getElementById("boardHit");
     const ghostEl    = document.getElementById("ghostStone");
@@ -489,26 +535,54 @@ body {
       ghostEl.style.top  = (pos.row * cellH) + "px";
     }
 
+    // Utility: Normalize turn value (handle nickname or 1/2)
+    function normalizeTurn(currentTurn, blackPlayer, whitePlayer) {
+      if (typeof currentTurn === 'number') return currentTurn;
+      if (typeof currentTurn === 'string') {
+        if (currentTurn === blackPlayer) return 1;
+        if (currentTurn === whitePlayer) return 2;
+      }
+      return null;
+    }
+
+    // Utility: Normalize payload structure
+    function normalizePayload(msg) {
+      return {
+        type: msg.type,
+        data: msg.data ?? msg
+      };
+    }
+
     // 5. 클릭 (착수)
     function onBoardClick(e) {
-      if (!gameActive) return;
+      if (!gameActive || gameEnded) return;
+      if (inputLocked) return;  // Prevent double-click
+
+      // Observer cannot make moves
+      if (isObserver || !isPlayer) {
+        console.warn("Observers cannot make moves");
+        return;
+      }
+
+      // Not my turn
+      if (myStone !== turn) {
+        console.warn("Not your turn");
+        return;
+      }
+
       const pos = getGridPos(e);
-	  console.log('여기 클릭됨');
+      console.log('Board clicked:', pos);
       if (!pos || boardState[pos.row][pos.col] !== 0) return;
-      
-   	  // 착수 시 서버로 전송 bgchoi
+
+      // Lock input until server responds
+      inputLocked = true;
+
+      // Send move to server
       socket.send(JSON.stringify({
         type: "MAKE_MOVE",
         row: pos.row,
         col: pos.col
       }));
-   	  
-      /* boardState[pos.row][pos.col] = turn;
-      placeStone(pos.row, pos.col, turn);
-
-      turn = (turn === 1) ? 2 : 1;
-      updateTurnUI();
-      onMouseMove(e); // 착수 후 바로 갱신 */
     }
 
     function updateTurnUI() {
@@ -521,6 +595,27 @@ body {
       }
     }
 
+    // Chat send function
+    function sendChatMessage() {
+      const input = document.getElementById("chatInput");
+      const message = input.value.trim();
+      if (!message) return;
+
+      // Determine channel based on role
+      const channel = isObserver ? "OBSERVER" : (isPlayer ? "PLAYER" : "ALL");
+
+      // Send to server
+      if (socket && socket.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({
+          type: "CHAT",
+          message: message,
+          channel: channel  // NOTE: server-side channel isolation required for true separation
+        }));
+      }
+
+      input.value = "";
+    }
+
     window.addEventListener("load", () => {
       recalcMetrics();
       window.addEventListener("resize", recalcMetrics);
@@ -528,10 +623,26 @@ body {
       boardHit.addEventListener("mousemove", onMouseMove);
       boardHit.addEventListener("mouseleave", () => { ghostEl.style.display = "none"; });
       boardHit.addEventListener("click", onBoardClick);
+
+      // Chat input events
+      const chatInput = document.getElementById("chatInput");
+      const chatSendBtn = document.getElementById("chatSendBtn");
+      chatSendBtn.onclick = sendChatMessage;
+      chatInput.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendChatMessage();
+      });
+
 	  // 웹소켓 연결 함수 호출 bgchoi
 	  connectWebSocket();
-	  
-	  
+
+      // Close socket on page unload
+      window.addEventListener("beforeunload", () => {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+          socket.close(1000, "unload");
+        }
+      });
+
+
       // 팝업 로직
       const dim = document.getElementById("dimLayer");
       const popup = document.getElementById("configPopup");
@@ -540,7 +651,22 @@ body {
       document.getElementById("closePopupBtn").onclick = close;
       dim.onclick = close;
 
-      const exitFunc = () => { if(confirm("정말 나가시겠습니까?")) location.href = CTX + "/main"; };
+      const exitFunc = () => {
+        if(confirm("정말 나가시겠습니까?")) {
+          // Send EXIT message to server (if server ignores, still harmless)
+          if (socket && socket.readyState === WebSocket.OPEN) {
+            try {
+              socket.send(JSON.stringify({ type: "EXIT" }));
+            } catch (e) { console.warn("Exit message send failed:", e); }
+          }
+          // Close WebSocket
+          if (socket) {
+            socket.close(1000, "leave");
+          }
+          // Redirect to lobby
+          location.replace(CTX + "/main");
+        }
+      };
       document.getElementById("exitBtn").onclick = exitFunc;
       document.getElementById("surrenderBtn").onclick = exitFunc;
     });
@@ -567,7 +693,8 @@ body {
 	  socket = new WebSocket(wsUrl);   // ✅ 1. 생성 먼저
 	
 	  socket.onopen = () => {
-	    console.log("✅ WebSocket 연결됨:", wsUrl);
+	    console.log("✅ [DIAG] WebSocket OPEN:", wsUrl);
+	    console.log("[DIAG] Current state - isPlayer:", isPlayer, "isObserver:", isObserver, "myStone:", myStone);
 	
 	    const joinMsg = {
 	      type: "JOIN_GAME",
@@ -575,70 +702,222 @@ body {
 	    };
 	
 	    socket.send(JSON.stringify(joinMsg)); // ✅ 2. 여기서 전송
-	    console.log("📤 JOIN_GAME 전송:", joinMsg);
+	    console.log("📤 [DIAG] JOIN_GAME sent - roomSeq:", roomSeq, "msg:", joinMsg);
 	  };
 	
 	  // 서버 응답
 	  socket.onmessage = (event) => {
-		  const data = JSON.parse(event.data);
-		  console.log("📩 서버수신:", data);
+		  const rawData = JSON.parse(event.data);
+		  console.log("📩 [DIAG] WS message received:", rawData);
 
-		  switch (data.type) {
+		  const normalized = normalizePayload(rawData);
+		  const type = normalized.type;
+		  const data = normalized.data;
+
+		  console.log("[DIAG] Message type:", type, "| Keys:", Object.keys(data || {}));
+
+		  switch (type) {
+
+		    case "JOIN_GAME_SUCCESS": {
+		      console.log("[DIAG] JOIN_GAME_SUCCESS - blackPlayer:", data.blackPlayer, "whitePlayer:", data.whitePlayer,
+		                  "isPlayer:", data.isPlayer, "isObserver:", data.isObserver, "boardSize:", data.boardSize,
+		                  "currentTurn:", data.currentTurn);
+
+		      // Game joined - initialize board and player info
+		      isPlayer = data.isPlayer || false;
+		      isObserver = data.isObserver || false;
+		      blackPlayerName = data.blackPlayer || "";
+		      whitePlayerName = data.whitePlayer || "";
+
+		      // Determine my stone color
+		      if (isPlayer && blackPlayerName === myNickname) myStone = 1;
+		      else if (isPlayer && whitePlayerName === myNickname) myStone = 2;
+		      else myStone = 0;
+
+		      console.log("[DIAG] Role determined - isPlayer:", isPlayer, "isObserver:", isObserver, "myStone:", myStone);
+
+		      // Update player name UI
+		      const p1NameEl = p1Box.querySelector('.player-name');
+		      const p2NameEl = p2Box.querySelector('.player-name');
+		      if (p1NameEl && blackPlayerName) p1NameEl.textContent = blackPlayerName;
+		      if (p2NameEl && whitePlayerName) p2NameEl.textContent = whitePlayerName;
+
+		      // Load initial board state
+		      const board = data.board || [];
+		      const boardSize = data.boardSize || BOARD_SIZE;
+		      for (let r = 0; r < boardSize; r++) {
+		        for (let c = 0; c < boardSize; c++) {
+		          const stoneValue = board[r]?.[c] || 0;
+		          if (stoneValue !== 0) {
+		            boardState[r][c] = stoneValue;
+		            placeStone(r, c, stoneValue);
+		          }
+		        }
+		      }
+
+		      // Set turn
+		      const serverTurn = data.currentTurn;
+		      turn = normalizeTurn(serverTurn, blackPlayerName, whitePlayerName) || 1;
+		      updateTurnUI();
+
+		      console.log("✅ JOIN_GAME_SUCCESS - isPlayer:", isPlayer, "myStone:", myStone);
+		      break;
+		    }
+
+		    case "WAITING_FOR_PLAYER": {
+		      // Waiting for second player
+		      console.log("⏳ Waiting for another player...");
+		      // Optional: show waiting overlay
+		      break;
+		    }
 
 		    case "MOVE": {
 		      const { row, col, stone, player, currentTurn } = data;
+		      console.log("[DIAG] MOVE - row:", row, "col:", col, "stone:", stone, "player:", player, "currentTurn:", currentTurn);
+
+		      // [GUARD] Validate move data
+		      if (typeof row !== 'number' || typeof col !== 'number') {
+		        console.error("[GUARD] Invalid row/col type:", {row, col});
+		        return;
+		      }
+		      if (row < 0 || row >= BOARD_SIZE || col < 0 || col >= BOARD_SIZE) {
+		        console.error("[GUARD] Out of bounds:", {row, col, BOARD_SIZE});
+		        return;
+		      }
+		      if (stone !== 1 && stone !== 2) {
+		        console.error("[GUARD] Invalid stone value:", stone);
+		        return;
+		      }
+		      if (!boardState || !boardState[row]) {
+		        console.error("[GUARD] boardState not initialized:", {row, col, boardState});
+		        return;
+		      }
 
 		      // 이미 놓인 돌이면 무시 (중복 방지)
-		      if (boardState[row][col] !== 0) return;
+		      if (boardState[row][col] !== 0) {
+		        console.log("[DIAG] Cell already occupied, skipping");
+		        return;
+		      }
 
 		      // UI 반영
 		      boardState[row][col] = stone;
 		      placeStone(row, col, stone);
 
-		      // 턴은 서버 기준으로 맞춤 (⭐ 중요)
-		      turn = currentTurn;
+		      // Backup: update player names from MOVE if not set yet
+		      if (player && stone) {
+		        if (stone === 1 && !blackPlayerName) blackPlayerName = player;
+		        if (stone === 2 && !whitePlayerName) whitePlayerName = player;
+		        const p1NameEl = p1Box.querySelector('.player-name');
+		        const p2NameEl = p2Box.querySelector('.player-name');
+		        if (p1NameEl && blackPlayerName && p1NameEl.textContent === 'Waiting...') p1NameEl.textContent = blackPlayerName;
+		        if (p2NameEl && whitePlayerName && p2NameEl.textContent === 'Waiting...') p2NameEl.textContent = whitePlayerName;
+		      }
+
+		      // 턴은 서버 기준으로 정규화 (⭐ nickname or 1/2 handle)
+		      turn = normalizeTurn(currentTurn, blackPlayerName, whitePlayerName) || ((turn === 1) ? 2 : 1);
 		      updateTurnUI();
 
-		      console.log(`🪨 ${player} 가 (${row}, ${col}) 착수`);
+		      // Unlock input
+		      inputLocked = false;
+
+		      console.log(`🪨 ${player} 가 (${row}, ${col}) 착수, 다음 턴: ${turn}`);
 		      break;
 		    }
-			
+
 		    case "GAME_OVER": {
-		     gameActive = false;   
-		     const dim = document.getElementById("gameOverDim");
-		     const popup = document.getElementById("gameOverPopup");
-		     const title = document.getElementById("gameOverTitle");
-		     const msg = document.getElementById("gameOverMessage");
-		     
-		    if (data.result === "DRAW") {
-		    	title.textContent = "무승부";
-		    	msg.textContent = data.message;
-		    } else if (data.result === "WIN") {
-		    	title.textContent = "게임 종료";
-		    	msg.textContent = data.message;
+		      console.log("[DIAG] GAME_OVER - result:", data.result, "message:", data.message);
+		      gameActive = false;
+		      gameEnded = true;
+		      const dim = document.getElementById("gameOverDim");
+		      const popup = document.getElementById("gameOverPopup");
+		      const title = document.getElementById("gameOverTitle");
+		      const msg = document.getElementById("gameOverMessage");
+
+		      if (data.result === "DRAW") {
+		        title.textContent = "무승부";
+		        msg.textContent = data.message;
+		      } else if (data.result === "WIN") {
+		        title.textContent = "게임 종료";
+		        msg.textContent = data.message;
+		      }
+		      dim.style.display = "block";
+		      popup.style.display = "flex";
+		      break;
 		    }
-		    	dim.style.display = "block";
-		    	popup.style.display = "flex";
-		    	break;
+
+		    case "CHAT": {
+		      // Chat message received
+		      const sender = data.sender || "Unknown";
+		      const message = data.message || "";
+		      const channel = data.channel || "ALL";
+		      console.log("💬 CHAT received - sender:", sender, "message:", message);
+
+		      const chatScroll = document.getElementById("chatScroll");
+		      const chatDiv = document.createElement("div");
+
+		      // Simple HTML escape function
+		      const escapeHtml = (str) => str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+		      chatDiv.innerHTML = `<span style="color: #1976d2;">${escapeHtml(sender)}:</span> ${escapeHtml(message)}`;
+		      chatScroll.appendChild(chatDiv);
+		      chatScroll.scrollTop = chatScroll.scrollHeight;
+		      // NOTE: server-side channel isolation required for true separation
+		      break;
 		    }
-		    
+
+		    case "NOTIFICATION": {
+		      // System notification
+		      const notifType = data.notificationType || "INFO";
+		      const message = data.message || "";
+		      console.log(`🔔 ${notifType}: ${message}`);
+		      // Optional: show toast
+		      alert(`[${notifType}] ${message}`);
+		      break;
+		    }
+
+		    case "ERROR": {
+		      // Error message
+		      const errorMsg = data.message || JSON.stringify(data);
+		      console.error("❌ [DIAG] ERROR received - message:", errorMsg, "data:", data);
+		      alert("오류: " + errorMsg);
+		      inputLocked = false;  // Unlock on error
+		      break;
+		    }
+
 		    case "EXIT":
 		      alert("상대방이 게임을 나갔습니다.");
 		      location.href = CTX + "/main";
 		      break;
 
 		    default:
-		      console.warn("알 수 없는 메시지 타입:", data);
+		      console.warn("[DIAG] Unknown WS type:", type, "data:", data, "rawData:", rawData);
 		  }
 		};
 
-	
-	  socket.onclose = () => {
-	    console.warn("⚠ WebSocket 연결 종료");
+
+	  socket.onclose = (event) => {
+	    console.warn("⚠ [DIAG] WebSocket CLOSE - code:", event.code, "reason:", event.reason,
+	                 "wasClean:", event.wasClean, "gameEnded:", gameEnded);
+	    console.log("[DIAG] State at close - isPlayer:", isPlayer, "isObserver:", isObserver, "myStone:", myStone);
+
+	    if (gameEnded) {
+	      // Normal close after game ended
+	      console.log("[DIAG] Normal close after game ended");
+	    } else {
+	      // Abnormal close - opponent may have left
+	      console.warn("[DIAG] Abnormal close - prompting user to return to lobby");
+	      if (confirm("연결이 종료되었습니다. 로비로 돌아가시겠습니까?")) {
+	        location.replace(CTX + "/main");
+	      }
+	    }
 	  };
-	
+
 	  socket.onerror = (err) => {
-	    console.error("❌ WebSocket 오류", err);
+	    console.error("❌ [DIAG] WebSocket ERROR - gameEnded:", gameEnded, "error:", err);
+	    console.log("[DIAG] State at error - isPlayer:", isPlayer, "isObserver:", isObserver, "myStone:", myStone);
+	    if (!gameEnded) {
+	      alert("연결 오류가 발생했습니다.");
+	    }
 	  };
 	}
 	

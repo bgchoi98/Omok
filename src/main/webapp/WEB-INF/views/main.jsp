@@ -538,6 +538,7 @@
         <div class="loading-content">
             <div class="spinner"></div>
             <div class="loading-text">방을 생성하는 중...</div>
+            <button onclick="DELETE_ROOM()">취소</button>
         </div>
     </div>
 
@@ -624,6 +625,8 @@
         let roomFrameMap = new Map();
         let currentVolume = 0.5;
         let isDraggingVolume = false;
+
+        let creatingRoomKey = 0;
 
         // URL 파라미터에서 debug 모드 확인
         const urlParams = new URLSearchParams(window.location.search);
@@ -783,7 +786,7 @@
                 websocket.onopen = function() {
                     debugLog('웹소켓 연결 성공!');
                     updateConnectionStatus(true);
-                    setTimeout(requestRoomList, 100);
+                    /* setTimeout(requestRoomList, 100); */
                 };
 
                 websocket.onmessage = function(event) {
@@ -837,12 +840,14 @@
                 const message = JSON.parse(data);
                 debugLog('메시지 파싱 성공: type=' + message.type);
 
+                creatingRoomKey = message.roomSeq;
+
                 if (message.type === 'ROOMLIST') {
                     debugLog('방 목록 데이터: ' + JSON.stringify(message.data));
                     updateRoomList(message.data);
                     if (isCreatingRoom) {
                         debugLog('방 생성 완료! 로딩 숨김');
-                        hideLoading();
+                        //hideLoading();
                         isCreatingRoom = false;
                     }
                 } else if (message.type === 'ERROR') {
@@ -850,6 +855,11 @@
                     alert('에러 발생: ' + JSON.stringify(message.data));
                     hideLoading();
                     isCreatingRoom = false;
+
+                // 게임 시작일경우  bgchoi
+                } else if (message.type === 'START') {
+
+                	window.location.href = "main/game?roomId=" + message.roomId;
                 } else {
                     debugLog('알 수 없는 메시지 타입: ' + message.type);
                 }
@@ -957,12 +967,20 @@
 
             const roomPlayers = document.createElement('div');
             roomPlayers.className = 'room-players';
-            const playerCount = (room.players && room.players.length) || 0;
+            const playerCount = (room.gameUsers && room.gameUsers.length) || 0;
             roomPlayers.textContent = playerCount + '/2';
+
+            // 옵저버 추가 임시
+            const roomObservers = document.createElement('div');
+            roomObservers.className = 'room-observers';
+            const observerCount = (room.observers && room.observers.length) || 0;
+            roomObservers.textContent = observerCount + '/2';
 
             info.appendChild(roomNumber);
             info.appendChild(roomStatus);
             info.appendChild(roomPlayers);
+            
+            info.appendChild(roomObservers);
 
             frame.appendChild(frameImg);
             frame.appendChild(info);
@@ -1080,18 +1098,75 @@
 
         function enterRoom(roomKey) {
             debugLog('방 #' + roomKey + ' 입장 시도');
-            if (confirm('방 #' + roomKey + '에 입장하시겠습니까?')) {
-                alert('방 입장 기능은 준비중입니다.');
+
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                alert('서버와 연결되어 있지 않습니다.');
+                return;
             }
+            if (confirm('방 #' + roomKey + '에 입장하시겠습니까?')) {
+            /*
+                alert('방 입장 기능은 준비중입니다.');
+            */
+            	console.log(roomKey);
+                const message = {
+                    type: 'JOIN_ROOM',
+                    roomId: roomKey
+                };
+                debugLog('방 입장 요청 전송: ' + JSON.stringify(message));
+                websocket.send(JSON.stringify(message));
+            } 
+        }
+        
+     	// 방생성 취소 시 삭제 bgchoi
+
+        function DELETE_ROOM() {
+            debugLog('방 생성/대기 취소 요청');
+            if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                alert('서버와 연결되어 있지 않습니다.');
+                hideLoading();
+                return;
+            }
+			console.log("룸삭제 번호 : " + creatingRoomKey);
+			const message = {
+				    type: 'DELETE_ROOM',
+				    data: {
+				        roomId: creatingRoomKey
+				    }
+				};
+            websocket.send(JSON.stringify(message));
+            hideLoading();
         }
 
+     	/*
         function watchRoom(roomKey) {
             debugLog('방 #' + roomKey + ' 관전 시도');
             if (confirm('방 #' + roomKey + '를 관전하시겠습니까?')) {
                 alert('관전 기능은 준비중입니다.');
             }
         }
+		*/
+     	// 방 입장 시 처리(관전자) bgchoi
+        function watchRoom(roomKey) {
+        	 debugLog('방 #' + roomKey + ' 입장 시도');
+ 			
+             if (!websocket || websocket.readyState !== WebSocket.OPEN) {
+                 alert('서버와 연결되어 있지 않습니다.');
+                 return;
+             }
 
+             if (confirm('방 #' + roomKey + '을 관전 하시겠습니까?')) {
+             	console.log(roomKey);
+                 const message = {
+                     type: 'OBSERVE_ROOM',
+                     roomId : roomKey
+                 };
+
+                 debugLog('방 입장 요청 전송: ' + JSON.stringify(message));
+                 websocket.send(JSON.stringify(message));
+             }
+     	}
+		
+		
         // ========== 페이지 종료 처리 ==========
         window.onbeforeunload = function() {
             if (websocket) {

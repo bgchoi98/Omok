@@ -252,7 +252,7 @@
         <img
           id="boardImg"
           class="board-img"
-          src="<%=CTX%>/assets/images/game/Board_3.png"
+          src="<%=CTX%>/assets/images/game/board.png"
           alt=""
           aria-hidden="true"
         />

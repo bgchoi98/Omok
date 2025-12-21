@@ -26,6 +26,8 @@
             --make-w: clamp(120px, 10vw, 180px);
             --config-box-w: 400px;  
             --config-box-h: 500px;
+            
+           
         }
 
         body {

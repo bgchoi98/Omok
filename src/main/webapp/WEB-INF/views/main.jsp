@@ -15,15 +15,20 @@
     <title>오목 메인 로비</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
 
-        :root {
+            /* 기존 변수 */
+
             --room-panel-width: clamp(900px, 85vw, 1200px);
             --room-panel-height: clamp(600px, 75vh, 720px);
-            --tree-w: clamp(280px, 22vw, 380px); 
-            --grid-gap: clamp(30px, 4vw, 50px);
-            --config-w: clamp(80px, 7vw, 120px);
+            --tree-w: clamp(390px, 36vw, 570px);
+            --config-w: clamp(160px, 14vw, 240px);
             --nav-arrow-w: clamp(60px, 5vw, 90px);
-            --make-w: clamp(120px, 10vw, 180px);
+            --make-w: clamp(60px, 5vw, 90px);
+            --grid-gap: clamp(20px, 2.5vw, 34px);
+
+            /* 설정 팝업용 변수 */
+
             --config-box-w: 400px;  
             --config-box-h: 500px;
         }
@@ -81,12 +86,11 @@
         .loading-cancel-btn:hover { background-color: #6d4c41; transform: scale(1.05); }
 
         /* --- 랭킹 트리 --- */
-        .ranking-tree { 
-            position: fixed; right: 3%; top: 55%; transform: translateY(-50%); 
-            z-index: 1; cursor: pointer; transition: transform 0.3s ease; 
-        }
+
+        .ranking-tree { position: fixed; right: 190px; top: 45%; transform: translateY(-50%); z-index: 1; cursor: pointer; transition: transform 0.3s ease; }
         .ranking-tree:hover { transform: translateY(-50%) scale(1.05); }
         .ranking-tree img { width: var(--tree-w); height: auto; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); }
+
 
         .room-panel-container { 
             position: fixed; top: 50%; left: 44%; transform: translate(-50%, -50%); z-index: 10; 

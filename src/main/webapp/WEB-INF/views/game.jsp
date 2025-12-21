@@ -1,412 +1,517 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
-<%@ page import="user.User" %>
-<%@ page import="util.Constants" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+	pageEncoding="UTF-8"%>
+<%@ page import="user.User"%>
+<%@ page import="util.Constants"%>
 <%
-    User user = (User) session.getAttribute(Constants.SESSION_KEY);
-    if (user == null) {
-        response.sendRedirect(request.getContextPath() + Constants.SIGNIN);
-        return;
-    }
+User user = (User) session.getAttribute(Constants.SESSION_KEY);
+if (user == null) {
+	response.sendRedirect(request.getContextPath() + Constants.SIGNIN);
+	return;
+}
 
-    final String CTX = request.getContextPath();
+final String CTX = request.getContextPath();
 
-    String nickName = "Guest";
-    int win = 0;
-    int lose = 0;
-    try { nickName = user.getNickname(); } catch (Exception ignore) {}
+String nickName = "Guest";
+int win = 0;
+int lose = 0;
+try {
+	nickName = user.getNickname();
+	// win = user.getWin();
+	// lose = user.getLose();
+} catch (Exception ignore) {
+}
 %>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <title>Omok Game Room</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<title>Omok Game Room</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <style>
-    /* ===== Global ===== */
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Arial, sans-serif;
-      user-select: none;
-    }
+<style>
+/* ===== Global Setting ===== */
+* {
+	box-sizing: border-box;
+}
 
-    .game-bg {
-      position: fixed;
-      inset: 0;
-      background: url('<%=CTX%>/assets/images/game/gameBg.png') no-repeat center/cover;
-      z-index: -1;
-    }
+body {
+	margin: 0;
+	width: 100vw;
+	height: 100vh;
+	overflow: hidden;
+	font-family: 'Arial', sans-serif;
+	user-select: none;
+	background: url('<%=CTX%>/assets/images/game/gameBg.png') no-repeat
+		center/cover;
+}
 
-    /* ===== Layout: 좌(보드) / 우(패널) ===== */
-    .layout {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      display: grid;
-      grid-template-columns: minmax(620px, 1fr) minmax(380px, 520px);
-      gap: 18px;
-      padding: 22px;
-      align-items: stretch; /* ✅ 양쪽 세로 꽉 채움 */
-    }
+/* ===== Main Layout (Grid) ===== */
+.layout {
+	display: grid;
+	grid-template-columns: 1fr 400px;
+	height: 100%;
+	padding: 20px;
+	gap: 20px;
+}
 
-    @media (max-width: 1100px) {
-      .layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
-        height: auto;
-        overflow: auto;
-      }
-      body { overflow: auto; }
-    }
+/* ===== Left: Board Area ===== */
+.left-col {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	position: relative;
+}
 
-    /* ===== Left: Board only ===== */
-    .left-col {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 0;
-    }
+/* [1] 보드 전체 래퍼 (board.png 비율 1024:1024) */
+.board-frame-wrap {
+	position: relative;
+	/* 화면 크기에 맞춰 반응형으로 조절 */
+	height: min(90vh, 90vw);
+	aspect-ratio: 1024/1024;
+	filter: drop-shadow(0 15px 35px rgba(0, 0, 0, 0.5));
+}
 
-    /* ===== Board (img + overlay) ===== */
-    .board-wrap {
-      position: relative;
-      width: min(880px, 78vmin);
-      aspect-ratio: 1 / 1;
-      filter: drop-shadow(0 18px 34px rgba(0,0,0,0.42));
-    }
+/* board.png (프레임 이미지) */
+.board-frame-img {
+	width: 100%;
+	height: 100%;
+	object-fit: fill;
+	pointer-events: none;
+	z-index: 1;
+}
 
-    .board-img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      pointer-events: none;
-    }
+/* [2] 투명 클릭 영역 (board-hit)
+       inBoard.png를 제거하고, board.png 내의 실제 격자 영역만 잡음.
+       전체 1024x1024 중 격자 영역 866x866 비율 계산:
+       - Width: 866 / 1024 ≈ 84.57%
+       - Height: 866 / 1024 ≈ 84.57%
+       - 중앙 정렬
+    */
+.board-hit {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%); /* 정확한 중앙 정렬 */
+	width: 84.57%;
+	height: 84.57%;
+	z-index: 10;
+	cursor: pointer;
+	/* border: 1px solid rgba(255, 0, 0, 0.3); 디버깅용: 격자 위치 확인 시 주석 해제 */
+}
 
-    .board-hit {
-      position: absolute;
-      left: 0; top: 0;
-      width: 100%; height: 100%;
-      cursor: pointer;
-    }
+/* 돌 스타일 */
+.stone, .ghost-stone {
+	position: absolute;
+	/* 돌의 중심점이 좌표에 오도록 설정 */
+	transform: translate(-50%, -50%);
+	pointer-events: none;
+	filter: drop-shadow(3px 4px 4px rgba(0, 0, 0, 0.4));
+	will-change: transform;
+}
 
-    .stone, .ghost-stone {
-      position: absolute;
-      transform: translate(-50%, -50%);
-      pointer-events: none;
-      filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
-      will-change: transform;
-    }
+.ghost-stone {
+	opacity: 0.6;
+	display: none;
+	z-index: 11;
+}
 
-    .ghost-stone {
-      opacity: 0.55;
-      display: none;
-    }
+/* ===== Right Panel (Control) ===== */
+.right-col {
+	display: flex;
+	flex-direction: column;
+	gap: 15px;
+	height: 100%;
+	justify-content: center;
+}
 
-    /* ===== Right: (top exit) + (chat) + (bottom players+config) ===== */
-    .right-col {
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      min-height: 0;
-    }
+.right-top {
+	display: flex;
+	justify-content: flex-end;
+	height: 50px;
+}
 
-    .right-top {
-      display: flex;
-      justify-content: flex-end;
-      align-items: flex-start;
-    }
+.exit-btn {
+	height: 100%;
+	cursor: pointer;
+	transition: transform 0.2s;
+	filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
+}
 
-    .exit-btn {
-      width: 110px;
-      height: auto;
-      cursor: pointer;
-      transition: transform 0.18s ease;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.25));
-    }
-    .exit-btn:hover { transform: scale(1.06); }
+.exit-btn:hover {
+	transform: scale(1.05);
+}
 
-    .chat-panel {
-      position: relative;
-      flex: 1;              /* ✅ 중간에서 늘어나는 영역 */
-      min-height: 420px;
-      background: url('<%=CTX%>/assets/images/game/chatBox.png') no-repeat center/contain;
-      filter: drop-shadow(0 10px 22px rgba(0,0,0,0.25));
-    }
+.chat-panel {
+	flex: 1;
+	position: relative;
+	background: url('<%=CTX%>/assets/images/game/chatBox.png') no-repeat
+		center/100% 100%;
+	min-height: 250px;
+	filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+}
 
-    .chat-scroll {
-      position: absolute;
-      inset: 10% 10% 18% 10%;
-      overflow: auto;
-      padding: 8px 10px;
-      font-size: 18px;
-      line-height: 1.5;
-      color: #2f2f2f;
-    }
+.chat-scroll {
+	position: absolute;
+	top: 12%;
+	bottom: 15%;
+	left: 10%;
+	right: 10%;
+	overflow-y: auto;
+	padding-right: 5px;
+	font-size: 15px;
+	font-weight: bold;
+	color: #3e2723;
+	line-height: 1.5;
+}
 
-    /* ✅ 아래: 플레이어1 / 플레이어2 / 설정 버튼 */
-    .right-bottom {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 12px;
-      align-items: end;
-    }
+.chat-scroll::-webkit-scrollbar {
+	width: 6px;
+}
 
-    .player-box {
-      height: 120px;
-      background: url('<%=CTX%>/assets/images/game/playerBox.png') no-repeat center/contain;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding-left: 100px;
-      color: #333;
-      font-weight: 800;
-      filter: drop-shadow(0 6px 12px rgba(0,0,0,0.28));
-      transition: transform 0.18s ease;
-    }
-    .player-box:hover { transform: scale(1.02); }
+.chat-scroll::-webkit-scrollbar-thumb {
+	background: rgba(62, 39, 35, 0.5);
+	border-radius: 10px;
+}
 
-    .player-name {
-      font-size: 1.05rem;
-      margin-bottom: 6px;
-      color: #4e342e;
-    }
-    .player-score {
-      font-size: 0.92rem;
-      color: #6b6b6b;
-      font-weight: 700;
-    }
+.right-bottom {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
 
-    .turn-active {
-      filter: drop-shadow(0 0 16px rgba(255, 215, 0, 0.9)) !important;
-    }
+.players-container {
+	display: flex;
+	justify-content: space-between;
+	gap: 10px;
+}
 
-    .config-btn {
-      width: 64px;
-      height: auto;
-      cursor: pointer;
-      transition: transform 0.25s ease;
-      filter: drop-shadow(0 8px 14px rgba(0,0,0,0.25));
-      margin-bottom: 8px; /* 버튼 살짝 위로 */
-    }
-    .config-btn:hover { transform: rotate(90deg); }
+.player-box {
+	flex: 1;
+	height: 90px;
+	background: url('<%=CTX%>/assets/images/game/playerBox.png') no-repeat
+		center/100% 100%;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	padding-left: 75px;
+	padding-right: 10px;
+	color: #3e2723;
+	filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+	transition: transform 0.2s;
+}
 
-    /* ===== Config Popup ===== */
-    .dim-layer {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.65);
-      display: none;
-      z-index: 100;
-    }
+.player-name {
+	font-size: 15px;
+	font-weight: 800;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
 
-    .config-popup {
-      position: fixed;
-      left: 50%;
-      top: 50%;
-      transform: translate(-50%, -50%);
-      width: min(420px, 92vw);
-      height: min(320px, 70vh);
-      background: url('<%=CTX%>/assets/images/main/ConfigPopUp/configureBox.png') no-repeat center/contain;
-      z-index: 101;
-      display: none; /* show -> flex */
-      align-items: center;
-      justify-content: center;
-    }
+.player-score {
+	font-size: 11px;
+	margin-top: 4px;
+	opacity: 0.8;
+}
 
-    .config-inner {
-      width: 80%;
-      text-align: center;
-    }
+.turn-active {
+	transform: scale(1.05);
+	filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.9)) !important;
+}
 
-    .close-popup-btn {
-      position: absolute;
-      top: 14px;
-      right: 18px;
-      width: 40px;
-      height: 40px;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      background: rgba(0,0,0,0.45);
-      color: #fff;
-      font-size: 18px;
-      font-weight: 900;
-    }
-  </style>
+.config-area {
+	display: flex;
+	justify-content: flex-end;
+	padding-right: 5px;
+}
+
+.config-btn {
+	width: 45px;
+	cursor: pointer;
+	transition: transform 0.3s;
+	filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+}
+
+.config-btn:hover {
+	transform: rotate(30deg) scale(1.1);
+}
+
+/* ===== Popup ===== */
+.dim-layer {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.6);
+	display: none;
+	z-index: 100;
+}
+
+.config-popup {
+	position: fixed;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 400px;
+	height: 320px;
+	background:
+		url('<%=CTX%>/assets/images/main/ConfigPopUp/configureBox.png')
+		no-repeat center/contain;
+	display: none;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	z-index: 101;
+	filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+}
+
+.close-popup-btn {
+	position: absolute;
+	top: 45px;
+	right: 30px;
+	width: 30px;
+	height: 30px;
+	background: #8d6e63;
+	border: 2px solid #5d4037;
+	color: white;
+	font-weight: bold;
+	cursor: pointer;
+	border-radius: 4px;
+}
+
+.popup-content {
+	margin-top: 20px;
+	text-align: center;
+}
+
+.surrender-btn {
+	padding: 10px 20px;
+	background: #5d4037;
+	color: white;
+	border: none;
+	border-radius: 8px;
+	font-weight: bold;
+	font-size: 16px;
+	cursor: pointer;
+	transition: 0.2s;
+}
+
+.surrender-btn:hover {
+	background: #3e2723;
+	transform: scale(1.05);
+}
+
+@media ( max-width : 1000px) {
+	.layout {
+		grid-template-columns: 1fr;
+		grid-template-rows: auto 1fr;
+		overflow-y: auto;
+	}
+	body {
+		overflow: auto;
+	}
+	.left-col {
+		margin-bottom: 20px;
+	}
+	.right-col {
+		height: auto;
+	}
+}
+</style>
 </head>
 
 <body>
-  <div class="game-bg" aria-hidden="true"></div>
+	<div class="game-bg"></div>
+	<!-- 게임 종료 팝업 -->
+	<div id="gameOverDim" class="dim-layer"></div>
+	
+	<div id="gameOverPopup" class="config-popup" style="display:none;">
+	  <div class="popup-content">
+	    <h2 id="gameOverTitle" style="color:#3e2723; margin-bottom:15px;"></h2>
+	    <p id="gameOverMessage" style="font-size:16px; margin-bottom:25px;"></p>
+	    <button id="gameOverBtn" class="surrender-btn">로비로</button>
+	  </div>
+	</div>
+	
+	<div class="layout">
+		<div class="left-col">
+			<div class="board-frame-wrap" id="boardFrame">
+				<img src="<%=CTX%>/assets/images/game/board.png"
+					class="board-frame-img" alt="Frame" />
 
-  <main class="layout">
-    <!-- LEFT : Board -->
-    <section class="left-col">
-      <div class="board-wrap" id="boardWrap" aria-label="Omok Board">
-        <img
-          id="boardImg"
-          class="board-img"
-          src="<%=CTX%>/assets/images/game/board.png"
-          alt=""
-          aria-hidden="true"
-        />
+				<div id="boardHit" class="board-hit">
+					<img id="ghostStone" class="ghost-stone"
+						src="<%=CTX%>/assets/images/game/stone_1.png" alt="" />
+				</div>
+			</div>
+		</div>
 
-        <div class="board-hit" id="boardHit" role="application" aria-label="Board Interaction Layer">
-          <img
-            id="ghostStone"
-            class="ghost-stone"
-            src="<%=CTX%>/assets/images/game/stone_1.png"
-            alt=""
-            aria-hidden="true"
-          />
-        </div>
-      </div>
-    </section>
+		<div class="right-col">
+			<div class="right-top">
+				<img id="exitBtn" class="exit-btn"
+					src="<%=CTX%>/assets/images/game/getOut.png" alt="Exit" />
+			</div>
 
-    <!-- RIGHT : Exit(top) / Chat(mid) / Players+Config(bottom) -->
-    <aside class="right-col">
-      <div class="right-top">
-        <img
-          src="<%=CTX%>/assets/images/game/getOut.png"
-          class="exit-btn"
-          id="exitBtn"
-          alt="Exit"
-        />
-      </div>
+			<div class="chat-panel">
+				<div class="chat-scroll" id="chatScroll">
+					<div>
+						<span style="color: #d32f2f;">System:</span> 게임에 입장했습니다.
+					</div>
+					<div>
+						<span style="color: #d32f2f;">System:</span> 즐거운 대국 되세요!
+					</div>
+				</div>
+			</div>
 
-      <div class="chat-panel" aria-label="Chat panel">
-        <div class="chat-scroll" id="chatScroll">
-          <div style="color:red; font-weight:800;">Hi</div>
-          <div style="color:blue; font-weight:800;">Hi</div>
-          <div style="color:red; font-weight:800;">Ok.</div>
-          <div style="color:blue; font-weight:800;">Nice to Meet you</div>
-        </div>
-      </div>
+			<div class="right-bottom">
+				<div class="players-container">
+					<div class="player-box turn-active" id="p1Box">
+						<div class="player-name"><%=nickName%></div>
+						<div class="player-score">
+							Wins:
+							<%=win%></div>
+					</div>
+					<div class="player-box" id="p2Box">
+						<div class="player-name">Waiting...</div>
+						<div class="player-score">-</div>
+					</div>
+				</div>
 
-      <div class="right-bottom">
-        <div class="player-box turn-active" id="p1Box">
-          <div class="player-name"><%= nickName %></div>
-          <div class="player-score">Wins: <%= win %> / Loses: <%= lose %></div>
-        </div>
+				<div class="config-area">
+					<img id="configBtn" class="config-btn"
+						src="<%=CTX%>/assets/images/game/configureIcon.png" alt="Config" />
+				</div>
+			</div>
+		</div>
+	</div>
 
-        <div class="player-box" id="p2Box">
-          <div class="player-name">Waiting...</div>
-          <div class="player-score">-</div>
-        </div>
+	<div id="dimLayer" class="dim-layer"></div>
+	<div id="configPopup" class="config-popup">
+		<button id="closePopupBtn" class="close-popup-btn">X</button>
+		<div class="popup-content">
+			<h2 style="color: #3e2723; margin-bottom: 20px;">Game Settings</h2>
+			<button id="surrenderBtn" class="surrender-btn">기권 / 나가기</button>
+		</div>
+	</div>
 
-        <img
-          src="<%=CTX%>/assets/images/game/configureIcon.png"
-          class="config-btn"
-          id="configBtn"
-          alt="Config"
-        />
-      </div>
-    </aside>
-  </main>
-
-  <!-- Config Popup -->
-  <div class="dim-layer" id="dimLayer"></div>
-  <div class="config-popup" id="configPopup" role="dialog" aria-modal="true" aria-label="Game Settings">
-    <button class="close-popup-btn" id="closePopupBtn" type="button">X</button>
-    <div class="config-inner">
-      <h2 style="color:#4e342e; margin: 0 0 14px;">Game Settings</h2>
-      <button id="surrenderBtn" type="button" style="padding:10px 20px; cursor:pointer;">
-        Surrender / Exit
-      </button>
-    </div>
-  </div>
-
-  <script>
+	<script>
     const CTX = "<%=CTX%>";
     const IMG = {
       black: CTX + "/assets/images/game/stone_1.png",
       white: CTX + "/assets/images/game/stone_2.png",
     };
 
-    // ✅ 돌 위치/크기 조정은 여기만 만지면 됨
-    const BOARD_TUNE = {
-      size: 15,
-      padXRatio: 0.095,
-      padYRatio: 0.095,
-      offsetX: 0,
-      offsetY: 0,
-      stoneScale: 0.90,
-    };
+    // 오목판 격자 (15줄 = 14칸 간격)
+    const BOARD_SIZE = 15; 
+    const LINES = 14; 
 
-    let turn = 1;
+    let turn = 1; // 1: 흑, 2: 백
     let gameActive = true;
-    let boardState = Array.from({ length: BOARD_TUNE.size }, () => Array(BOARD_TUNE.size).fill(0));
+    let boardState = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
 
-    const boardWrap = document.getElementById("boardWrap");
-    const boardImg  = document.getElementById("boardImg");
-    const boardHit  = document.getElementById("boardHit");
-    const ghostEl   = document.getElementById("ghostStone");
-    const p1Box     = document.getElementById("p1Box");
-    const p2Box     = document.getElementById("p2Box");
+    const boardHit   = document.getElementById("boardHit");
+    const ghostEl    = document.getElementById("ghostStone");
+    const p1Box      = document.getElementById("p1Box");
+    const p2Box      = document.getElementById("p2Box");
 
-    const exitBtn        = document.getElementById("exitBtn");
-    const configBtn      = document.getElementById("configBtn");
-    const dimLayer       = document.getElementById("dimLayer");
-    const configPopup    = document.getElementById("configPopup");
-    const closePopupBtn  = document.getElementById("closePopupBtn");
-    const surrenderBtn   = document.getElementById("surrenderBtn");
+    let cellW = 0;
+    let cellH = 0;
 
-    const metrics = {
-      hitW: 0, hitH: 0,
-      padX: 0, padY: 0,
-      cellX: 0, cellY: 0,
-      stone: 32,
-    };
+    // 1. 그리드 수치 계산 (보드 크기에 맞춰 동적 계산)
+    function recalcMetrics() {
+      // boardHit가 CSS에 의해 이미 격자 영역에 맞춰져 있음
+      const width = boardHit.clientWidth;
+      const height = boardHit.clientHeight;
 
-    function syncHitAreaToBoardImage() {
-      const wrapRect = boardWrap.getBoundingClientRect();
-      const imgRect  = boardImg.getBoundingClientRect();
-
-      const left = imgRect.left - wrapRect.left;
-      const top  = imgRect.top  - wrapRect.top;
-
-      boardHit.style.left = left + "px";
-      boardHit.style.top  = top + "px";
-      boardHit.style.width  = imgRect.width + "px";
-      boardHit.style.height = imgRect.height + "px";
-
-      metrics.hitW = imgRect.width;
-      metrics.hitH = imgRect.height;
+      // 14칸으로 나눔
+      cellW = width / LINES;
+      cellH = height / LINES;
+      
+      // 돌 크기는 칸의 95% (가로/세로 중 작은 쪽 기준)
+      const stoneSize = Math.min(cellW, cellH) * 0.95; 
+      
+      ghostEl.style.width = stoneSize + "px";
+      ghostEl.style.height = stoneSize + "px";
     }
 
-    function recalcGridMetrics() {
-      metrics.padX = Math.round(metrics.hitW * BOARD_TUNE.padXRatio) + BOARD_TUNE.offsetX;
-      metrics.padY = Math.round(metrics.hitH * BOARD_TUNE.padYRatio) + BOARD_TUNE.offsetY;
+    // 2. 좌표 변환 (Pixel -> Grid Index)
+    function getGridPos(e) {
+      const rect = boardHit.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-      metrics.cellX = (metrics.hitW - metrics.padX * 2) / (BOARD_TUNE.size - 1);
-      metrics.cellY = (metrics.hitH - metrics.padY * 2) / (BOARD_TUNE.size - 1);
+      // 반올림하여 가장 가까운 교차점 찾기
+      const col = Math.round(x / cellW);
+      const row = Math.round(y / cellH);
 
-      const cellMin = Math.min(metrics.cellX, metrics.cellY);
-      metrics.stone = Math.max(18, Math.round(cellMin * BOARD_TUNE.stoneScale));
-    }
-
-    function pxToGrid(x, y) {
-      const col = Math.round((x - metrics.padX) / metrics.cellX);
-      const row = Math.round((y - metrics.padY) / metrics.cellY);
-      if (col < 0 || col >= BOARD_TUNE.size || row < 0 || row >= BOARD_TUNE.size) return null;
+      // 0 ~ 14 범위 체크
+      if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) {
+        return null;
+      }
       return { row, col };
     }
 
-    function gridToPx(row, col) {
-      return {
-        x: metrics.padX + col * metrics.cellX,
-        y: metrics.padY + row * metrics.cellY,
-      };
+    // 3. 돌 놓기 (UI)
+    function placeStone(row, col, player) {
+      const stone = document.createElement("img");
+      stone.src = (player === 1) ? IMG.black : IMG.white;
+      stone.className = "stone";
+      
+      const stoneSize = Math.min(cellW, cellH) * 0.95;
+      stone.style.width = stoneSize + "px";
+      stone.style.height = stoneSize + "px";
+
+      // 위치 설정: (인덱스 * 간격) = 해당 교차점의 중심
+      // CSS에서 translate(-50%, -50%)를 했으므로 정확히 중앙에 옴
+      stone.style.left = (col * cellW) + "px";
+      stone.style.top  = (row * cellH) + "px";
+
+      // 랜덤 회전으로 자연스럽게
+      const deg = Math.random() * 40 - 20;
+      stone.style.transform = `translate(-50%, -50%) rotate(${deg}deg)`;
+
+      boardHit.appendChild(stone);
     }
 
-    function setTurn(nextTurn) {
-      turn = nextTurn;
+    // 4. 마우스 이동 (Ghost Stone)
+    function onMouseMove(e) {
+      if (!gameActive) return;
+      const pos = getGridPos(e);
+      
+      if (!pos || boardState[pos.row][pos.col] !== 0) {
+        ghostEl.style.display = "none";
+        return;
+      }
+
+      ghostEl.style.display = "block";
+      ghostEl.src = (turn === 1) ? IMG.black : IMG.white;
+      
+      // 위치 업데이트 (독립 좌표 사용)
+      ghostEl.style.left = (pos.col * cellW) + "px";
+      ghostEl.style.top  = (pos.row * cellH) + "px";
+    }
+
+    // 5. 클릭 (착수)
+    function onBoardClick(e) {
+      if (!gameActive) return;
+      const pos = getGridPos(e);
+	  console.log('여기 클릭됨');
+      if (!pos || boardState[pos.row][pos.col] !== 0) return;
+      
+   	  // 착수 시 서버로 전송 bgchoi
+      socket.send(JSON.stringify({
+        type: "MAKE_MOVE",
+        row: pos.row,
+        col: pos.col
+      }));
+   	  
+      /* boardState[pos.row][pos.col] = turn;
+      placeStone(pos.row, pos.col, turn);
+
+      turn = (turn === 1) ? 2 : 1;
+      updateTurnUI();
+      onMouseMove(e); // 착수 후 바로 갱신 */
+    }
+
+    function updateTurnUI() {
       if (turn === 1) {
         p1Box.classList.add("turn-active");
         p2Box.classList.remove("turn-active");
@@ -416,115 +521,132 @@
       }
     }
 
-    function showGhost(row, col) {
-      const { x, y } = gridToPx(row, col);
-      ghostEl.style.left = x + "px";
-      ghostEl.style.top  = y + "px";
-      ghostEl.style.width  = metrics.stone + "px";
-      ghostEl.style.height = metrics.stone + "px";
-      ghostEl.src = (turn === 1) ? IMG.black : IMG.white;
-      ghostEl.style.display = "block";
-    }
+    window.addEventListener("load", () => {
+      recalcMetrics();
+      window.addEventListener("resize", recalcMetrics);
 
-    function hideGhost() { ghostEl.style.display = "none"; }
-
-    function createStone(row, col, player) {
-      const stone = document.createElement("img");
-      stone.className = "stone";
-      stone.alt = "";
-      stone.setAttribute("aria-hidden", "true");
-      stone.src = (player === 1) ? IMG.black : IMG.white;
-
-      const { x, y } = gridToPx(row, col);
-      stone.style.left = x + "px";
-      stone.style.top  = y + "px";
-      stone.style.width  = metrics.stone + "px";
-      stone.style.height = metrics.stone + "px";
-
-      const rotation = Math.random() * 360;
-      stone.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-
-      boardHit.appendChild(stone);
-    }
-
-    function onBoardMove(e) {
-      if (!gameActive) return;
-      const rect = boardHit.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const pos = pxToGrid(x, y);
-      if (!pos) return hideGhost();
-
-      const { row, col } = pos;
-      if (boardState[row][col] !== 0) return hideGhost();
-      showGhost(row, col);
-    }
-
-    function onBoardLeave() { hideGhost(); }
-
-    function onBoardClick(e) {
-      if (!gameActive) return;
-
-      const rect = boardHit.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      const pos = pxToGrid(x, y);
-      if (!pos) return;
-
-      const { row, col } = pos;
-      if (boardState[row][col] !== 0) return;
-
-      boardState[row][col] = turn;
-      createStone(row, col, turn);
-
-      setTurn(turn === 1 ? 2 : 1);
-      onBoardMove(e);
-    }
-
-    function openConfig() {
-      dimLayer.style.display = "block";
-      configPopup.style.display = "flex";
-    }
-
-    function closeConfig() {
-      dimLayer.style.display = "none";
-      configPopup.style.display = "none";
-    }
-
-    function exitGame() {
-      if (!confirm("정말 나갈까요?")) return;
-      location.href = CTX + "/main";
-    }
-
-    function recalcAll() {
-      syncHitAreaToBoardImage();
-      recalcGridMetrics();
-      hideGhost();
-    }
-
-    function init() {
-      setTurn(1);
-
-      if (boardImg.complete) recalcAll();
-      else boardImg.addEventListener("load", recalcAll);
-
-      boardHit.addEventListener("mousemove", onBoardMove);
-      boardHit.addEventListener("mouseleave", onBoardLeave);
+      boardHit.addEventListener("mousemove", onMouseMove);
+      boardHit.addEventListener("mouseleave", () => { ghostEl.style.display = "none"; });
       boardHit.addEventListener("click", onBoardClick);
+	  // 웹소켓 연결 함수 호출 bgchoi
+	  connectWebSocket();
+	  
+	  
+      // 팝업 로직
+      const dim = document.getElementById("dimLayer");
+      const popup = document.getElementById("configPopup");
+      document.getElementById("configBtn").onclick = () => { dim.style.display="block"; popup.style.display="flex"; };
+      const close = () => { dim.style.display="none"; popup.style.display="none"; };
+      document.getElementById("closePopupBtn").onclick = close;
+      dim.onclick = close;
 
-      configBtn.addEventListener("click", openConfig);
-      dimLayer.addEventListener("click", closeConfig);
-      closePopupBtn.addEventListener("click", closeConfig);
+      const exitFunc = () => { if(confirm("정말 나가시겠습니까?")) location.href = CTX + "/main"; };
+      document.getElementById("exitBtn").onclick = exitFunc;
+      document.getElementById("surrenderBtn").onclick = exitFunc;
+    });
+    
+    
+ // 웹소켓 호출 bgchoi
+ /* ======================
+   WebSocket 연결
+	====================== */
+	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+	const wsUrl = protocol + '//' + window.location.host + CTX + '/game';
+	
+	// GET 방식으로 넘어온 roomSeq
+	const params = new URLSearchParams(window.location.search);
+	const roomSeq = params.get('roomSeq');
+	
+	if (!roomSeq) {
+	  alert("roomSeq가 없습니다.");
+	}
+	
+	let socket = null;
+	
+	function connectWebSocket() {
+	  socket = new WebSocket(wsUrl);   // ✅ 1. 생성 먼저
+	
+	  socket.onopen = () => {
+	    console.log("✅ WebSocket 연결됨:", wsUrl);
+	
+	    const joinMsg = {
+	      type: "JOIN_GAME",
+	      roomSeq: Number(roomSeq)
+	    };
+	
+	    socket.send(JSON.stringify(joinMsg)); // ✅ 2. 여기서 전송
+	    console.log("📤 JOIN_GAME 전송:", joinMsg);
+	  };
+	
+	  // 서버 응답
+	  socket.onmessage = (event) => {
+		  const data = JSON.parse(event.data);
+		  console.log("📩 서버수신:", data);
 
-      exitBtn.addEventListener("click", exitGame);
-      surrenderBtn.addEventListener("click", exitGame);
+		  switch (data.type) {
 
-      window.addEventListener("resize", recalcAll);
-    }
+		    case "MOVE": {
+		      const { row, col, stone, player, currentTurn } = data;
 
-    document.addEventListener("DOMContentLoaded", init);
+		      // 이미 놓인 돌이면 무시 (중복 방지)
+		      if (boardState[row][col] !== 0) return;
+
+		      // UI 반영
+		      boardState[row][col] = stone;
+		      placeStone(row, col, stone);
+
+		      // 턴은 서버 기준으로 맞춤 (⭐ 중요)
+		      turn = currentTurn;
+		      updateTurnUI();
+
+		      console.log(`🪨 ${player} 가 (${row}, ${col}) 착수`);
+		      break;
+		    }
+			
+		    case "GAME_OVER": {
+		     gameActive = false;   
+		     const dim = document.getElementById("gameOverDim");
+		     const popup = document.getElementById("gameOverPopup");
+		     const title = document.getElementById("gameOverTitle");
+		     const msg = document.getElementById("gameOverMessage");
+		     
+		    if (data.result === "DRAW") {
+		    	title.textContent = "무승부";
+		    	msg.textContent = data.message;
+		    } else if (data.result === "WIN") {
+		    	title.textContent = "게임 종료";
+		    	msg.textContent = data.message;
+		    }
+		    	dim.style.display = "block";
+		    	popup.style.display = "flex";
+		    	break;
+		    }
+		    
+		    case "EXIT":
+		      alert("상대방이 게임을 나갔습니다.");
+		      location.href = CTX + "/main";
+		      break;
+
+		    default:
+		      console.warn("알 수 없는 메시지 타입:", data);
+		  }
+		};
+
+	
+	  socket.onclose = () => {
+	    console.warn("⚠ WebSocket 연결 종료");
+	  };
+	
+	  socket.onerror = (err) => {
+	    console.error("❌ WebSocket 오류", err);
+	  };
+	}
+	
+	// 게임결과 안내창 클릭시 메인 페이지
+	document.getElementById("gameOverBtn").onclick = () => {
+		  location.href = CTX + "/main";
+	};
+
   </script>
 </body>
 </html>

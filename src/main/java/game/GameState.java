@@ -3,9 +3,7 @@ package game;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * 오목 게임의 상태를 관리하는 클래스
- */
+
 public class GameState {
     
     private static final int BOARD_SIZE = 15;
@@ -13,41 +11,36 @@ public class GameState {
     
     private Long roomSeq;
     private int[][] board;  // 0: 빈칸, 1: 흑돌(선공), 2: 백돌(후공)
-    private String blackPlayer;  // 흑돌 플레이어 (선공)
-    private String whitePlayer;  // 백돌 플레이어 (후공)
-    private String currentTurn;  // 현재 턴의 플레이어
+    private String blackPlayer;  // 흑돌, 선공
+    private String whitePlayer;  // 백돌, 후공
+    private String currentTurn;  // 현재 차례인 플레이어
     private boolean gameOver;
-    private String winner;  // 승자 닉네임
-    private List<Move> moveHistory;  // 착수 기록
+    private String winner;  
+    //private List<Move> moveHistory;  // 착수 기록
     
-    /**
-     * 착수 정보를 담는 내부 클래스
-     */
+
+    // 내부 클래스, 돌을 둔 곳을 파악
     public static class Move {
         private int row;
         private int col;
         private int stone;  // 1: 흑돌, 2: 백돌
-        private String player;
+        private String gameUserName; // 닉네임이 unique 이기에 GameUser 객체로 구분하지 않고 메모리가 덜 소요되는 nickName 사용
         
-        public Move(int row, int col, int stone, String player) {
+        public Move(int row, int col, int stone, String gameUserName) {
             this.row = row;
             this.col = col;
             this.stone = stone;
-            this.player = player;
+            this.gameUserName = gameUserName;
         }
         
         public int getRow() { return row; }
         public int getCol() { return col; }
         public int getStone() { return stone; }
-        public String getPlayer() { return player; }
+        public String getPlayer() { return gameUserName; }
     }
     
-    /**
-     * GameState 생성자
-     * @param roomSeq 방 번호
-     * @param player1 첫 번째 플레이어 (흑돌, 선공)
-     * @param player2 두 번째 플레이어 (백돌, 후공)
-     */
+
+    // 생성자
     public GameState(Long roomSeq, String player1, String player2) {
         this.roomSeq = roomSeq;
         this.board = new int[BOARD_SIZE][BOARD_SIZE];
@@ -56,24 +49,19 @@ public class GameState {
         this.currentTurn = player1;  // 흑돌이 선공
         this.gameOver = false;
         this.winner = null;
-        this.moveHistory = new ArrayList<>();
+        // this.moveHistory = new ArrayList<>();
     }
     
-    /**
-     * 착수 시도
-     * @param row 행
-     * @param col 열
-     * @param playerNickname 착수하는 플레이어
-     * @return 착수 성공 여부
-     */
-    public synchronized boolean makeMove(int row, int col, String playerNickname) {
+
+    // 착수 시도
+    public synchronized boolean makeMove(int row, int col, String gameUserName) {
         // 게임이 이미 종료되었는지 확인
         if (gameOver) {
             return false;
         }
         
         // 현재 턴인지 확인
-        if (!currentTurn.equals(playerNickname)) {
+        if (!currentTurn.equals(gameUserName)) {
             return false;
         }
         
@@ -88,14 +76,14 @@ public class GameState {
         }
         
         // 착수
-        int stone = playerNickname.equals(blackPlayer) ? 1 : 2;
+        int stone = gameUserName.equals(blackPlayer) ? 1 : 2;
         board[row][col] = stone;
-        moveHistory.add(new Move(row, col, stone, playerNickname));
+        // moveHistory.add(new Move(row, col, stone, gameUserName));
         
         // 승리 조건 확인
         if (checkWin(row, col, stone)) {
             gameOver = true;
-            winner = playerNickname;
+            winner = gameUserName;
             return true;
         }
         
@@ -112,16 +100,15 @@ public class GameState {
         return true;
     }
     
-    /**
-     * 승리 조건 확인
-     */
+
+    // 승리 조건 확인
     private boolean checkWin(int row, int col, int stone) {
-        // 4방향 체크: 가로, 세로, 대각선(\), 대각선(/)
+       
         int[][] directions = {
             {0, 1},   // 가로
             {1, 0},   // 세로
-            {1, 1},   // 대각선 \
-            {1, -1}   // 대각선 /
+            {1, 1},   // 대각선 1
+            {1, -1}   // 대각선 2
         };
         
         for (int[] dir : directions) {
@@ -139,9 +126,8 @@ public class GameState {
         return false;
     }
     
-    /**
-     * 특정 방향으로 연속된 같은 돌의 개수 세기
-     */
+
+    // 특정 방향으로 연속된 같은 돌의 개수를 세아린다
     private int countStones(int row, int col, int stone, int dRow, int dCol) {
         int count = 0;
         int r = row + dRow;
@@ -156,9 +142,8 @@ public class GameState {
         return count;
     }
     
-    /**
-     * 보드가 가득 찼는지 확인
-     */
+
+    // 보드가 가득 찼는지 확인
     private boolean isBoardFull() {
         for (int i = 0; i < BOARD_SIZE; i++) {
             for (int j = 0; j < BOARD_SIZE; j++) {
@@ -170,7 +155,7 @@ public class GameState {
         return true;
     }
     
-    // Getters
+    // getter
     public Long getRoomSeq() { return roomSeq; }
     public int[][] getBoard() { return board; }
     public String getBlackPlayer() { return blackPlayer; }
@@ -178,13 +163,9 @@ public class GameState {
     public String getCurrentTurn() { return currentTurn; }
     public boolean isGameOver() { return gameOver; }
     public String getWinner() { return winner; }
-    public List<Move> getMoveHistory() { return moveHistory; }
+    // public List<Move> getMoveHistory() { return moveHistory; }
     
-    /**
-     * 특정 플레이어의 돌 색상 가져오기
-     * @param nickname 플레이어 닉네임
-     * @return 1: 흑돌, 2: 백돌, 0: 해당 없음
-     */
+    // 게임 유저의 돌 색상 가져오기, 1: 흑돌 2: 백돌
     public int getPlayerStone(String nickname) {
         if (nickname.equals(blackPlayer)) {
             return 1;
@@ -194,10 +175,6 @@ public class GameState {
         return 0;
     }
     
-    /**
-     * 보드 크기 가져오기
-     * @return 보드 크기
-     */
     public static int getBoardSize() {
         return BOARD_SIZE;
     }

@@ -1,19 +1,23 @@
 package game;
 
-import com.google.gson.Gson;
+import rank.Rank;
+import rank.RankService;
 import room.Room;
 import room.RoomRepository;
+import user.User;
+import user.UserService;
+
 import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * 게임 관련 비즈니스 로직을 처리하는 서비스
- */
+
 public class GameService {
-	
-	private final Gson gson = new Gson();
+
 	private final RoomRepository roomRepository = RoomRepository.getInstance();
+	private final RankService rankService = RankService.getInstance();
+	private final UserService userService = UserService.getInstance();
+	
 	private static final Logger log = LoggerFactory.getLogger(GameService.class);
 	
     // 싱글톤 
@@ -32,11 +36,8 @@ public class GameService {
         return instance;
     }
     
-    /**
-     * 게임 시작
-     * @param roomSeq 방 번호
-     * @return 게임 시작 성공 여부
-     */
+
+    // 게임 시작 메서드
     public boolean startGame(Long roomSeq) {
         Room room = roomRepository.findById(roomSeq);
         
@@ -45,7 +46,7 @@ public class GameService {
             return false;
         }
         
-        // 2명이 모두 모였는지 확인
+        // 2명이 모두 모였는지 확인, 프론트 단에서 한 번 검증 필요
         if (!room.isFull()) {
         	log.warn("startGame: Room not full, roomSeq={}, playerCount={}", 
                     roomSeq, room.getGameUsers().size());
@@ -53,7 +54,6 @@ public class GameService {
         }
         
         synchronized (room) {
-            
             if (room.getGameState() != null) {
             	log.info("startGame: Game already started, roomSeq={}", roomSeq);
                 return false;  // 이미 시작되었을 경우
@@ -74,22 +74,19 @@ public class GameService {
         }
     }
     
-    /**
-     * 착수 시도
-     * @param roomSeq 방 번호
-     * @param row 행
-     * @param col 열
-     * @param playerNickname 플레이어 닉네임
-     * @return 착수 성공 여부
-     */
+
+    // 착수 시도
     public boolean makeMove(Long roomSeq, int row, int col, String playerNickname) {
+    	// 방 조회
         Room room = roomRepository.findById(roomSeq);
         
+        // 방 검증
         if (room == null) {
             log.error("makeMove: Room not found, roomSeq={}", roomSeq);
             return false;
         }
         
+        // 현재 게임 상태 조회
         GameState gameState = room.getGameState();
         if (gameState == null) {
             log.error("makeMove: GameState is null, roomSeq={}", roomSeq);
@@ -99,6 +96,7 @@ public class GameService {
         log.info("makeMove: Attempt by {}, position=({},{}), currentTurn={}", 
             playerNickname, row, col, gameState.getCurrentTurn());
         
+        // 돌을 둔다
         boolean result = gameState.makeMove(row, col, playerNickname);
         
         if (result) {
@@ -110,11 +108,8 @@ public class GameService {
         
         return result;
     }
-    /**
-     * 게임 상태 조회
-     * @param roomSeq 방 번호
-     * @return 게임 상태 또는 null
-     */
+
+    // 게임 상태 조회
     public GameState getGameState(Long roomSeq) {
         Room room = roomRepository.findById(roomSeq);
         
@@ -125,12 +120,8 @@ public class GameService {
         return room.getGameState();
     }
     
-    /**
-     * 특정 플레이어가 해당 방의 게임 참여자인지 확인
-     * @param roomSeq 방 번호
-     * @param nickname 닉네임
-     * @return 게임 참여자 여부
-     */
+
+    // 게임 유저인지 판단
     public boolean isGameUser(Long roomSeq, String nickname) {
         Room room = roomRepository.findById(roomSeq);
         
@@ -148,12 +139,7 @@ public class GameService {
         return false;
     }
     
-    /**
-     * 특정 플레이어가 해당 방의 관전자인지 확인
-     * @param roomSeq 방 번호
-     * @param nickname 닉네임
-     * @return 관전자 여부
-     */
+    // 옵저버인지 판단
     public boolean isObserver(Long roomSeq, String nickname) {
         Room room = roomRepository.findById(roomSeq);
         
@@ -162,11 +148,75 @@ public class GameService {
         }
         
         for (Observer observer : room.getObservers()) {
-            if (observer.getLobbyUser().getNickName().equals(nickname)) {
+            if (observer.getNickName().equals(nickname)) {
                 return true;
             }
         }
         
         return false;
+    }
+    
+    // 게임 종료 판단
+    public boolean isGameOver(Long roomSeq) {
+        Room room = roomRepository.findById(roomSeq);
+        
+        // 방 검증
+        if (room == null) {
+            log.warn("isGameOver: Room not found, roomSeq={}", roomSeq);
+            return false;
+        }
+        
+        GameState gameState = room.getGameState();
+        
+        // 게임 상태 검증
+        if (gameState == null) {
+            log.warn("isGameOver: GameState is null, roomSeq={}", roomSeq);
+            return false;
+        }
+        
+        boolean gameOver = gameState.isGameOver();
+        
+        // 게임 종료 여부 검증
+//        if (gameOver) {
+//        	
+//        	// 게임 종료 시 전적 (Rank) 업데이트
+//        	User winner = userService.findByNickName(gameState.getWinner());
+//        	Long winnerId = winner.getUserSeq();
+//        	Rank winUserRank = rankService.findById(winnerId);
+//        	winUserRank.addWin();
+//        	rankService.update(winUserRank);
+//        	
+//        	String loserName = gameState.getWinner() == gameState.getBlackPlayer() ? gameState.getWhitePlayer() : gameState.getBlackPlayer();  
+//        	User loser = userService.findByNickName(loserName);
+//        	Long loserId = loser.getUserSeq();
+//        	Rank loseUserRank = rankService.findById(loserId);
+//        	loseUserRank.addLose();
+//        	rankService.update(loseUserRank);
+//        	        	
+//        	
+//            log.info("isGameOver: Game is over, roomSeq={}, winner={}", 
+//                roomSeq, gameState.getWinner());
+//        }
+//        
+        return gameOver;
+    }
+    
+    // 승리자 판단
+    public String getWinner(Long roomSeq) {
+        Room room = roomRepository.findById(roomSeq);
+        
+        if (room == null) {
+            log.warn("getWinner: Room not found, roomSeq={}", roomSeq);
+            return null;
+        }
+        
+        GameState gameState = room.getGameState();
+        
+        if (gameState == null) {
+            log.warn("getWinner: GameState is null, roomSeq={}", roomSeq);
+            return null;
+        }
+        
+        return gameState.getWinner();
     }
 }

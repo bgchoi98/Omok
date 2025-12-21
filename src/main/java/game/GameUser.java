@@ -17,8 +17,5 @@ public class GameUser {
 	public String getNickName() {
 		return nickName;
 	}
-
-
-	
 	
 }

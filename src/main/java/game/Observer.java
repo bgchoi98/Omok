@@ -4,14 +4,14 @@ import room.LobbyUser;
 
 public class Observer {
 
-	private LobbyUser lobbyUser;
+	private String nickName;
 
 	public Observer(LobbyUser lobbyUser) {
-		this.lobbyUser = lobbyUser;
+		this.nickName = lobbyUser.getNickName();
 	}
 
-	public LobbyUser getLobbyUser() {
-		return lobbyUser;
+	public String getNickName() {
+		return nickName;
 	}
-
+	
 }

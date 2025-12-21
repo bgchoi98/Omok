@@ -52,12 +52,18 @@ public class RoomRepository {
 		return savedRoom;
 	}
 
-    /**
-     * 모든 방 조회
-     * @return 방 리스트
-     */
+	/**
+	 * 모든 방 조회 (종료된 방 제외)
+	 * @return 방 리스트
+	 */
 	public List<Room> findAll() {
-		return new ArrayList<>(rooms.values());
+	    List<Room> result = new ArrayList<>();
+	    for (Room room : rooms.values()) {
+	        if (room.getRoomStatus() != RoomStatus.END) {	// 게임끝난 방은 조회안하도록
+	            result.add(room);
+	        }
+	    }
+	    return result;
 	}
 
     /**

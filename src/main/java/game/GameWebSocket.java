@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 
 import room.Room;
 import room.RoomRepository;
+import room.RoomStatus;
 import user.User;
 import util.Constants;
 import util.webSocketDTOs.GetHttpSessionConfigurator;
@@ -61,7 +62,7 @@ public class GameWebSocket {
 		// HTTP 세션에서 User 가져오기
         HttpSession httpSession = (HttpSession) config.getUserProperties()
             .get(HttpSession.class.getName());
-        
+        System.out.println("게임 들어옴");
         // 세션 검증
         if (httpSession == null) {
             closeSession(session, "No HTTP session");
@@ -80,7 +81,7 @@ public class GameWebSocket {
         // 세션에 유저 정보 저장
         session.getUserProperties().put("user", user);
         session.getUserProperties().put("nickname", user.getNickname());
-     
+        
         
         log.info("Game WebSocket connected: {}", user.getNickname());
 	}
@@ -100,7 +101,7 @@ public class GameWebSocket {
 			String nickname = user.getNickname();
 			JsonObject json = gson.fromJson(message, JsonObject.class);
 			String type = json.get("type").getAsString();
-			
+
 			log.debug("Game message received - type: {}, from: {}", type, nickname);
 			
 			switch (type) {
@@ -150,9 +151,9 @@ public class GameWebSocket {
 	            // 방에 웹소켓 세션이 하나도 없을 경우 방 삭제
 	            if (sessions.isEmpty()) {
 	                roomSessions.remove(roomSeq);
+	                roomRepository.deleteRoom(roomSeq);
 	            }
 	        }
-
 	    }
 
 	    // 세션 관련 정보 제거
@@ -167,24 +168,36 @@ public class GameWebSocket {
 		log.error("Game WebSocket error for user {}: {}", nickname != null ? nickname : "unknown", t.getMessage(), t);
 	}
 	
+	
+	/*
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	여기까지 onOpen, onMessage, onClose, onError 
+	*/
+	
+	
 	// 1. 게임 방 참여 (게임 플레이어, 관전)
 	private void joinGame(Session session, JsonObject json, String nickname) {
 		
-		// 프론트에서 json 으로 roomSeq을 받아와야 한다.
+		// 프론트에서 JSON 으로 roomSeq을 받아와야 한다.
 		if (!json.has("roomSeq")) {
 			sendError(session, "방 번호가 없습니다.");
 			return;
 		}
-		
+		System.out.println("여기들어옴");
 		Long roomSeq = json.get("roomSeq").getAsLong();
-		Room room = roomRepository.findById(roomSeq); // json 으로 받아온 roomSeq 을 통해 Room 을 리포지토리에서 조회
+		Room room = roomRepository.findById(roomSeq); // JSON 으로 받아온 roomSeq 을 통해 Room 을 리포지토리에서 조회
 		
 		if (room == null) {
 			sendError(session, "방을 찾을 수 없습니다.");
 			return;
 		}
 		
-		// roomSeq를 웹소켓 세션에 저장 => 이 시점에 웹 소켓 세션에는 User, userNickName, roomSeq 총 3개의 데이터가 들어있다.
+		// roomSeq를 웹소켓 세션에 저장 -> 이 시점부터 웹 소켓 세션에는 User, userNickName, roomSeq 총 3개의 데이터가 들어있다.
 		session.getUserProperties().put("roomSeq", roomSeq);
 		
 		// 세션 관리 
@@ -248,7 +261,7 @@ public class GameWebSocket {
 	            log.info("{} is waiting for another player in room {}", nickname, roomSeq);
 	            return;
 	        } else {
-	            // 관전자가 게임 시작 전 방에 들어오려 함 => 프론트 단에서 잡아두기 때문에 발생 가능성은 거의 없음
+	            // 관전자가 게임 시작 전 방에 들어오려 함 -> 프론트 단에서 잡아두기 때문에 발생 가능성은 거의 없음
 	            sendError(session, "아직 게임이 시작되지 않았습니다.");
 	            
 	            // 등록했던 세션 제거
@@ -289,15 +302,17 @@ public class GameWebSocket {
 	}
 	
 
-	// 돌 착수 처리
+	// 2. 돌 착수 처리
 	private void makeMove(Session session, JsonObject json, String nickname) {
 		Long roomSeq = (Long) session.getUserProperties().get("roomSeq");
-		
+		System.out.println("룸아이디 조회:" + roomSeq);
+		// room 검증
 		if (roomSeq == null) {
 			sendError(session, "게임 방에 참여하지 않았습니다.");
 			return;
 		}
 		
+		//  프론트에서 JSON 으로 row, col 을 받아야 한다.
 		if (!json.has("row") || !json.has("col")) {
 			sendError(session, "착수 위치가 없습니다.");
 			return;
@@ -305,14 +320,14 @@ public class GameWebSocket {
 		
 		int row = json.get("row").getAsInt();
 		int col = json.get("col").getAsInt();
-		
-		// 플레이어인지 확인
+		System.out.println("돌 둔 위치: " + row + " : " + col);
+		// 게임 유저인지 검증 (관전자는 돌을 둘 수 없으며 프론트단에서 먼저 돌을 못두도록 막아둬야 한다) 
 		if (!gameService.isGameUser(roomSeq, nickname)) {
 			sendError(session, "플레이어만 착수할 수 있습니다.");
 			return;
 		}
 		
-		// 착수 시도
+		// 착수 
 		boolean success = gameService.makeMove(roomSeq, row, col, nickname);
 		
 		if (!success) {
@@ -344,21 +359,21 @@ public class GameWebSocket {
 		log.info("Move made in room {}: ({}, {}) by {}", roomSeq, row, col, nickname);
 		
 		// 게임 종료 확인
-		if (gameState.isGameOver()) {
-			gameOver(roomSeq, gameState);
+		if (gameService.isGameOver(roomSeq)) {
+			gameOver(roomSeq);
 		}
 	}
 	
 
-	// onMessage - chat 처리
+	// 3. 채팅 (관전자, 게임 유저 모두 가능)
 	private void chat(Session session, JsonObject json, String nickname) {
 		Long roomSeq = (Long) session.getUserProperties().get("roomSeq");
 		
+		// roomSeq, JSON 검증
 		if (roomSeq == null) {
 			sendError(session, "게임 방에 참여하지 않았습니다.");
 			return;
 		}
-		
 		if (!json.has("message")) {
 			sendError(session, "메시지가 없습니다.");
 			return;
@@ -371,18 +386,32 @@ public class GameWebSocket {
 		chatMsg.addProperty("type", "CHAT");
 		chatMsg.addProperty("sender", nickname);
 		chatMsg.addProperty("message", message);
-		chatMsg.addProperty("timestamp", System.currentTimeMillis());
+		chatMsg.addProperty("timestamp", System.currentTimeMillis()); // 채팅 시 현재 시간 출력
 		
 		broadcastToRoom(roomSeq, gson.toJson(chatMsg), null);
 		
 		log.debug("Chat in room {}: {} - {}", roomSeq, nickname, message);
 	}
 	
-	/**
-	 * 게임 종료 처리
-	 */
-	private void gameOver(Long roomSeq, GameState gameState) {
-		String winner = gameState.getWinner();
+
+	/*
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	---------------------------------------------------------------------------------------------------
+	여기까지 onMessage -> joinGame, makeMove, chat
+	*/
+	
+	// makeMove 끝단에서 사용 
+	private void gameOver(Long roomSeq) {
+		String winner = gameService.getWinner(roomSeq);
+		
+	    if (winner == null) {
+	        log.warn("gameOver: Winner is null, roomSeq={}", roomSeq);
+	        return;
+	    }
 		
 		JsonObject gameOverMsg = new JsonObject();
 		gameOverMsg.addProperty("type", "GAME_OVER");
@@ -397,20 +426,23 @@ public class GameWebSocket {
 		}
 		
 		broadcastToRoom(roomSeq, gson.toJson(gameOverMsg), null);
-		
+		// room이 삭제 됐으면 룸상태 변경
+		Room room = roomRepository.findById(roomSeq);
+	    if (room != null) {
+	        room.setRoomStatus(RoomStatus.END);
+	    }
 		log.info("Game over in room {}: winner = {}", roomSeq, winner);
 	}
 	
 	// 브로드캐스트
 	private void broadcastToRoom(Long roomSeq, String message, Session except) {
-	    // roomSessions는 Map<Long, Set<Session>> 타입
+
 	    Set<Session> sessions = roomSessions.get(roomSeq);
 	    
 	    if (sessions == null) {
 	        return;
 	    }
-	    
-	    // Set<Session>을 순회
+	    // 순회, 메시지 비동기로 전송
 	    for (Session s : sessions) {
 	        if (s != null && s.isOpen() && !s.equals(except)) {
 	            try {
@@ -432,9 +464,6 @@ public class GameWebSocket {
 		return gson.toJson(notification);
 	}
 	
-
-	
-
 	// 웹소켓 세션 종료
 	private void closeSession(Session session, String reason) {
 		try {

@@ -13,8 +13,8 @@
     String nickName = "Guest";
     int win = 0;
     int lose = 0;
-    try { 
-        nickName = user.getNickname(); 
+    try {
+        nickName = user.getNickname();
         // win = user.getWin();
         // lose = user.getLose();
     } catch (Exception ignore) {}
@@ -27,21 +27,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    /* ===== 튜닝용 변수 (여기서 1px 단위 미세 조정 가능) ===== */
+    /* ===== 튜닝용 변수 (board.png: 460x455, gameBoard.png: 375x375 정확 매칭) ===== */
     :root {
-      /* board.png(460x455) 기준 격자 시작점과 크기 비율 */
-      --grid-left: 9.13%;   /* 좌측 여백 비율 */
-      --grid-top: 3.52%;    /* 상단 여백 비율 */
-      --grid-width: 81.52%; /* 격자 전체 너비 비율 */
-      --grid-height: 94.07%;/* 격자 전체 높이 비율 */
+      /* ✅ board(460x455) 안에 gameBoard(375x375)가 정확히 들어가는 비율 */
+      --grid-left: 9.239130%;   /* 42.5 / 460 */
+      --grid-top:  8.791209%;   /* 40 / 455 */
+      --grid-width: 81.521739%; /* 375 / 460 */
+      --grid-height: 82.417582%;/* 375 / 455 */
 
-      /* 미세 조정 (화면에서 살짝 밀리면 숫자를 1px, -1px 등으로 변경) */
+      /* 미세 조정 (필요하면 1~2px) */
       --grid-nudge-x: 0px;
       --grid-nudge-y: 0px;
     }
 
-    /* ===== Global Setting ===== */
     * { box-sizing: border-box; }
+
     body {
       margin: 0;
       width: 100vw;
@@ -55,7 +55,7 @@
     /* ===== Main Layout (Grid) ===== */
     .layout {
       display: grid;
-      grid-template-columns: 1fr 400px;
+      grid-template-columns: 1fr 400px; /* 왼쪽: 보드, 오른쪽: 패널 */
       height: 100%;
       padding: 20px;
       gap: 20px;
@@ -69,45 +69,48 @@
       position: relative;
     }
 
-    /* [1] 보드 프레임 (460 x 455 비율 유지) */
+    /* ✅ 오른쪽 패널 400px을 고려해 보드가 과도하게 커지지 않게 */
     .board-frame-wrap {
       position: relative;
-      height: min(90vh, 90vw);
-      aspect-ratio: 460 / 455; 
+      width: min(calc(100vw - 400px - 60px), 90vh);
+      height: min(calc(100vw - 400px - 60px), 90vh);
+      aspect-ratio: 460 / 455;
       filter: drop-shadow(0 15px 35px rgba(0,0,0,0.5));
     }
 
     .board-frame-img {
       width: 100%;
       height: 100%;
-      object-fit: fill;
+      object-fit: contain; /* ✅ fill 금지: 왜곡 방지 */
       pointer-events: none;
       z-index: 1;
+      display: block;
     }
 
-    /* [2] 격자판 배치 영역 (수정됨) 
-       - 기존: 중앙 정렬
-       - 변경: CSS 변수 기반 절대 좌표 배치 (직사각형 대응)
-    */
+    /* ✅ gameBoard가 들어갈 "프레임 내부 영역" */
     .board-inner-area {
       position: absolute;
       left: calc(var(--grid-left) + var(--grid-nudge-x));
-      top: calc(var(--grid-top) + var(--grid-nudge-y));
+      top:  calc(var(--grid-top)  + var(--grid-nudge-y));
       width: var(--grid-width);
       height: var(--grid-height);
       z-index: 2;
     }
 
-    /* board.png 자체에 선이 있다면, 이 이미지는 숨김 처리 */
+    /* 필요하면 보이게(현재는 프레임에 격자가 있으니 숨김) */
     .grid-img {
-      display: none; 
-      /* 만약 별도 격자 이미지를 써야 한다면 display: block; width:100%; height:100%; fill; */
+      display: none;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      pointer-events: none;
+      user-select: none;
     }
 
-    /* [3] 클릭 및 돌 배치 레이어 */
+    /* ✅ 클릭/돌 배치 영역: 오직 gameBoard(375x375) 영역만 */
     .board-hit {
-      position: relative; /* 자식(돌)의 기준점이 됨 */
-      width: 100%; 
+      position: relative;
+      width: 100%;
       height: 100%;
       cursor: pointer;
       z-index: 10;
@@ -116,8 +119,7 @@
     /* 돌 스타일 */
     .stone, .ghost-stone {
       position: absolute;
-      /* 중요: 돌의 중심점이 좌표가 되도록 변환 */
-      transform: translate(-50%, -50%); 
+      transform: translate(-50%, -50%); /* 중심 정렬 */
       pointer-events: none;
       filter: drop-shadow(3px 4px 4px rgba(0,0,0,0.4));
       will-change: transform;
@@ -129,7 +131,7 @@
       z-index: 11;
     }
 
-    /* ===== Right Panel (Control) ===== */
+    /* ===== Right Panel ===== */
     .right-col {
       display: flex;
       flex-direction: column;
@@ -191,7 +193,7 @@
       display: flex;
       flex-direction: column;
       justify-content: center;
-      padding-left: 75px; 
+      padding-left: 75px;
       padding-right: 10px;
       color: #3e2723;
       filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
@@ -278,6 +280,7 @@
     }
     .surrender-btn:hover { background: #3e2723; transform: scale(1.05); }
 
+    /* 반응형 */
     @media (max-width: 1000px) {
       .layout {
         grid-template-columns: 1fr;
@@ -287,6 +290,10 @@
       body { overflow: auto; }
       .left-col { margin-bottom: 20px; }
       .right-col { height: auto; }
+      .board-frame-wrap{
+        width: min(90vw, 90vh);
+        height: min(90vw, 90vh);
+      }
     }
   </style>
 </head>
@@ -298,10 +305,12 @@
     <div class="left-col">
       <div class="board-frame-wrap" id="boardFrame">
         <img src="<%=CTX%>/assets/images/game/board.png" class="board-frame-img" alt="Frame" />
-        
+
         <div class="board-inner-area" id="boardInner">
+          <!-- 프레임에 격자가 이미 있으면 숨김 유지 -->
           <img src="<%=CTX%>/assets/images/game/gameBoard.png" class="grid-img" alt="Grid" />
-          
+
+          <!-- ✅ 이 영역이 gameBoard(375x375)와 정확히 매칭되는 클릭/돌 영역 -->
           <div id="boardHit" class="board-hit">
             <img id="ghostStone" class="ghost-stone" src="<%=CTX%>/assets/images/game/stone_1.png" alt="" />
           </div>
@@ -332,7 +341,7 @@
             <div class="player-score">-</div>
           </div>
         </div>
-        
+
         <div class="config-area">
           <img id="configBtn" class="config-btn" src="<%=CTX%>/assets/images/game/configureIcon.png" alt="Config" />
         </div>
@@ -356,87 +365,71 @@
       white: CTX + "/assets/images/game/stone_2.png",
     };
 
-    // 오목판 격자 (15줄 = 14칸 간격)
-    const BOARD_SIZE = 15; 
-    const LINES = 14; 
+    // ✅ 교차점 15개(=줄 15개) => 간격은 14칸
+    const BOARD_SIZE = 15; // 인덱스 0~14
+    const LINES = 14;      // 칸 수(간격 수)
 
-    let turn = 1; // 1: 흑, 2: 백
+    let turn = 1;
     let gameActive = true;
     let boardState = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
 
-    const boardHit   = document.getElementById("boardHit");
-    const ghostEl    = document.getElementById("ghostStone");
-    const p1Box      = document.getElementById("p1Box");
-    const p2Box      = document.getElementById("p2Box");
+    const boardHit = document.getElementById("boardHit");
+    const ghostEl  = document.getElementById("ghostStone");
+    const p1Box    = document.getElementById("p1Box");
+    const p2Box    = document.getElementById("p2Box");
 
-    // 가로/세로 간격을 각각 저장 (직사각형 격자 대응)
-    let gapX = 0;
-    let gapY = 0;
+    // ✅ 정사각 격자: gap 하나만 사용
+    let gap = 0;
     let stoneSize = 0;
 
-    // 1. 그리드 수치 계산 (가로/세로 독립 계산)
     function recalcMetrics() {
+      // boardHit는 gameBoard(375x375) 영역에 정확히 매칭되어 있음
       const width = boardHit.clientWidth;
-      const height = boardHit.clientHeight;
 
-      // 가로, 세로 간격 독립 계산
-      gapX = width / LINES;
-      gapY = height / LINES;
-      
-      // 돌 크기는 칸의 약 92% (가로/세로 중 작은 쪽 기준)
-      stoneSize = Math.min(gapX, gapY) * 0.92; 
-      
+      gap = width / LINES;         // 14칸
+      stoneSize = gap * 0.92;
+
       ghostEl.style.width = stoneSize + "px";
       ghostEl.style.height = stoneSize + "px";
     }
 
-    // 2. 좌표 변환 (Pixel -> Grid Index)
     function getGridPos(e) {
       const rect = boardHit.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
-      // X는 gapX로, Y는 gapY로 나눔
-      const col = Math.round(x / gapX);
-      const row = Math.round(y / gapY);
+      const col = Math.round(x / gap);
+      const row = Math.round(y / gap);
 
-      // 범위 체크 (0 ~ 14)
-      if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) {
-        return null;
-      }
+      if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) return null;
       return { row, col };
     }
 
-    // 3. 요소 위치 설정 헬퍼 (Grid Index -> Pixel)
     function setElementPos(element, row, col) {
-      element.style.left = (col * gapX) + "px";
-      element.style.top  = (row * gapY) + "px";
+      element.style.left = (col * gap) + "px";
+      element.style.top  = (row * gap) + "px";
     }
 
-    // 4. 돌 놓기 (UI)
     function placeStone(row, col, player) {
       const stone = document.createElement("img");
       stone.src = (player === 1) ? IMG.black : IMG.white;
       stone.className = "stone";
-      
+
       stone.style.width = stoneSize + "px";
       stone.style.height = stoneSize + "px";
 
-      // 위치 설정 (X/Y 개별 간격 적용)
       setElementPos(stone, row, col);
 
-      // 랜덤 회전 (자연스럽게)
       const deg = Math.random() * 40 - 20;
       stone.style.transform = `translate(-50%, -50%) rotate(${deg}deg)`;
 
       boardHit.appendChild(stone);
     }
 
-    // 5. 마우스 이동 (Ghost Stone)
     function onMouseMove(e) {
       if (!gameActive) return;
+
       const pos = getGridPos(e);
-      
       if (!pos || boardState[pos.row][pos.col] !== 0) {
         ghostEl.style.display = "none";
         return;
@@ -444,16 +437,13 @@
 
       ghostEl.style.display = "block";
       ghostEl.src = (turn === 1) ? IMG.black : IMG.white;
-      
-      // 고스트 스톤 위치 업데이트
       setElementPos(ghostEl, pos.row, pos.col);
     }
 
-    // 6. 클릭 (착수)
     function onBoardClick(e) {
       if (!gameActive) return;
-      const pos = getGridPos(e);
 
+      const pos = getGridPos(e);
       if (!pos || boardState[pos.row][pos.col] !== 0) return;
 
       boardState[pos.row][pos.col] = turn;
@@ -461,7 +451,6 @@
 
       turn = (turn === 1) ? 2 : 1;
       updateTurnUI();
-      // 클릭 후 마우스가 제자리에 있을 때 고스트 갱신
       onMouseMove(e);
     }
 
@@ -476,10 +465,8 @@
     }
 
     window.addEventListener("load", () => {
-      // 레이아웃 확정 후 계산을 위해 프레임 요청
-      requestAnimationFrame(() => {
-        recalcMetrics();
-      });
+      // ✅ 레이아웃 확정 후 계산
+      requestAnimationFrame(() => recalcMetrics());
       window.addEventListener("resize", recalcMetrics);
 
       boardHit.addEventListener("mousemove", onMouseMove);
@@ -489,12 +476,23 @@
       // 팝업 로직
       const dim = document.getElementById("dimLayer");
       const popup = document.getElementById("configPopup");
-      document.getElementById("configBtn").onclick = () => { dim.style.display="block"; popup.style.display="flex"; };
-      const close = () => { dim.style.display="none"; popup.style.display="none"; };
+
+      document.getElementById("configBtn").onclick = () => {
+        dim.style.display = "block";
+        popup.style.display = "flex";
+      };
+
+      const close = () => {
+        dim.style.display = "none";
+        popup.style.display = "none";
+      };
+
       document.getElementById("closePopupBtn").onclick = close;
       dim.onclick = close;
 
-      const exitFunc = () => { if(confirm("정말 나가시겠습니까?")) location.href = CTX + "/main"; };
+      const exitFunc = () => {
+        if (confirm("정말 나가시겠습니까?")) location.href = CTX + "/main";
+      };
       document.getElementById("exitBtn").onclick = exitFunc;
       document.getElementById("surrenderBtn").onclick = exitFunc;
     });

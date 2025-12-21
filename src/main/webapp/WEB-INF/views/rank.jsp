@@ -31,9 +31,33 @@
   <meta charset="UTF-8" />
   <title>Omok Ranking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+  <!-- 기존 폰트 (폴백용으로 유지) -->
+  <!-- <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet"> -->
 
   <style>
+    /* ====== 🎄 크리스마스 폰트 (Mountains of Christmas) ====== */
+    /* License: SIL Open Font License 1.1 - 상업적 사용 가능 */
+    /* Author: Crystal Kluge (Tart Workshop) */
+    /* Source: https://fonts.google.com/specimen/Mountains+of+Christmas */
+    @font-face {
+      font-family: 'Mountains of Christmas';
+      src: url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Regular.woff2') format('woff2'),
+           url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Regular.woff') format('woff');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'Mountains of Christmas';
+      src: url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Bold.woff2') format('woff2'),
+           url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Bold.woff') format('woff');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+    /* ================================================= */
+
     :root{
       --shadow: 0 20px 40px rgba(0,0,0,0.5);
       --ink: #5d4037;
@@ -52,8 +76,8 @@
       --paper-scale: 1.2;
       --paper-shift-y: -30px;
 
-      /* ✅ 타이틀/순위 전체를 "살짝 왼쪽" (여기만 미세조정하면 됨) */
-      --ui-shift-x: -8px;
+      /* ✅ 중앙 정렬은 JS로 계산 (CSS 추가 이동 제거) */
+      --ui-shift-x: 0px;
 
       /* JS가 계산해서 넣는 값 */
       --pad-top: 18px;
@@ -64,6 +88,12 @@
       --scroll-right: 8px;
       --scroll-h: 200px;
       --track-w: 18px;
+
+      /* ✅ 여기 숫자만 조절하면 폭이 더 줄어듦 */
+      --content-w: min(62%, 520px);
+
+      /* ✅ +면 오른쪽, -면 왼쪽 */
+      --content-shift-x: 11px;
     }
 
     * { margin:0; padding:0; box-sizing:border-box; user-select:none; }
@@ -72,7 +102,7 @@
       width:100vw; height:100vh;
       overflow:hidden;
       background: none;              /* ✅ 실제 배경은 ::before로 깔 거라 제거 */
-      font-family: 'Patrick Hand', cursive, sans-serif;
+      font-family: 'Mountains of Christmas', 'Patrick Hand', cursive, sans-serif;
       position:relative;
 
       display:flex;
@@ -146,40 +176,41 @@
       align-items: stretch;
       padding: var(--pad-top) var(--pad-x) var(--pad-bottom);
 
-      /* ✅ 전체를 왼쪽으로 조금 */
-      transform: translateX(var(--ui-shift-x));
+      /* ✅ 정렬은 JS에서 계산 */
     }
 
-    /* ✅ 타이틀: 상단 중앙 + 종이 안쪽 */
-    .title{
-      width:100%;
+    /* 제목/리스트 영역을 content-w로 가운데 정렬 */
+    .paper-ui .title{
+      width: var(--content-w);
+      margin: 2px auto 8px;
+      transform: translateX(var(--content-shift-x));
       text-align:center;
       font-size: clamp(1.85rem, 2.55vw, 2.7rem);
+      font-weight: 700;  /* 🎄 크리스마스 폰트 Bold 사용 */
       color: var(--ink-strong);
-      margin: 2px 0 8px;
       text-shadow: 2px 2px 0 rgba(255,255,255,0.4);
       pointer-events:none;
       line-height: 1.05;
     }
 
-    .list-wrapper{
-      width:100%;
+    .paper-ui .list-wrapper{
+      width: var(--content-w);
+      margin: 0 auto;
+      transform: translateX(var(--content-shift-x));
       flex:1;
       min-height:0;
       overflow-y:auto;
       overflow-x:hidden;
       scrollbar-width:none;
     }
-    .list-wrapper::-webkit-scrollbar{ width:0; height:0; }
+    .paper-ui .list-wrapper::-webkit-scrollbar{ width:0; height:0; }
 
     /* ✅ 오른쪽 여백(스크롤바 자리) 너무 많이 먹지 않게 줄임 */
     .rank-list{
-      width:100%;
-      display:flex;
-      flex-direction: column;
-      gap: 8px;
-      padding-right: 34px; /* <- 기존 46px에서 줄임 */
-    }
+      width: 100%;
+    
+    
+·    }
 
     /* ✅ 종이 안에 "무조건" 들어가게 더 타이트하게 */
     .rank-item{
@@ -253,7 +284,7 @@
         --paper-fit-vh: 78vh;
         --paper-scale: 1.05;
         --paper-shift-y: -18px;
-        --ui-shift-x: -18px;
+        --ui-shift-x: 0px;
       }
       .back-btn{ width: clamp(110px, 18vw, 170px); }
       .rank-item{ grid-template-columns: 38px minmax(0,1fr) 66px; }
@@ -327,16 +358,14 @@
       const thumb = document.getElementById('scrollThumb');
 
       /*
-        ✅ 핵심: 종이 "태그 몸통"에 맞춰 안전영역 잡기
-        - 오른쪽(W/L) 튀는 걸 막으려고 rightRatio를 조금 더 크게 잡음
-        - 타이틀/리스트를 왼쪽으로 맞추기 위해 leftRatio를 아주 살짝 더 크게 잡아
-          (CSS의 --ui-shift-x로 왼쪽 이동하는 만큼 안전영역에서 여유를 확보)
+        ✅ 핵심: 종이 "빈 영역" 기준으로 좌우 대칭 안전영역 설정
+        - sideRatio: 좌/우 동일한 여백 (0.12~0.16 범위에서 미세조정)
+        - 중앙 정렬은 좌=우 대칭으로 자동 해결
       */
       const PAPER_SAFE = {
-        leftRatio: 0.315,
-        rightRatio: 0.345,
-        topRatio: 0.150,
-        bottomRatio: 0.105,
+        sideRatio: 0.16,    // ✅ 좌/우 동일 (필요시 0.01 단위로 조정)
+        topRatio: 0.17,
+        bottomRatio: 0.12,
       };
 
       const PAPER_TUNE = {
@@ -348,39 +377,56 @@
         scrollRightRatio: 0.02,
         scrollHeightRatio: 0.74,
 
-        offsetX: -50,
+        offsetX: 0,    // ✅ 중앙 정렬을 위해 추가 오프셋 제거
         offsetY: 0,
       };
 
       function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
       function syncUiToPaperImage() {
-        const wrapRect = wrap.getBoundingClientRect();
-        const imgRect  = img.getBoundingClientRect();
+        // ✅ object-fit: contain으로 실제 그려진 이미지 영역 계산
+        const containerW = wrap.clientWidth;
+        const containerH = wrap.clientHeight;
+        const naturalW = img.naturalWidth;
+        const naturalH = img.naturalHeight;
 
-        const innerW = imgRect.width  * (1 - PAPER_SAFE.leftRatio - PAPER_SAFE.rightRatio);
-        const innerH = imgRect.height * (1 - PAPER_SAFE.topRatio  - PAPER_SAFE.bottomRatio);
+        if (!naturalW || !naturalH) return;
 
-        const innerLeft = (imgRect.left - wrapRect.left)
-          + (imgRect.width * PAPER_SAFE.leftRatio)
-          + PAPER_TUNE.offsetX;
+        // contain 방식: 비율 유지하며 컨테이너에 맞춤
+        const scale = Math.min(containerW / naturalW, containerH / naturalH);
+        const drawnW = naturalW * scale;
+        const drawnH = naturalH * scale;
+        const drawnLeft = (containerW - drawnW) / 2;
+        const drawnTop = (containerH - drawnH) / 2;
 
-        const innerTop  = (imgRect.top - wrapRect.top)
-          + (imgRect.height * PAPER_SAFE.topRatio)
-          + PAPER_TUNE.offsetY;
+        // 좌우 대칭으로 안전영역 계산
+        const innerW = drawnW * (1 - PAPER_SAFE.sideRatio * 2);
+        const innerH = drawnH * (1 - PAPER_SAFE.topRatio - PAPER_SAFE.bottomRatio);
+
+        const innerLeft = drawnLeft + (drawnW * PAPER_SAFE.sideRatio) + PAPER_TUNE.offsetX;
+        const innerTop = drawnTop + (drawnH * PAPER_SAFE.topRatio) + PAPER_TUNE.offsetY;
+
+        // 디버깅 정보
+        console.log('🔍 Debug Info:', {
+          container: { w: containerW, h: containerH },
+          natural: { w: naturalW, h: naturalH },
+          drawn: { w: drawnW, h: drawnH, left: drawnLeft, top: drawnTop },
+          inner: { w: innerW, h: innerH, left: innerLeft, top: innerTop },
+          safe: PAPER_SAFE
+        });
 
         ui.style.left = innerLeft + 'px';
-        ui.style.top  = innerTop + 'px';
-        ui.style.width  = innerW + 'px';
+        ui.style.top = innerTop + 'px';
+        ui.style.width = innerW + 'px';
         ui.style.height = innerH + 'px';
 
-        ui.style.setProperty('--pad-top',    Math.round(innerH * PAPER_TUNE.padTopRatio) + 'px');
-        ui.style.setProperty('--pad-x',      Math.round(innerW * PAPER_TUNE.padXRatio) + 'px');
+        ui.style.setProperty('--pad-top', Math.round(innerH * PAPER_TUNE.padTopRatio) + 'px');
+        ui.style.setProperty('--pad-x', Math.round(innerW * PAPER_TUNE.padXRatio) + 'px');
         ui.style.setProperty('--pad-bottom', Math.round(innerH * PAPER_TUNE.padBottomRatio) + 'px');
 
-        ui.style.setProperty('--scroll-top',   Math.round(innerH * PAPER_TUNE.scrollTopRatio) + 'px');
+        ui.style.setProperty('--scroll-top', Math.round(innerH * PAPER_TUNE.scrollTopRatio) + 'px');
         ui.style.setProperty('--scroll-right', Math.round(innerW * PAPER_TUNE.scrollRightRatio) + 'px');
-        ui.style.setProperty('--scroll-h',     Math.round(innerH * PAPER_TUNE.scrollHeightRatio) + 'px');
+        ui.style.setProperty('--scroll-h', Math.round(innerH * PAPER_TUNE.scrollHeightRatio) + 'px');
       }
 
       let isDragging = false;

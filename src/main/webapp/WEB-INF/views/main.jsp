@@ -14,29 +14,16 @@
     <meta charset="UTF-8">
     <title>오목 메인 로비</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         :root {
-            /* 룸 패널 크기 */
             --room-panel-width: clamp(900px, 85vw, 1200px);
             --room-panel-height: clamp(600px, 75vh, 720px);
-            
-            /* 랭킹 트리 크기 */
             --tree-w: clamp(280px, 22vw, 380px); 
-
-            /* 방 카드 간격 및 크기 조절 */
             --grid-gap: clamp(30px, 4vw, 50px);
-            
-            /* 기타 변수 */
             --config-w: clamp(80px, 7vw, 120px);
             --nav-arrow-w: clamp(60px, 5vw, 90px);
             --make-w: clamp(120px, 10vw, 180px);
-            
-            /* 설정 팝업용 변수 */
             --config-box-w: 400px;  
             --config-box-h: 500px;
         }
@@ -53,7 +40,7 @@
             position: relative;
         }
 
-        /* --- 로딩 팝업 UI --- */
+        /* --- 로딩 팝업 --- */
         .loading-overlay { 
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
             background-color: rgba(0, 0, 0, 0.6); 
@@ -65,37 +52,18 @@
         .loading-overlay.show { display: flex !important; }
         
         .loading-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;
         }
 
-        /* [수정] 스피너(리스) 크기 확대 (300px -> 380px) */
         .spinner-wrapper {
-            position: relative;
-            width: 380px;  
-            height: 380px; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            position: relative; width: 380px; height: 380px; 
+            display: flex; justify-content: center; align-items: center;
         }
 
-        .wreath-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            animation: spinWreath 4s linear infinite;
-        }
-
+        .wreath-img { width: 100%; height: 100%; object-fit: contain; animation: spinWreath 4s linear infinite; }
         .loading-text-img {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60%; /* 리스 크기에 맞춰 비율 유지 */
-            height: auto;
-            object-fit: contain;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 60%; height: auto; object-fit: contain;
         }
 
         @keyframes spinWreath {
@@ -104,50 +72,24 @@
         }
 
         .loading-status-text {
-            margin-top: 20px;
-            font-size: 20px;
-            color: #fff;
-            font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            margin-top: 20px; font-size: 20px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .loading-cancel-btn {
-            margin-top: 15px;
-            padding: 8px 30px;
-            background-color: #8d6e63;
-            border: 2px solid #5d4037;
-            border-radius: 8px;
-            color: white;
-            font-weight: bold;
-            font-size: 16px;
-            cursor: pointer;
-            transition: transform 0.2s, background-color 0.2s;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin-top: 15px; padding: 8px 30px; background-color: #8d6e63; border: 2px solid #5d4037; border-radius: 8px; color: white; font-weight: bold; font-size: 16px; cursor: pointer; transition: transform 0.2s, background-color 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .loading-cancel-btn:hover {
-            background-color: #6d4c41;
-            transform: scale(1.05);
-        }
+        .loading-cancel-btn:hover { background-color: #6d4c41; transform: scale(1.05); }
 
-        /* --- [수정] 랭킹 트리 배치 --- */
+        /* --- 랭킹 트리 --- */
         .ranking-tree { 
-            position: fixed; 
-            right: 3%; 
-            top: 55%; 
-            transform: translateY(-50%); 
-            /* [수정] 룸 패널(z-index: 10)보다 뒤로 가도록 설정 */
-            z-index: 1; 
-            cursor: pointer; 
-            transition: transform 0.3s ease; 
+            position: fixed; right: 3%; top: 55%; transform: translateY(-50%); 
+            z-index: 1; cursor: pointer; transition: transform 0.3s ease; 
         }
         .ranking-tree:hover { transform: translateY(-50%) scale(1.05); }
         .ranking-tree img { width: var(--tree-w); height: auto; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); }
 
         .room-panel-container { 
-            position: fixed; 
-            top: 50%; left: 44%; 
-            transform: translate(-50%, -50%); 
-            z-index: 10; /* 트리보다 높은 레이어 */
+            position: fixed; top: 50%; left: 44%; transform: translate(-50%, -50%); z-index: 10; 
         }
         .room-panel { position: relative; display: flex; flex-direction: column; width: var(--room-panel-width); height: var(--room-panel-height); padding: 85px 95px 80px; overflow: visible; }
         .room-panel::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: url('<%= request.getContextPath() %>/assets/images/main/RoomBox.png'); background-size: 100% 100%; background-position: center; background-repeat: no-repeat; opacity: 0.85; transition: opacity 0.3s ease; z-index: -1; }
@@ -165,12 +107,7 @@
         .room-status.playing { color: #ff4d4d; }
         .room-players { font-size: 12px; margin-top: 3px; }
         
-        .empty-room { 
-            visibility: hidden; 
-            pointer-events: none; 
-            cursor: default; 
-        }
-        
+        .empty-room { visibility: hidden; pointer-events: none; cursor: default; }
         .empty-message { font-size: 20px; color: #fff; text-align: center; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); font-weight: bold; }
 
         .page-navigation { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 40px; z-index: 3; }
@@ -186,13 +123,12 @@
         .config-icon:hover { transform: scale(1.1) rotate(30deg); }
         .config-icon img { width: var(--config-w); height: auto; }
 
-        /* 설정 팝업 CSS */
+        /* 설정 팝업 */
         .config-popup {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0, 0, 0, 0.5); z-index: 9998;
             display: none; justify-content: center; align-items: center;
         }
-
         .config-popup.show { display: flex !important; }
 
         .config-box {
@@ -212,7 +148,6 @@
         .btn-close-popup:hover { background: #5d2906; }
 
         .config-menu-group { display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%; margin-top: -20px; }
-
         .img-btn { display: block; width: 180px; height: auto; cursor: pointer; transition: transform 0.2s; }
         .img-btn:hover { transform: scale(1.05); }
         .img-btn:active { transform: scale(0.95); }
@@ -223,12 +158,10 @@
             background-size: 100% 100%; background-repeat: no-repeat;
             display: flex; align-items: center; justify-content: center; margin-top: 5px;
         }
-
         .input-box-wrapper input {
             width: 90%; height: 80%; background: transparent; border: none; outline: none;
             text-align: center; font-family: 'Arial', sans-serif; font-size: 14px; color: #5d4037;
         }
-        
         .input-label { font-size: 12px; color: #5d4037; margin-bottom: -10px; font-weight: bold; }
 
         .volume-image-wrapper {
@@ -238,9 +171,7 @@
             background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
             display: flex; justify-content: center; align-items: center;
         }
-
         .volume-track-area { position: absolute; width: 260px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); cursor: pointer; }
-
         .volume-knob {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -40%);
             width: 40px; height: 50px;
@@ -267,13 +198,9 @@
     <div id="loadingOverlay" class="loading-overlay">
         <div class="loading-container">
             <div class="spinner-wrapper">
-                <img src="<%= request.getContextPath() %>/assets/images/main/loading_wreath.png" 
-                     class="wreath-img" alt="Loading Wreath">
-                
-                <img src="<%= request.getContextPath() %>/assets/images/main/loading_text.png" 
-                     class="loading-text-img" alt="Loading...">
+                <img src="<%= request.getContextPath() %>/assets/images/main/loading_wreath.png" class="wreath-img" alt="Loading Wreath">
+                <img src="<%= request.getContextPath() %>/assets/images/main/loading_text.png" class="loading-text-img" alt="Loading...">
             </div>
-            
             <div class="loading-status-text">방을 생성하는 중...</div>
             <button class="loading-cancel-btn" onclick="DELETE_ROOM()">취소</button>
         </div>
@@ -282,20 +209,14 @@
     <div id="configPopup" class="config-popup">
         <div class="config-box">
             <button class="btn-close-popup" onclick="closeConfigPopup()">X</button>
-
             <div class="config-menu-group">
-                <img src="<%= request.getContextPath() %>/assets/images/main/ConfigPopUp/logout_btn.png" 
-                     alt="로그아웃" class="img-btn" onclick="handleLogout()">
-                
-                <img src="<%= request.getContextPath() %>/assets/images/main/ConfigPopUp/deleteMem.png" 
-                     alt="회원탈퇴" class="img-btn" onclick="requestWithdrawal()">
-                
+                <img src="<%= request.getContextPath() %>/assets/images/main/ConfigPopUp/logout_btn.png" alt="로그아웃" class="img-btn" onclick="handleLogout()">
+                <img src="<%= request.getContextPath() %>/assets/images/main/ConfigPopUp/deleteMem.png" alt="회원탈퇴" class="img-btn" onclick="requestWithdrawal()">
                 <div class="input-label">Password Check</div>
                 <div class="input-box-wrapper">
                     <input type="password" id="withdrawalPw" placeholder="비밀번호 입력">
                 </div>
             </div>
-
             <div class="volume-image-wrapper">
                 <div id="volumeTrack" class="volume-track-area">
                     <div id="volumeKnob" class="volume-knob"></div>
@@ -306,7 +227,6 @@
 
     <div style="display:none;">
         <form id="logoutForm" action="<%= request.getContextPath() + Constants.SIGNOUT %>" method="get"></form>
-        
         <form id="withdrawForm" action="<%= request.getContextPath() + Constants.WITHDRAW %>" method="post">
             <input type="hidden" name="user_pw" id="hiddenPw">
         </form>
@@ -324,9 +244,7 @@
 
     <main class="room-panel-container">
         <div class="room-panel">
-            <div id="roomsGrid" class="rooms-grid">
-                </div>
-
+            <div id="roomsGrid" class="rooms-grid"></div>
             <div class="page-navigation">
                 <div id="prevBtn" class="nav-arrow arrow-left" onclick="changePage(-1)">
                     <img src="<%= request.getContextPath() %>/assets/images/main/Arrow_left.png" alt="이전 페이지">
@@ -360,7 +278,6 @@
         
         let currentVolume = 0.5;
         let isDraggingVolume = false;
-
         let creatingRoomKey = 0;
 
         const urlParams = new URLSearchParams(window.location.search);
@@ -381,25 +298,37 @@
             debugLog('SFX 재생 시도: ' + name);
         }
 
+        // ========== [수정됨] 강력한 BGM 재생 로직 ==========
         function startBgm() {
             debugLog('BGM 시작 로직 진입');
             const audio = document.getElementById('bgmAudio');
-            if(!audio) return;
+            if (!audio) return;
 
+            // 저장된 볼륨 적용
             audio.volume = currentVolume;
+
+            // 저장된 재생 시간 복원 (페이지 이동 간 연속성)
             const savedTime = sessionStorage.getItem('omok_bgm_time');
             if (savedTime) {
                 audio.currentTime = parseFloat(savedTime);
+                debugLog('저장된 BGM 시간 복원: ' + savedTime);
             }
 
+            // 재생 시도
             const playPromise = audio.play();
+
             if (playPromise !== undefined) {
                 playPromise.then(() => {
-                    debugLog('BGM 재생 성공');
+                    debugLog('BGM 자동 재생 성공');
                 }).catch(error => {
-                    document.addEventListener('click', function playOnFirstClick() {
-                        audio.play();
-                        document.removeEventListener('click', playOnFirstClick);
+                    debugLog('자동 재생 실패(브라우저 정책). 클릭 대기 중...');
+                    // 브라우저 정책으로 자동 재생이 막혔을 때, 화면의 아무 곳이나 클릭하면 바로 재생되도록 이벤트 등록
+                    document.body.addEventListener('click', function playOnInteraction() {
+                        audio.play().then(() => {
+                            debugLog('사용자 클릭으로 BGM 시작');
+                        });
+                        // 한 번 실행 후 이벤트 제거
+                        document.body.removeEventListener('click', playOnInteraction);
                     }, { once: true });
                 });
             }
@@ -409,10 +338,14 @@
             if (debugMode) document.getElementById('debugConsole').classList.add('show');
             initVolumeControl();
             loadVolumeFromStorage();
+            
+            // 페이지 로드 시 무조건 BGM 시작 시도
             startBgm();
+            
             connectWebSocket();
         };
 
+        // 페이지를 떠날 때 현재 재생 시간 저장
         window.onbeforeunload = function() {
             const audio = document.getElementById('bgmAudio');
             if (audio && !audio.paused) {
@@ -502,6 +435,7 @@
 
         function goToRanking() {
             playSfx('click');
+            // 페이지 이동 전 재생 시간 저장은 window.onbeforeunload에서 처리됨
             window.location.href = CTX + '/rank';
         }
 
@@ -554,7 +488,7 @@
                     hideLoading();
                     isCreatingRoom = false;
                 } else if (message.type === 'START') {
-                	window.location.href = "main/game?roomId=" + message.roomId;
+                    window.location.href = "main/game?roomId=" + message.roomId;
                 }
             } catch (error) {
                 console.error('메시지 파싱 에러:', error);
@@ -756,7 +690,7 @@
                 hideLoading();
                 return;
             }
-			const message = { type: 'DELETE_ROOM', data: { roomId: creatingRoomKey } };
+            const message = { type: 'DELETE_ROOM', data: { roomId: creatingRoomKey } };
             websocket.send(JSON.stringify(message));
             hideLoading();
         }
@@ -770,7 +704,7 @@
                  const message = { type: 'OBSERVE_ROOM', roomId : roomKey };
                  websocket.send(JSON.stringify(message));
              }
-     	}
+        }
     </script>
 </body>
 </html>

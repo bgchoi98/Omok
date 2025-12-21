@@ -27,11 +27,7 @@ public class RoomRepository {
         return instance;
     }
 
-    /**
-     * 방 생성 및 저장
-     * @param lobbyUser 방을 생성하는 로비 유저
-     * @return 생성된 Room 객체
-     */
+
 	public Room save(LobbyUser lobbyUser) {
 		
 		// 1. 로비 유저가 게임 유저로 변경됨 
@@ -52,34 +48,17 @@ public class RoomRepository {
 		return savedRoom;
 	}
 
-	/**
-	 * 모든 방 조회 (종료된 방 제외)
-	 * @return 방 리스트
-	 */
+
 	public List<Room> findAll() {
-	    List<Room> result = new ArrayList<>();
-	    for (Room room : rooms.values()) {
-	        if (room.getRoomStatus() != RoomStatus.END) {	// 게임끝난 방은 조회안하도록
-	            result.add(room);
-	        }
-	    }
-	    return result;
+		return new ArrayList<>(rooms.values());
 	}
 
-    /**
-     * 방 ID로 방 조회
-     * @param roomId 방 ID
-     * @return Room 객체 또는 null
-     */
+
 	public Room findById(Long roomId) {
 		return rooms.get(roomId);
 	}
 
-    /**
-     * 특정 상태의 방들만 조회
-     * @param status 방 상태
-     * @return 해당 상태의 방 리스트
-     */
+
 	public List<Room> findByStatus(RoomStatus status) {
 		List<Room> result = new ArrayList<>();
 		for (Room room : rooms.values()) {
@@ -90,11 +69,7 @@ public class RoomRepository {
 		return result;
 	}
 
-    /**
-     * 방 삭제
-     * @param roomId 삭제할 방 ID
-     * @return 삭제 성공 여부
-     */
+
 	public boolean deleteRoom(Long roomId) {
 		try {
 			Room removed = rooms.remove(roomId);
@@ -105,26 +80,15 @@ public class RoomRepository {
 		}
 	}
 
-    /**
-     * 방이 존재하는지 확인
-     * @param roomId 방 ID
-     * @return 존재 여부
-     */
+
 	public boolean existsById(Long roomId) {
 		return rooms.containsKey(roomId);
 	}
 
-    /**
-     * 전체 방 개수
-     * @return 방 개수
-     */
 	public int count() {
 		return rooms.size();
 	}
 
-    /**
-     * 모든 방 삭제 (테스트용)
-     */
 	public void deleteAll() {
 		rooms.clear();
 	}

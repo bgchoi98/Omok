@@ -7,18 +7,6 @@
 <%
   if (request.getAttribute("ranks") == null) {
     List<Rank> ranks = new ArrayList<>();
-    try {
-      ranks.add(new Rank(0L, 12, 2, "Tomas"));
-      ranks.add(new Rank(0L, 10, 5, "Scott"));
-      ranks.add(new Rank(0L, 8,  4, "Allen"));
-      ranks.add(new Rank(0L, 7,  7, "Kate"));
-      ranks.add(new Rank(0L, 5,  3, "James"));
-      ranks.add(new Rank(0L, 4, 10, "Alice"));
-      ranks.add(new Rank(0L, 3,  2, "Bob"));
-      ranks.add(new Rank(0L, 2,  8, "Sam"));
-      ranks.add(new Rank(0L, 1, 12, "Mike"));
-      ranks.add(new Rank(0L, 0, 15, "Zoe"));
-    } catch (Exception e) { e.printStackTrace(); }
     request.setAttribute("ranks", ranks);
   }
 %>

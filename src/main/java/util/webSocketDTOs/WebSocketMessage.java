@@ -3,7 +3,7 @@ package util.webSocketDTOs;
 
 public class WebSocketMessage {
     private MessageType type;
-    private String gameId; // 게임 대기 화면에서는 필요 없다.
+    private String gameId; // 로비 웹소켓에서는 필요없고 게임 웹소켓에서 필요 (게임 방 식별)
     private Object data;
     
     public WebSocketMessage() {}

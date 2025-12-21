@@ -19,7 +19,6 @@
 			:root {
 
             /* 기존 변수 */
-
             --room-panel-width: clamp(900px, 85vw, 1200px);
             --room-panel-height: clamp(600px, 75vh, 720px);
             --tree-w: clamp(390px, 36vw, 570px);
@@ -584,8 +583,7 @@
             roomPlayers.className = 'room-players';
             const playerCount = (room.gameUsers && room.gameUsers.length) || 0;
             roomPlayers.textContent = playerCount + '/2';
-         	
-            // 게임중일경우 display none
+         	// 게임중일경우 display none
             if (playerCount === 2) {
                 roomPlayers.style.display = 'none';
             }
@@ -659,7 +657,7 @@
             }
 
             try {
-                const userId = '<%= user.getUserId() %>';
+                const userId = '<%= user.getSignId() %>';
                 let hash = 0;
                 for (let i = 0; i < userId.length; i++) {
                     hash = ((hash << 5) - hash) + userId.charCodeAt(i);

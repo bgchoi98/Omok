@@ -9,6 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import game.GameWebSocket;
 import user.dto.SignInForm;
 import user.dto.SignUpForm;
 import util.Constants;
@@ -26,7 +30,7 @@ import util.Constants;
 public class UserController extends HttpServlet {
 	
 	private static final UserService USERSERVICE = UserService.getInstance();
-
+	private static final Logger log = LoggerFactory.getLogger(UserController.class);
 	
 	protected void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
 		String uri = req.getRequestURI().substring(req.getContextPath().length());   
@@ -69,12 +73,15 @@ public class UserController extends HttpServlet {
 			
 			SignUpForm joinform = new SignUpForm(id, pw, email, nickname);	// 서버단 검증 객체 생성
 			
-			boolean isValid = joinform.joinValidation();
+			boolean isValid = joinform.joinValidation(); // 입력이 null 이 아닌지 검증
 			
 			if (isValid) {
 				User user = new User(id, pw, email, nickname);
-				User savedUser = USERSERVICE.signUp(user);
-				System.out.println(savedUser.toString()); // 테스트용 출력 (회원가입 정보)
+				User savedUser = USERSERVICE.signUp(user); // 입력이 중복인지 아닌지 service 레이어에서 검증
+				log.info("new Member join : {}, {}, {}, {}", 
+						savedUser.getSignId(), savedUser.getPassword(), 
+						savedUser.getNickname(), savedUser.getNickname());
+
 				
 				res.sendRedirect(req.getContextPath() + Constants.SIGNIN + "?msg=register");
 			} else {
@@ -127,7 +134,7 @@ public class UserController extends HttpServlet {
 	            }
 	  
 	            User user = (User) session.getAttribute(Constants.SESSION_KEY);
-	            boolean isDeleted = USERSERVICE.withdraw(user.getUserId());
+	            boolean isDeleted = USERSERVICE.withdraw(user.getUserSeq());
 	            
 	            if (isDeleted) {
 	               // 성공 시 세션 파기하고 메인으로

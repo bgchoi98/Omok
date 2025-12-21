@@ -177,27 +177,41 @@ public class GameService {
         boolean gameOver = gameState.isGameOver();
         
         // 게임 종료 여부 검증
-//        if (gameOver) {
-//        	
-//        	// 게임 종료 시 전적 (Rank) 업데이트
-//        	User winner = userService.findByNickName(gameState.getWinner());
-//        	Long winnerId = winner.getUserSeq();
-//        	Rank winUserRank = rankService.findById(winnerId);
-//        	winUserRank.addWin();
-//        	rankService.update(winUserRank);
-//        	
-//        	String loserName = gameState.getWinner() == gameState.getBlackPlayer() ? gameState.getWhitePlayer() : gameState.getBlackPlayer();  
-//        	User loser = userService.findByNickName(loserName);
-//        	Long loserId = loser.getUserSeq();
-//        	Rank loseUserRank = rankService.findById(loserId);
-//        	loseUserRank.addLose();
-//        	rankService.update(loseUserRank);
-//        	        	
-//        	
-//            log.info("isGameOver: Game is over, roomSeq={}, winner={}", 
-//                roomSeq, gameState.getWinner());
-//        }
-//        
+        if (gameOver) {
+        	
+        	// 게임 종료 시 전적 (Rank) 업데이트
+        	User winner = userService.findByNickName(gameState.getWinner());
+        	Long winnerId = winner.getUserSeq();
+        	Rank winUserRank = rankService.findById(winnerId);
+        	
+        	// 게임이 계정 생성 후 첫 판이라면 Rank 테이블에 save
+        	if (winUserRank == null) {
+                Rank newRank = new Rank(winnerId, 1, 0, 100, winner.getNickname()); // 계정 생성 후 첫 승 시 승리 1, 패배 0, 승률 100
+                rankService.save(newRank);
+        	} else { // 두 번째 판부터는 Rank 테이블에 update
+        		winUserRank.addWin();
+            	rankService.update(winUserRank);
+        	}
+        
+        	String loserName = gameState.getWinner().equals(gameState.getBlackPlayer()) ? gameState.getWhitePlayer() : gameState.getBlackPlayer();
+        	User loser = userService.findByNickName(loserName);
+        	Long loserId = loser.getUserSeq();
+        	Rank loseUserRank = rankService.findById(loserId);
+        	
+        	// 게임이 계정 생성 후 첫 판이라면 Rank 테이블에 save
+        	if (loseUserRank == null) {
+                Rank newRank = new Rank(loserId, 0, 1, 0, loser.getNickname()); // 계정 생성 후 첫 승 시 승리 0, 패배 1, 승률 0
+                rankService.save(newRank);
+        	} else { // 두 번째 판부터는 Rank 테이블에 update
+        		loseUserRank.addLose();
+        		rankService.update(loseUserRank);
+        	}
+        	        	
+        	
+            log.info("isGameOver: Game is over, roomSeq={}, winner={}", 
+                roomSeq, gameState.getWinner());
+        }
+        
         return gameOver;
     }
     
@@ -220,3 +234,5 @@ public class GameService {
         return gameState.getWinner();
     }
 }
+
+

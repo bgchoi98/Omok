@@ -23,11 +23,7 @@ public class Room {
 	// 게임 상태
 	private GameState gameState;
 
-	/**
-	 * Room 생성자
-	 * @param roomStatus 방 상태
-	 * @param hostNickname 방장 닉네임
-	 */
+
 	public Room(RoomStatus roomStatus, String hostNickname) {
 		this.roomSeq = roomSeqGenerator++;
 		this.roomStatus = roomStatus;
@@ -58,51 +54,37 @@ public class Room {
 		return hostNickname;
 	}
 
-	/**
-	 * 해당 유저가 방장인지 확인
-	 * @param nickname 확인할 닉네임
-	 * @return 방장 여부
-	 */
+
+	// 해당 유저가 방장인지
 	public boolean isHost(String nickname) {
 		return this.hostNickname != null && this.hostNickname.equals(nickname);
 	}
 
-	/**
-	 * 방이 가득 찼는지 확인
-	 * @return 방이 가득 찼으면 true
-	 */
+
+	// 해당 방이 가득찼는지
 	public boolean isFull() {
 		return gameUsers.size() >= 2;
 	}
 
-	/**
-	 * 방이 비어있는지 확인
-	 * @return 방이 비어있으면 true
-	 */
+
+	// 해당 방이 비어있는지
 	public boolean isEmpty() {
 		return gameUsers.isEmpty();
 	}
 
-	/**
-	 * 방에 참가 가능한지 확인
-	 * @return 참가 가능하면 true
-	 */
+	// 해당 방에 참여 가능한지
 	public boolean canJoin() {
 		return roomStatus == RoomStatus.WAITING && !isFull();
 	}
 
-	/**
-	 * 게임 상태 조회
-	 * @return 게임 상태
-	 */
+
+	// 현재 게임 상태 조회
 	public GameState getGameState() {
 		return gameState;
 	}
 
-	/**
-	 * 게임 상태 설정
-	 * @param gameState 게임 상태
-	 */
+
+	// 게임 상태 수정
 	public void setGameState(GameState gameState) {
 		this.gameState = gameState;
 	}

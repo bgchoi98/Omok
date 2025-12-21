@@ -6,9 +6,9 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import util.OmokRepository;
+import util.JDBCRepository;
 
-public class RankRepository extends OmokRepository<Rank, Integer> {
+public class RankRepository extends JDBCRepository<Rank, Integer> {
 
 	private static volatile RankRepository instance;
 
@@ -30,26 +30,29 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 		return new Rank( rs.getLong("USERS_SEQ_ID")
 				       , rs.getInt("WIN")
 				       , rs.getInt("LOSE")
-				       , rs.getString("NICKNAME")
+				       , rs.getInt("RATE")
 				    );
 	}
 
 	@Override
-	public Rank save(Rank rank) { // 회원가입시 기본값 저장
+	public int save(Rank rank) { // 회원가입시 기본값 저장
 		String sql = 
 				     "INSERT INTO RANKS (USERS_SEQ_ID, WIN, LOSE, RATE) "
-				   + "VALUES (?,0,0,0)";
-		executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
+				   + "VALUES (?, ?, ?, ?)";
+		int insertForm = executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
 			@Override
 			public void accept(PreparedStatement pstmt) throws SQLException {
 				pstmt.setLong(1, rank.getUsers_seq_id());
+				pstmt.setInt(2, rank.getWin());
+				pstmt.setInt(3, rank.getLose());
+				pstmt.setInt(4, rank.getRate());
 			}
 		});
-		return rank;
+		return insertForm;
 	}
 
 	@Override
-	public Rank findById(int seqId) {
+	public Rank findById(Long seqId) {
 		String sql = 
 				     "SELECT "
 				   + "R.USERS_SEQ_ID, R.WIN, R.LOSE, R.RATE, U.NICKNAME "
@@ -60,7 +63,7 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 		return executeQuery(sql, new SQLConsumer<PreparedStatement>() {
 			@Override
 			public void accept(PreparedStatement pstmt) throws SQLException {
-				pstmt.setInt(1, seqId);
+				pstmt.setLong(1, seqId);
 			}
 		},
 				
@@ -72,7 +75,7 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 						return mapRow(rs);
 					}
 				} catch (SQLException e) {
-					// TODO Auto-generated catch block
+					
 					e.printStackTrace();
 				}
 				return null;
@@ -89,7 +92,6 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 				   + "R.USERS_SEQ_ID, R.WIN, R.LOSE, R.RATE, U.NICKNAME "
 				   + "FROM RANKS R INNER JOIN USERS U "
 				   + "ON R.USERS_SEQ_ID = U.SEQ_ID "
-				   + "WHERE (R.WIN + R.LOSE) > 0 "
 				   + "ORDER BY R.RATE DESC, R.WIN DESC";
 				
 			return executeQuery(sql, null, 
@@ -111,17 +113,33 @@ public class RankRepository extends OmokRepository<Rank, Integer> {
 		);
 	}
 
+
 	@Override
-	public int update(Rank rank) {
+	public Rank update(Rank r) {
+		
+		String sql = 
+			     "UPDATE RANKS "
+			     + "SET WIN = ?, LOSE = ?, RATE = ? "
+			     + "WHERE users_seq_id = ?";
+	executeUpdate(sql, new SQLConsumer<PreparedStatement>() {
+		@Override
+		public void accept(PreparedStatement pstmt) throws SQLException {
+			pstmt.setInt(1, r.getWin());
+            pstmt.setInt(2, r.getLose());
+            pstmt.setInt(3, r.getRate());
+            pstmt.setLong(4, r.getUsers_seq_id());
+		}
+	});
+	return r;
+	}
+
+	@Override
+	public int delete(Long id) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
-	@Override
-	public int delete(Integer e) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+
 
 	
 }

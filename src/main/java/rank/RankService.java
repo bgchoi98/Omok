@@ -23,8 +23,23 @@ public class RankService {
         }
         return instance;
     }
+   
+    
+   // 리포지토리에 위임
+   
+   public int save(Rank rank) {
+	   return RANKREPOSITORY.save(rank);
+   }
     
    public List<Rank> findAll() {
 	   return RANKREPOSITORY.findAll();
+   }
+   
+   public Rank findById(Long seqId) {
+	   return RANKREPOSITORY.findById(seqId);
+   }
+   
+   public Rank update(Rank rank) {
+	   return RANKREPOSITORY.update(rank);
    }
 }

@@ -1,4 +1,3 @@
-
 package util;
 
 
@@ -15,11 +14,11 @@ import javax.naming.NamingException;
 import javax.sql.DataSource;
 
 
-public abstract class OmokRepository <E, ID> {
+public abstract class JDBCRepository <E, ID> {
 	
 	private final DataSource dataSource;
 	
-	protected OmokRepository() {
+	protected JDBCRepository() {
 		try {
 			InitialContext ctx = new InitialContext();
 			this.dataSource = (DataSource) ctx.lookup("java:comp/env/jdbc/omokdb");
@@ -76,11 +75,11 @@ public abstract class OmokRepository <E, ID> {
     
     protected abstract E mapRow(ResultSet rs) throws SQLException;
 
-    public abstract E save(E e);
-    public abstract E findById(int id);
+    public abstract int save(E e);
+    public abstract E findById(Long id);
     public abstract List<E> findAll();
-    public abstract int update(E e);
-    public abstract int delete(ID id);
+    public abstract E update(E e);
+    public abstract int delete(Long id);
 
 	
 }

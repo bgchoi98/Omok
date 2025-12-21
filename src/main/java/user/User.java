@@ -4,8 +4,9 @@ import java.time.LocalDateTime;
 
 public class User {
 
-    private String userId;           // USER_ID
-    private String userPw;           // USER_PW
+	private Long userSeq;
+    private String signId;           // USER_ID
+    private String password;           // USER_PW
     private String email;            // EMAIL
     private LocalDateTime createdAt; // CREATED_AT
     private LocalDateTime deletedAt; // DELETED_AT
@@ -13,24 +14,33 @@ public class User {
 
     public User() {}
 
- // User.java
-    public User(String userId, String userPw, String email, String nickname) {
-
-        this.userId = userId;
-        this.userPw = userPw;
+    public User(String signId, String password, String email, String nickname) {
+        this.signId = signId;
+        this.password = password;
         this.email = email;
         this.nickname = nickname;
         this.createdAt = LocalDateTime.now();
     }
 
-
-
-    public String getUserId() {
-        return userId;
+    public User(Long userSeq, String signId, String password, String email, String nickname) {
+        this.userSeq = userSeq;
+        this.signId = signId;
+        this.password = password;
+        this.email = email;
+        this.nickname = nickname;
+        this.createdAt = LocalDateTime.now();
     }
 
-    public String getUserPw() {
-        return userPw;
+    public long getUserSeq() {
+    	return userSeq;
+    }
+    
+	public String getSignId() {
+        return signId;
+    }
+
+    public String getPassword() {
+        return password;
     }
 
     public String getEmail() {
@@ -38,7 +48,7 @@ public class User {
     }
 
 
-    public LocalDateTime getCreatedAt() {
+	public LocalDateTime getCreatedAt() {
         return createdAt;
     }
 
@@ -52,11 +62,7 @@ public class User {
 
 	@Override
 	public String toString() {
-		return "User [userId=" + userId + ", userPw=" + userPw + ", email=" + email + ", createdAt=" + createdAt
+		return "User [signId=" + signId + ", password=" + password + ", email=" + email + ", createdAt=" + createdAt
 				+ ", deletedAt=" + deletedAt + ", nickname=" + nickname + "]";
-	}
-
-    
- 
-
+	} 
 }

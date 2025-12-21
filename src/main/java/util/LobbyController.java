@@ -38,6 +38,8 @@ public class LobbyController extends HttpServlet {
 			req.getRequestDispatcher(Constants.VIEW_MAIN).forward(req, res);
 			
 		} else if (uri.equals(contextPath+"/main/game")) {	// 게임 입장 임시
+			System.out.println("Dasdadsadasd");
+			
 		    RequestDispatcher dispatcher =
 		            req.getRequestDispatcher("/WEB-INF/views/game.jsp");
 		    dispatcher.forward(req, res);

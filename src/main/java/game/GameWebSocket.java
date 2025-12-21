@@ -62,7 +62,7 @@ public class GameWebSocket {
 		// HTTP 세션에서 User 가져오기
         HttpSession httpSession = (HttpSession) config.getUserProperties()
             .get(HttpSession.class.getName());
-        System.out.println("게임 들어옴");
+        
         // 세션 검증
         if (httpSession == null) {
             closeSession(session, "No HTTP session");
@@ -81,7 +81,7 @@ public class GameWebSocket {
         // 세션에 유저 정보 저장
         session.getUserProperties().put("user", user);
         session.getUserProperties().put("nickname", user.getNickname());
-        
+     
         
         log.info("Game WebSocket connected: {}", user.getNickname());
 	}
@@ -101,7 +101,7 @@ public class GameWebSocket {
 			String nickname = user.getNickname();
 			JsonObject json = gson.fromJson(message, JsonObject.class);
 			String type = json.get("type").getAsString();
-
+			
 			log.debug("Game message received - type: {}, from: {}", type, nickname);
 			
 			switch (type) {
@@ -150,8 +150,8 @@ public class GameWebSocket {
 	            
 	            // 방에 웹소켓 세션이 하나도 없을 경우 방 삭제
 	            if (sessions.isEmpty()) {
-	                roomSessions.remove(roomSeq);
-	                roomRepository.deleteRoom(roomSeq);
+					roomRepository.deleteRoom(roomSeq);
+					roomSessions.remove(roomSeq);
 	            }
 	        }
 	    }
@@ -188,7 +188,7 @@ public class GameWebSocket {
 			sendError(session, "방 번호가 없습니다.");
 			return;
 		}
-		System.out.println("여기들어옴");
+		
 		Long roomSeq = json.get("roomSeq").getAsLong();
 		Room room = roomRepository.findById(roomSeq); // JSON 으로 받아온 roomSeq 을 통해 Room 을 리포지토리에서 조회
 		
@@ -305,7 +305,7 @@ public class GameWebSocket {
 	// 2. 돌 착수 처리
 	private void makeMove(Session session, JsonObject json, String nickname) {
 		Long roomSeq = (Long) session.getUserProperties().get("roomSeq");
-		System.out.println("룸아이디 조회:" + roomSeq);
+		
 		// room 검증
 		if (roomSeq == null) {
 			sendError(session, "게임 방에 참여하지 않았습니다.");
@@ -320,7 +320,7 @@ public class GameWebSocket {
 		
 		int row = json.get("row").getAsInt();
 		int col = json.get("col").getAsInt();
-		System.out.println("돌 둔 위치: " + row + " : " + col);
+		
 		// 게임 유저인지 검증 (관전자는 돌을 둘 수 없으며 프론트단에서 먼저 돌을 못두도록 막아둬야 한다) 
 		if (!gameService.isGameUser(roomSeq, nickname)) {
 			sendError(session, "플레이어만 착수할 수 있습니다.");
@@ -426,11 +426,13 @@ public class GameWebSocket {
 		}
 		
 		broadcastToRoom(roomSeq, gson.toJson(gameOverMsg), null);
-		// room이 삭제 됐으면 룸상태 변경
+
+		// 현재 룸
 		Room room = roomRepository.findById(roomSeq);
-	    if (room != null) {
-	        room.setRoomStatus(RoomStatus.END);
-	    }
+		if (room != null) {
+			room.setRoomStatus(RoomStatus.END);
+		}
+
 		log.info("Game over in room {}: winner = {}", roomSeq, winner);
 	}
 	

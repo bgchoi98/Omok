@@ -1,6 +1,6 @@
 package user;
 
-import util.OmokRepository;
+import util.JDBCRepository;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 import rank.*;
 import user.User;
 
-public class UserRepository extends OmokRepository<User, String> {
+public class UserRepository extends JDBCRepository<User, String> {
 
 	private static volatile UserRepository instance;
 
@@ -29,8 +29,9 @@ public class UserRepository extends OmokRepository<User, String> {
 
 	@Override
 	protected User mapRow(ResultSet rs) throws SQLException {
-	    return new User(        
-	                   rs.getString("USER_ID")
+	    return new User(
+				         rs.getLong("SEQ_ID")
+				       , rs.getString("USER_ID")
 	                   , rs.getString("USER_PW")
 	                   , rs.getString("EMAIL")
 	                   , rs.getString("NICKNAME")
@@ -39,29 +40,46 @@ public class UserRepository extends OmokRepository<User, String> {
 
 	// 기존에 상원님이 만들어 두신거 (회원가입으로 처리함)
 	@Override
-	public User save(User user) {
+	public int save(User user) {
 		String sql = 
 				     "INSERT INTO USERS (USER_ID, USER_PW, EMAIL, NICKNAME, CREATED_AT) "
 				   + "VALUES (?, ?, ?, ?, ?)";
-		// insert문 호출 
+		// insert 문 호출 
 		// JDBC INSERT 리턴값은 0(성공) / 1(실패)
 		int inserForm = executeUpdate(sql, pstmt -> {
-			pstmt.setString(1, user.getUserId());
-			pstmt.setString(2, user.getUserPw());
+			pstmt.setString(1, user.getSignId());
+			pstmt.setString(2, user.getPassword());
 			pstmt.setString(3, user.getEmail());
 			pstmt.setString(4, user.getNickname());
 			pstmt.setObject(5, LocalDateTime.now());
 		});
 		
-		if (inserForm > 0) {	//insert 성공 시 vo객체 반환 (회원가입 요청한 데이터)
-			RankRepository.getInstance().save(new Rank(findBySeq_Id(user.getUserId())));
-			return user;
-		}
 		
-		return null;
+		
+		return inserForm;
 	}
 	
-	// rank테이블 seq_id 자동 삽입용
+	@Override
+	public User findById(Long seqId) {
+		String sql = 
+				     "SELECT "
+				   + "SEQ_ID, USER_ID, USER_PW, EMAIL, NICKNAME, CREATED_AT, DELETED_AT "
+				   + "FROM USERS "
+				   + "WHERE SEQ_ID = ?";
+
+		return executeQuery(sql, pstmt -> pstmt.setLong(1, seqId), rs -> {
+			try {
+				if (rs.next()) {
+					return mapRow(rs);
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			return null;
+		});
+	}
+	
+	/* rank테이블 seq_id 자동 삽입용
 	public Long findBySeq_Id(String id) {
 		String sql = 
 				     "SELECT "
@@ -80,28 +98,9 @@ public class UserRepository extends OmokRepository<User, String> {
 			return null;
 		});
 	}
+	*/
 	
-	
-	@Override
-	public User findById(int id) {
-		String sql = 
-				     "SELECT "
-				   + "SEQ_ID, USER_ID, USER_PW, EMAIL, NICKNAME, CREATED_AT, DELETED_AT "
-				   + "FROM USERS "
-				   + "WHERE SEQ_ID = ?";
 
-		return executeQuery(sql, pstmt -> pstmt.setInt(1, id), rs -> {
-			try {
-				if (rs.next()) {
-					return mapRow(rs);
-				}
-			} catch (SQLException e) {
-				e.printStackTrace();
-			}
-			return null;
-		});
-	}
-	
 	// 로그인 아이디로 회원 조회
 	public User findBySignId(String signId) {
 		String sql = 
@@ -150,22 +149,25 @@ public class UserRepository extends OmokRepository<User, String> {
 	}
 
 	@Override
-	public int update(User e) {
+	public User update(User e) {
 		// TODO Auto-generated method stub
-		return 0;
+		return null;
 	}
 
 	@Override  
-    public int delete(String id) {
+    public int delete(Long id) {
        //String sql = "DELETE FROM USERS WHERE user_id = ?";
        String sql = 
     		        "UPDATE USERS SET DELETED_AT = NOW() "
-       		      + "WHERE USER_ID = ?"; // soft Delete
+       		      + "WHERE SEQ_ID = ?"; // soft Delete
       
        // 회원 삭제(탈퇴) 쿼리
        return executeUpdate(sql, pstmt -> {
-          pstmt.setString(1, id);
+           pstmt.setLong(1, id);
        });
    }
+
+
+
 
 }

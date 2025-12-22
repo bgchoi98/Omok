@@ -204,7 +204,8 @@
     .rank-item{
       width:100%;
       display:grid;
-      grid-template-columns: 40px minmax(0, 1fr) 70px; /* 등수 / 닉 / 승패 */
+      grid-template-columns: 40px minmax(0, 1fr) 70px 50px; /* 등수 / 닉네임 / 승패 / 승률 */
+     /* grid-template-columns: 40px minmax(0, 1fr) 70px; /* 등수 / 닉 / 승패 */
       column-gap: 6px;
       align-items:center;
 
@@ -225,10 +226,18 @@
       min-width: 0;
     }
     .rank-score{
+      text-align:center;
+      white-space:nowrap;
+      font-size: 0.95em;
+      letter-spacing: 0.2px;
+      min-width: 70px;
+    }
+    .rank-rate{
       text-align:right;
       white-space:nowrap;
       font-size: 0.95em;
       letter-spacing: 0.2px;
+      min-width: 50px;
     }
 
     .rank-item.top-1{
@@ -275,7 +284,8 @@
         --ui-shift-x: 0px;
       }
       .back-btn{ width: clamp(110px, 18vw, 170px); }
-      .rank-item{ grid-template-columns: 38px minmax(0,1fr) 66px; }
+      /*.rank-item{ grid-template-columns: 38px minmax(0,1fr) 66px; }*/
+      .rank-item{ grid-template-columns: 38px minmax(0,1fr) 66px 48px; } /* 4개 컬럼으로 수정 */
       .rank-list{ padding-right: 30px; gap: 7px; }
     }
   </style>
@@ -319,6 +329,7 @@
               </span>
               <span class="rank-name">${r.nickName}</span>
               <span class="rank-score">${r.win}W ${r.lose}L</span>
+              <span class="rank-rate">${r.rate}%</span>
             </div>
           </c:forEach>
 

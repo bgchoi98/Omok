@@ -50,7 +50,13 @@ public class RoomRepository {
 
 
 	public List<Room> findAll() {
-		return new ArrayList<>(rooms.values());
+		List<Room> result = new ArrayList<>();
+	    for (Room room : rooms.values()) {
+	        if (room.getRoomStatus() != RoomStatus.END) {	// 게임종료방 제외 조회
+	            result.add(room);
+	        }
+	    }
+	    return result;
 	}
 
 

@@ -67,8 +67,9 @@ public class UserService {
     public boolean isIdExist(String userID) {	
         User user = USERREPOSITORY.findBySignId(userID);
         if (user != null) { // 중복된 ID가 없을때
-        	return false;
-        } else if (user.getDeletedAt() != null) {
+        	if (user.getDeletedAt() != null) {
+            	return false;
+            }
         	return false;
         }
         return true;

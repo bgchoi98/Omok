@@ -120,6 +120,11 @@ public class GameWebSocket {
 			case "CHAT":
 				chat(session, json, nickname);
 				break;
+			
+			// 4. 기권/나가기
+			case "EXIT":
+			    handleExit(session, nickname);
+			    break;
 				
 			default:
 				log.warn("Unknown game message type: {}", type);
@@ -134,28 +139,62 @@ public class GameWebSocket {
 	}
 	
 	// game.jsp -> main.jsp 로 이동 시 (게임 종료 혹은 관전 나가기, 게임 탈주)
+//	@OnClose
+//	public void onClose(Session session) {
+//		
+//	    // 맵에서 nickname, roomSeq 가져오기
+//	    String nickname = sessionNicknameMap.get(session);
+//	    Long roomSeq = sessionRoomMap.get(session);
+//
+//	    if (nickname != null && roomSeq != null) {
+//	        // 방에 해당하는 모든 세션들 조회
+//	        Set<Session> sessions = roomSessions.get(roomSeq);
+//	        if (sessions != null) {
+//	        	// 나간 사람의 웹소켓 세션 삭제
+//	            sessions.remove(session);
+//	            
+//	            // 방에 웹소켓 세션이 하나도 없을 경우 방 삭제
+//	            if (sessions.isEmpty()) {
+//					roomRepository.deleteRoom(roomSeq);
+//					roomSessions.remove(roomSeq);
+//	            }
+//	        }
+//	    }
 	@OnClose
 	public void onClose(Session session) {
-		
-	    // 맵에서 nickname, roomSeq 가져오기
+
 	    String nickname = sessionNicknameMap.get(session);
 	    Long roomSeq = sessionRoomMap.get(session);
 
 	    if (nickname != null && roomSeq != null) {
-	        // 방에 해당하는 모든 세션들 조회
-	        Set<Session> sessions = roomSessions.get(roomSeq);
-	        if (sessions != null) {
-	        	// 나간 사람의 웹소켓 세션 삭제
-	            sessions.remove(session);
-	            
-	            // 방에 웹소켓 세션이 하나도 없을 경우 방 삭제
-	            if (sessions.isEmpty()) {
-					roomRepository.deleteRoom(roomSeq);
-					roomSessions.remove(roomSeq);
+
+	        // 게임 유저 & 게임 진행 중이면 → 기권 처리
+	        if (gameService.isGameUser(roomSeq, nickname)) {
+	            GameState gameState = gameService.getGameState(roomSeq);
+
+	            if (gameState != null && !gameState.isGameOver()) {
+	                gameState.quit(nickname);
+
+	                String winner = gameState.getWinner();
+
+	                JsonObject msg = new JsonObject();
+	                msg.addProperty("type", "GAME_OVER");
+	                msg.addProperty("result", "WIN");
+	                msg.addProperty("winner", winner);
+	                msg.addProperty(
+	                    "message",
+	                    nickname + "님이 게임을 나가 " + winner + "님이 승리했습니다."
+	                );
+
+	                broadcastToRoom(roomSeq, gson.toJson(msg), session);
+
+	                Room room = roomRepository.findById(roomSeq);
+	                if (room != null) {
+	                    room.setRoomStatus(RoomStatus.END);
+	                }
 	            }
 	        }
 	    }
-
 	    // 세션 관련 정보 제거
 	    sessionNicknameMap.remove(session);
 	    sessionRoomMap.remove(session);
@@ -416,6 +455,48 @@ public class GameWebSocket {
 		log.debug("Chat in room {}: {} - {}", roomSeq, nickname, message);
 	}
 	
+	// 4. 기권 처리 
+	private void handleExit(Session session, String nickname) {
+
+	    Long roomSeq = sessionRoomMap.get(session);
+	    if (roomSeq == null) {
+	        return;
+	    }
+
+	    // 게임 유저가 아니면 (관전자) → 그냥 나가기
+	    if (!gameService.isGameUser(roomSeq, nickname)) {
+	        return;
+	    }
+
+	    GameState gameState = gameService.getGameState(roomSeq);
+	    if (gameState == null || gameState.isGameOver()) {
+	        return;
+	    }
+
+	    // 기권 처리
+	    gameState.quit(nickname);
+
+	    String winner = gameState.getWinner();
+
+	    JsonObject msg = new JsonObject();
+	    msg.addProperty("type", "GAME_OVER");
+	    msg.addProperty("result", "WIN");
+	    msg.addProperty("winner", winner);
+	    msg.addProperty(
+	        "message",
+	        nickname + "님이 기권하여 " + winner + "님이 승리했습니다."
+	    );
+
+	    broadcastToRoom(roomSeq, gson.toJson(msg), null);
+
+	    // 방 상태 종료
+	    Room room = roomRepository.findById(roomSeq);
+	    if (room != null) {
+	        room.setRoomStatus(RoomStatus.END);
+	    }
+
+	    log.info("Player quit: roomSeq={}, quitter={}, winner={}", roomSeq, nickname, winner);
+	}
 
 	/*
 	---------------------------------------------------------------------------------------------------

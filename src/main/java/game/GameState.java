@@ -178,4 +178,18 @@ public class GameState {
     public static int getBoardSize() {
         return BOARD_SIZE;
     }
+    
+    public synchronized void quit(String quitterNickname) {
+        if (gameOver) {
+            return;
+        }
+
+        this.gameOver = true;
+
+        if (quitterNickname.equals(blackPlayer)) {
+            this.winner = whitePlayer;
+        } else if (quitterNickname.equals(whitePlayer)) {
+            this.winner = blackPlayer;
+        }
+    }
 }

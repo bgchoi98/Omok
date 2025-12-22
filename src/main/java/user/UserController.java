@@ -133,8 +133,15 @@ public class UserController extends HttpServlet {
 
 	            }
 	  
+	            String inputPassword = req.getParameter("user_pw");
+	            
+	            if (inputPassword == null || inputPassword.trim().isEmpty()) {
+	                res.sendRedirect(req.getContextPath() + Constants.MAIN + "?error=no_password");
+	                return;
+	            }
+	            
 	            User user = (User) session.getAttribute(Constants.SESSION_KEY);
-	            boolean isDeleted = USERSERVICE.withdraw(user.getUserSeq());
+	            boolean isDeleted = USERSERVICE.withdraw(user.getUserSeq(), inputPassword);
 	            
 	            if (isDeleted) {
 	               // 성공 시 세션 파기하고 메인으로
@@ -142,7 +149,8 @@ public class UserController extends HttpServlet {
 	               res.sendRedirect(req.getContextPath() + Constants.SIGNIN + "?msg=bye");
 	            } else {
 	               // 실패 시 예외처리
-	               res.sendRedirect(req.getContextPath() + Constants.VIEW_MAIN +"?error=fail");
+//	               res.sendRedirect(req.getContextPath() + Constants.VIEW_MAIN +"?error=fail");
+	               res.sendRedirect(req.getContextPath() + Constants.MAIN +"?error=wrong_password");
 	            }
 	         } 
 		}	

@@ -154,20 +154,26 @@ public class UserRepository extends JDBCRepository<User, String> {
 		return null;
 	}
 
-	@Override  
-    public int delete(Long id) {
+	 
+    public int withDraw(Long id, String userPw) {
        //String sql = "DELETE FROM USERS WHERE user_id = ?";
        String sql = 
     		        "UPDATE USERS SET DELETED_AT = NOW() "
-       		      + "WHERE SEQ_ID = ?"; // soft Delete
+       		      + "WHERE USER_PW = ?"
+       		      + "AND SEQ_ID = ?"; // soft Delete
       
        // 회원 삭제(탈퇴) 쿼리
        return executeUpdate(sql, pstmt -> {
-           pstmt.setLong(1, id);
+           pstmt.setString(1, userPw);
+           pstmt.setLong(2, id);
        });
    }
 
-
+	@Override
+	public int delete(Long id) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 
 
 }

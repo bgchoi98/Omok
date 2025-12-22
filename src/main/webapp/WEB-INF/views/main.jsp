@@ -34,7 +34,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background-image: url('<%= request.getContextPath() %>/assets/images/main/mainBg.png');
+            background-image: url('<%= request.getContextPath() %>/assets/images/main/main_bg.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -345,6 +345,20 @@
             startBgm();
             
             connectWebSocket();
+            
+            // 회원탈퇴를 위한 수정
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            
+            if (error === 'wrong_password') {
+            	// 비밀번호 불일치 시 설정 팝업 열고 alert 표시
+            	openConfigPopup();
+            	alert('비밀번호가 다릅니다.');
+            } else if (error === 'no_password') {
+            	// 비밀번호 미입력 시 설정 팝업 열고 alert 표시
+            	openConfigPopup();
+            	alert('비밀번호를 입력해주세요.');
+            }
         };
 
         // 페이지를 떠날 때 현재 재생 시간 저장

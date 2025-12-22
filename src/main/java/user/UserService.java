@@ -95,8 +95,19 @@ public class UserService {
 		return USERREPOSITORY.findByNickName(nickName);
 	}
 	
-    public boolean withdraw(Long userId) {
-        int result = USERREPOSITORY.delete(userId);
+    public boolean withdraw(Long userId, String inputPassword) {
+    	// 1. 현재 사용자 정보 조회 (비밀번호 확인용)
+    	User user = USERREPOSITORY.findById(userId);
+    	
+    	if (user == null) {
+    		return false; // 사용자없음
+    	}
+    	// 2. 비밀번호 검증
+    	if (!user.getPassword().equals(inputPassword)) {
+    		return false;
+    	}
+    	// 3. 회원탈퇴 처리 (DELETED_AT 업데이트)
+        int result = USERREPOSITORY.withDraw(userId, inputPassword);
         return result > 0;
      }
     

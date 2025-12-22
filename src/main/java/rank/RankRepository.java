@@ -31,6 +31,7 @@ public class RankRepository extends JDBCRepository<Rank, Integer> {
 				       , rs.getInt("WIN")
 				       , rs.getInt("LOSE")
 				       , rs.getInt("RATE")
+				       , rs.getString("NICKNAME")
 				    );
 	}
 

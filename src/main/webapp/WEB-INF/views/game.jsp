@@ -41,7 +41,7 @@ body {
 	overflow: hidden;
 	font-family: 'Arial', sans-serif;
 	user-select: none;
-	background: url('<%=CTX%>/assets/images/game/gameBg.png') no-repeat
+	background: url('<%=CTX%>/assets/images/game/game_bg.png') no-repeat
 		center/cover;
 }
 

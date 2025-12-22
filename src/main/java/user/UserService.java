@@ -66,10 +66,13 @@ public class UserService {
     // 비동기 회원가입 ID 중복체크
     public boolean isIdExist(String userID) {	
         User user = USERREPOSITORY.findBySignId(userID);
-        if (user == null) { // 중복된 ID가 없을때
-        	return true;
+        if (user != null) { // 중복된 ID가 없을때
+        	if (user.getDeletedAt() != null) {
+            	return false;
+            }
+        	return false;
         }
-        return false;
+        return true;
     }
     
     // 비동기 회원가입 닉네임 중복체크

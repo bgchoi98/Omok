@@ -176,6 +176,7 @@ public class GameService {
         
         boolean gameOver = gameState.isGameOver();
         
+        
         // 게임 종료 여부 검증
         if (gameOver) {
         	

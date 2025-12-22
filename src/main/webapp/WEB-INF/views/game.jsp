@@ -946,10 +946,10 @@ body {
 	      console.log("[DIAG] Normal close after game ended");
 	    } else {
 	      // Abnormal close - opponent may have left
-	      console.warn("[DIAG] Abnormal close - prompting user to return to lobby");
+	      /* console.warn("[DIAG] Abnormal close - prompting user to return to lobby");
 	      if (confirm("연결이 종료되었습니다. 로비로 돌아가시겠습니까?")) {
 	        location.replace(CTX + "/main");
-	      }
+	      } */
 	    }
 	  };
 

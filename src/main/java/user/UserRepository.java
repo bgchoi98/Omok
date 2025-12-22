@@ -7,8 +7,6 @@ import java.sql.SQLException;
 import java.util.List;
 import java.time.LocalDateTime;
 
-import rank.*;
-import user.User;
 
 public class UserRepository extends JDBCRepository<User, String> {
 

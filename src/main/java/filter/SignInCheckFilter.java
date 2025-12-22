@@ -50,8 +50,7 @@ public class SignInCheckFilter extends HttpFilter implements Filter {
 		String uri = request.getRequestURI();
 	    String ctx = request.getContextPath();
 	    
-	    return !(
-	            uri.equals(ctx + "/") ||
+	    return !(     
 	            uri.equals(ctx + Constants.SIGNIN) ||
 	            uri.equals(ctx + Constants.SIGNUP) ||
 	            uri.startsWith(ctx + "/css/") ||

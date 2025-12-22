@@ -79,7 +79,7 @@ public class RoomWebSocket {
         nicknameToSession.put(nickname, session);
         
         roomService.sendRoomListToLobbyUser(session, lobbyUser);
-        
+        System.out.println("소켓 세션아이디 확인용 : "+session.getId());
         log.info("LobbyUser connected userId={}", nickname);
 	}
 	
@@ -256,8 +256,17 @@ public class RoomWebSocket {
 	        
 	        // 양방향 맵에서 모두 제거
 	        sessionToUser.remove(session);
-	        nicknameToSession.remove(lobbyUser.getNickName());
+	        nicknameToSession.remove(lobbyUser.getNickName(), session);
 	    }
+	    
+	    // 룸매칭중 새로고침시 삭제처리
+	    Room room = roomService.findByHostNickname(lobbyUser.getNickName());
+	    if (room == null) return;
+	    if (room.getRoomStatus() == RoomStatus.WAITING) {
+	        roomService.deleteRoom_Refresh(room.getRoomSeq(), lobbyUser.getNickName());
+	        roomService.broadcastRoomList(sessionToUser.keySet());
+	    }
+	    
 	}
 	
 	@OnError

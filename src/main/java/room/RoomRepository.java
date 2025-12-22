@@ -52,7 +52,7 @@ public class RoomRepository {
 	public List<Room> findAll() {
 		List<Room> result = new ArrayList<>();
 	    for (Room room : rooms.values()) {
-	        if (room.getRoomStatus() != RoomStatus.END) {	// 게임종료방 제외 조회
+	        if (room.getRoomStatus() != RoomStatus.END) {	// 종료중방 빼고
 	            result.add(room);
 	        }
 	    }

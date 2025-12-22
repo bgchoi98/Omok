@@ -410,7 +410,7 @@ body {
 						<div class="player-score">-</div>
 					</div>
 				</div>
-
+햐
 				<div class="config-area">
 					<img id="configBtn" class="config-btn"
 						src="<%=CTX%>/assets/images/game/configureIcon.png" alt="Config" />
@@ -848,11 +848,30 @@ body {
 		    }
 
 		    case "CHAT": {
-		      if (window.GameChat && typeof window.GameChat.append === "function") {
-		        window.GameChat.append(data);
-		      } else {
-		        console.warn("GameChat not loaded");
+		      const chatData = data.data ?? data;
+		      const sender = chatData.sender || chatData.nickname || "Unknown";
+		      const message = chatData.message || "";
+
+		      const chatLog = document.getElementById("chatLog") || document.getElementById("chatScroll");
+		      if (!chatLog) {
+		        console.warn("Chat log element not found");
+		        break;
 		      }
+
+		      const lineDiv = document.createElement("div");
+
+		      const senderSpan = document.createElement("span");
+		      senderSpan.style.color = "#1976d2";
+		      senderSpan.textContent = sender + ": ";
+
+		      const messageSpan = document.createElement("span");
+		      messageSpan.textContent = message;
+
+		      lineDiv.appendChild(senderSpan);
+		      lineDiv.appendChild(messageSpan);
+		      chatLog.appendChild(lineDiv);
+
+		      chatLog.scrollTop = chatLog.scrollHeight;
 		      break;
 		    }
 

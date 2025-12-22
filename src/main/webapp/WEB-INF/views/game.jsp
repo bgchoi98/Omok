@@ -428,6 +428,8 @@ body {
 		</div>
 	</div>
 
+	<script src="<%= request.getContextPath() %>/assets/js/game/game-chat.js?v=1"></script>
+
 	<script>
     const CTX = "<%=CTX%>";
     const IMG = {
@@ -846,22 +848,11 @@ body {
 		    }
 
 		    case "CHAT": {
-		      // Chat message received
-		      const sender = data.sender || "Unknown";
-		      const message = data.message || "";
-		      const channel = data.channel || "ALL";
-		      console.log("💬 CHAT received - sender:", sender, "message:", message);
-
-		      const chatScroll = document.getElementById("chatScroll");
-		      const chatDiv = document.createElement("div");
-
-		      // Simple HTML escape function
-		      const escapeHtml = (str) => str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-
-		      chatDiv.innerHTML = `<span style="color: #1976d2;">${escapeHtml(sender)}:</span> ${escapeHtml(message)}`;
-		      chatScroll.appendChild(chatDiv);
-		      chatScroll.scrollTop = chatScroll.scrollHeight;
-		      // NOTE: server-side channel isolation required for true separation
+		      if (window.GameChat && typeof window.GameChat.append === "function") {
+		        window.GameChat.append(data);
+		      } else {
+		        console.warn("GameChat not loaded");
+		      }
 		      break;
 		    }
 

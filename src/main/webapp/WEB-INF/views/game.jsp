@@ -220,8 +220,10 @@ body {
 .player-box {
 	flex: 1;
 	height: 90px;
-	background: url('<%=CTX%>/assets/images/game/playerBox.png') no-repeat
-		center/100% 100%;
+	/* ADD: 멀티 background로 playerBox + 아바타 합성 */
+	background:
+		var(--avatar-img, none) no-repeat left center / auto 85%,
+		url('<%=CTX%>/assets/images/game/playerBox.png') no-repeat center/100% 100%;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
@@ -723,7 +725,7 @@ body {
 		    case "JOIN_GAME_SUCCESS": {
 		      console.log("[DIAG] JOIN_GAME_SUCCESS - blackPlayer:", data.blackPlayer, "whitePlayer:", data.whitePlayer,
 		                  "isPlayer:", data.isPlayer, "isObserver:", data.isObserver, "boardSize:", data.boardSize,
-		                  "currentTurn:", data.currentTurn);
+		                  "currentTurn:", data.currentTurn, "p1Avatar:", data.p1Avatar, "p2Avatar:", data.p2Avatar);
 
 		      // Game joined - initialize board and player info
 		      isPlayer = data.isPlayer || false;
@@ -743,6 +745,14 @@ body {
 		      const p2NameEl = p2Box.querySelector('.player-name');
 		      if (p1NameEl && blackPlayerName) p1NameEl.textContent = blackPlayerName;
 		      if (p2NameEl && whitePlayerName) p2NameEl.textContent = whitePlayerName;
+
+		      // ADD: 아바타 이미지 설정 (서버에서 받은 값 적용)
+		      if (data.p1Avatar) {
+		        p1Box.style.setProperty('--avatar-img', `url('${CTX}/assets/images/game/player${data.p1Avatar}.png')`);
+		      }
+		      if (data.p2Avatar) {
+		        p2Box.style.setProperty('--avatar-img', `url('${CTX}/assets/images/game/player${data.p2Avatar}.png')`);
+		      }
 
 		      // Load initial board state
 		      const board = data.board || [];
@@ -772,6 +782,27 @@ body {
 		      // Optional: show waiting overlay
 		      break;
 		    }
+			case "JOIN_OBSERVER": {
+                const { board, blackPlayer, whitePlayer, currentTurn } = data;
+                console.log("옵저버일떄 확인" , data);
+                // 전체 보드 상태 초기화
+                for (let r = 0; r < board.length; r++) {
+                    for (let c = 0; c < board[r].length; c++) {
+                        boardState[r][c] = board[r][c];
+                        if (board[r][c] !== 0) {
+                            placeStone(r, c, board[r][c]);
+                        }
+                    }
+                }
+                // 턴 표시
+                turn = currentTurn;
+                updateTurnUI();
+
+                // 플레이어 정보 등 UI 업데이트 가능
+                updatePlayersUI(blackPlayer, whitePlayer);
+
+                break;
+            }
 
 		    case "MOVE": {
 		      const { row, col, stone, player, currentTurn } = data;

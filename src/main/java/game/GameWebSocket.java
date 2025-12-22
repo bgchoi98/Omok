@@ -271,6 +271,19 @@ public class GameWebSocket {
 	            return;
 	        }
 	    }
+		// 옵저버 접속의 경우 기존 게임내역 확인을위해 별도 map내역 프론트단 전송 bgchoi
+        if (isObserver) {
+            // 1. GameState의 board를 그대로 JSON으로 보내기
+            JsonObject response = new JsonObject();
+            response.addProperty("type", "JOIN_OBSERVER");
+            response.addProperty("roomSeq", roomSeq);
+            response.addProperty("currentTurn", gameState.getCurrentTurn());
+            response.add("board", gson.toJsonTree(gameState.getBoard())); // int[][] 그대로 전송
+
+            session.getAsyncRemote().sendText(gson.toJson(response));
+            return; // 관전자 초기화 끝
+        }
+		
 		
 		// 프론트에 JSON 객체 전달
 	    JsonObject response = new JsonObject();
@@ -282,10 +295,20 @@ public class GameWebSocket {
 	    response.addProperty("whitePlayer", gameState.getWhitePlayer());
 	    response.addProperty("currentTurn", gameState.getCurrentTurn());
 	    response.addProperty("boardSize", GameState.getBoardSize());
-	    
+
+	    // ADD: 아바타 정보 전송 (서버 상태에서 가져옴)
+	    Integer p1Avatar = room.getP1Avatar();
+	    Integer p2Avatar = room.getP2Avatar();
+	    if (p1Avatar != null) {
+	        response.addProperty("p1Avatar", p1Avatar);
+	    }
+	    if (p2Avatar != null) {
+	        response.addProperty("p2Avatar", p2Avatar);
+	    }
+
 	    // 객체 배열은 add
 	    response.add("board", gson.toJsonTree(gameState.getBoard()));
-	    
+
 	    if (isGameUser) {
 	        int stone = gameState.getPlayerStone(nickname);
 	        response.addProperty("myStone", stone);

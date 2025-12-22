@@ -2,6 +2,7 @@ package room;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import javax.websocket.Session;
 import com.google.gson.Gson;
@@ -15,8 +16,9 @@ import util.webSocketDTOs.WebSocketMessage;
 public class RoomService {
 
 	private static final RoomRepository ROOM_REPOSITORY = RoomRepository.getInstance();
-	
+
 	private final Gson gson = new Gson();
+	private final Random random = new Random();  // ADD: 아바타 랜덤 배정용
 	
     // 싱글톤 
 	private static volatile RoomService instance;
@@ -41,7 +43,16 @@ public class RoomService {
      * @return 생성된 Room
      */
     public Room createRoom(LobbyUser lobbyUser, Set<Session> sessions) {
-    	Room room = ROOM_REPOSITORY.save(lobbyUser); 
+    	Room room = ROOM_REPOSITORY.save(lobbyUser);
+
+    	// ADD: P1 아바타 배정 (방 생성 시점 1회만)
+    	synchronized (room) {
+    		if (room.getP1Avatar() == null) {
+    			int avatar = random.nextInt(4) + 1;  // 1~4 랜덤
+    			room.setP1Avatar(avatar);
+    		}
+    	}
+
     	broadcastRoomList(sessions);
     	return room;
     }
@@ -62,15 +73,25 @@ public class RoomService {
             if (!room.canJoin()) {
             	return false;
             }
-            
+
             GameUser gameUser = new GameUser(lobbyUser);
-            room.getGameUsers().add(gameUser);   
+            room.getGameUsers().add(gameUser);
 
             // 2명이 되면 게임 중 상태로 변경
             if (room.isFull()) {
             	System.out.println("2명이상됨");
                 room.setRoomStatus(RoomStatus.PLAYING);
-            } 
+
+                // ADD: P2 아바타 배정 (2명 확정 시점 1회만)
+                if (room.getP2Avatar() == null) {
+                	int p1 = room.getP1Avatar() != null ? room.getP1Avatar() : 1;
+                	int p2;
+                	do {
+                		p2 = random.nextInt(4) + 1;  // 1~4 랜덤
+                	} while (p2 == p1);  // P1과 겹치지 않게
+                	room.setP2Avatar(p2);
+                }
+            }
             return true;
         }
     }

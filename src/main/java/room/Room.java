@@ -23,6 +23,10 @@ public class Room {
 	// 게임 상태
 	private GameState gameState;
 
+	// ADD: 플레이어 아바타 (1~4)
+	private Integer p1Avatar;  // Player 1 아바타 번호 (1~4)
+	private Integer p2Avatar;  // Player 2 아바타 번호 (1~4)
+
 
 	public Room(RoomStatus roomStatus, String hostNickname) {
 		this.roomSeq = roomSeqGenerator++;
@@ -87,5 +91,22 @@ public class Room {
 	// 게임 상태 수정
 	public void setGameState(GameState gameState) {
 		this.gameState = gameState;
+	}
+
+	// ADD: 아바타 getter/setter
+	public Integer getP1Avatar() {
+		return p1Avatar;
+	}
+
+	public void setP1Avatar(Integer p1Avatar) {
+		this.p1Avatar = p1Avatar;
+	}
+
+	public Integer getP2Avatar() {
+		return p2Avatar;
+	}
+
+	public void setP2Avatar(Integer p2Avatar) {
+		this.p2Avatar = p2Avatar;
 	}
 }

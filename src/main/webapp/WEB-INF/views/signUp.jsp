@@ -55,7 +55,6 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      /* 타이틀과 겹치지 않도록 상단 여백 확보 */
       padding-top: 190px; 
       color: #3e2723;
     }
@@ -68,7 +67,6 @@
 
     .input-group {
       width: 100%;
-      /* 메시지가 나올 공간 확보를 위해 마진 조정 */
       margin-bottom: 5px; 
       display: flex;
       flex-direction: column;
@@ -105,7 +103,6 @@
       font-size: 1.1rem;
     }
 
-    /* 크롬 자동완성 배경색 제거 (투명 유지) */
     input:-webkit-autofill,
     input:-webkit-autofill:hover, 
     input:-webkit-autofill:focus, 
@@ -115,11 +112,10 @@
         transition: background-color 5000s ease-in-out 0s;
     }
 
-    /* 유효성 검사 메시지 스타일 */
     .status-msg {
       font-size: 0.85rem;
       text-align: right;
-      height: 18px; /* 메시지 공간 고정 */
+      height: 18px;
       line-height: 18px;
       font-weight: bold;
       margin-bottom: 2px;
@@ -268,31 +264,22 @@
 
   <script>
     $(document).ready(function () {
-      // --- 정규식 정의 ---
-      // ID: 영문, 숫자 포함 가능 (4~12자)
       const regexId = /^[a-zA-Z0-9]{4,16}$/;
-      
-      // PW: 영문 + 숫자 필수 포함, 특수문자 금지 (8~20자)
       const regexPw = /^(?=.*[a-zA-Z])(?=.*[0-9])[a-zA-Z0-9]{8,20}$/;
-      
-      // Nick: 한글, 영문, 숫자 (2~10자)
       const regexNick = /^[a-zA-Z0-9가-힣]{2,12}$/;
-      
-      // Email: 일반적인 이메일 형식 (@ 뒤에 .이 반드시 포함되어야 함)
       const regexEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-      // --- 상태 변수 ---
       let status = {
-        id: false,
-        idDupl: false, // 중복체크 통과 여부
-        pw: false,
-        pwRe: false,
-        nick: false,
-        nickDupl: false, // 중복체크 통과 여부
+        id: false, idDupl: false,
+        pw: false, pwRe: false,
+        nick: false, nickDupl: false,
         email: false
       };
 
-      // --- 버튼 활성화 함수 ---
+      // 디바운싱 타이머 변수
+      let idTimer = null;
+      let nickTimer = null;
+
       function checkAllValid() {
         const isValid = status.id && status.idDupl && 
                         status.pw && status.pwRe && 
@@ -301,52 +288,60 @@
         $("#join_btn").prop("disabled", !isValid);
       }
 
-      // --- 메시지 출력 헬퍼 ---
       function setMsg(elementId, text, color) {
         $(elementId).text(text).css("color", color);
       }
 
-      // 1. ID 유효성 검사 (입력 시 형식 검사, 변경 시 중복체크 초기화)
+      // 공통 AJAX 중복 체크 함수
+      function checkDuplicate(type, value, msgId, successMsg, failMsg, statusKey) {
+        $.ajax({
+          url: "<%=request.getContextPath() + Constants.SIGNUP %>",
+          method: "GET",
+          data: { ajaxCheck: "true", type: type, value: value },
+          success: function(res) {
+            if (res === "true") {
+              status[statusKey] = true;
+              setMsg(msgId, successMsg, "#388e3c");
+            } else {
+              status[statusKey] = false;
+              setMsg(msgId, failMsg, "#d32f2f");
+            }
+            checkAllValid();
+          }
+        });
+      }
+
+      // 1. ID 입력 (디바운싱 적용)
       $("#user_id").on("input", function() {
+        clearTimeout(idTimer); // 기존 타이머 취소
         const val = $(this).val();
-        status.idDupl = false; // 입력값이 바뀌면 중복체크 다시 해야 함
+        status.idDupl = false; 
         
         if (!regexId.test(val)) {
           status.id = false;
           setMsg("#idMsg", "Eng+Num, 4~16 chars", "#d32f2f");
         } else {
           status.id = true;
-          setMsg("#idMsg", "Check availability...", "#a1887f");
+          setMsg("#idMsg", "Checking...", "#a1887f");
+          
+          // 1초 뒤에 자동으로 중복 체크
+          idTimer = setTimeout(function() {
+            checkDuplicate("id", val, "#idMsg", "Available ID", "ID already exists", "idDupl");
+          }, 1000);
         }
         checkAllValid();
       });
 
-      // 1-1. ID 중복 체크 (포커스 아웃 시)
+      // 1-1. ID 포커스 아웃 (즉시 체크)
       $("#user_id").on("blur", function() {
-        if (!status.id) return; // 형식이 안 맞으면 중복체크 안 함
-        
-        const val = $(this).val();
-        $.ajax({
-          url: "<%=request.getContextPath() + Constants.SIGNUP %>",
-          method: "GET",
-          data: { ajaxCheck: "true", type: "id", value: val },
-          success: function(res) {
-            if (res === "true") { // 사용 가능
-              status.idDupl = true;
-              setMsg("#idMsg", "Available ID", "#388e3c");
-            } else { // 중복
-              status.idDupl = false;
-              setMsg("#idMsg", "ID already exists", "#d32f2f");
-            }
-            checkAllValid();
-          }
-        });
+        clearTimeout(idTimer); // 타이머 취소하고 즉시 실행
+        if (!status.id) return;
+        checkDuplicate("id", $(this).val(), "#idMsg", "Available ID", "ID already exists", "idDupl");
       });
 
-      // 2. 비밀번호 검사
+      // 2. PW 입력
       $("#user_pw").on("input", function() {
         const val = $(this).val();
-        // 비밀번호 확인 로직도 다시 돌려야 함
         $("#user_pwRe").trigger("input");
 
         if (!regexPw.test(val)) {
@@ -359,7 +354,7 @@
         checkAllValid();
       });
 
-      // 3. 비밀번호 확인 검사
+      // 3. PW 확인
       $("#user_pwRe").on("input", function() {
         const val = $(this).val();
         const originPw = $("#user_pw").val();
@@ -377,8 +372,9 @@
         checkAllValid();
       });
 
-      // 4. 닉네임 검사
+      // 4. 닉네임 입력 (디바운싱 적용)
       $("#nickname").on("input", function() {
+        clearTimeout(nickTimer); // 기존 타이머 취소
         const val = $(this).val();
         status.nickDupl = false;
 
@@ -387,34 +383,24 @@
           setMsg("#nickMsg", "2~12 chars (Eng/Kor/Num)", "#d32f2f");
         } else {
           status.nick = true;
-          setMsg("#nickMsg", "Check availability...", "#a1887f");
+          setMsg("#nickMsg", "Checking...", "#a1887f");
+
+          // 1초 뒤에 자동으로 중복 체크
+          nickTimer = setTimeout(function() {
+            checkDuplicate("nickname", val, "#nickMsg", "Available Nickname", "Nickname taken", "nickDupl");
+          }, 1000);
         }
         checkAllValid();
       });
 
-      // 4-1. 닉네임 중복 체크
+      // 4-1. 닉네임 포커스 아웃 (즉시 체크)
       $("#nickname").on("blur", function() {
+        clearTimeout(nickTimer); // 타이머 취소하고 즉시 실행
         if (!status.nick) return;
-
-        const val = $(this).val();
-        $.ajax({
-          url: "<%=request.getContextPath() + Constants.SIGNUP %>",
-          method: "GET",
-          data: { ajaxCheck: "true", type: "nickname", value: val },
-          success: function(res) {
-            if (res === "true") {
-              status.nickDupl = true;
-              setMsg("#nickMsg", "Available Nickname", "#388e3c");
-            } else {
-              status.nickDupl = false;
-              setMsg("#nickMsg", "Nickname is Already taken", "#d32f2f");
-            }
-            checkAllValid();
-          }
-        });
+        checkDuplicate("nickname", $(this).val(), "#nickMsg", "Available Nickname", "Nickname taken", "nickDupl");
       });
 
-      // 5. 이메일 검사
+      // 5. 이메일 입력
       $("#email").on("input", function() {
         const val = $(this).val();
         

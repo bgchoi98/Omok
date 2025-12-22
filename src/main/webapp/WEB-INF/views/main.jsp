@@ -34,7 +34,7 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background-image: url('<%= request.getContextPath() %>/assets/images/main/mainBg.png');
+            background-image: url('<%= request.getContextPath() %>/assets/images/main/main_bg.png');
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;

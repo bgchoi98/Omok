@@ -149,6 +149,7 @@ body {
 	min-height: 250px;
 	filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
 	transform: translateX(-30px);
+	margin-top: 10px; /* align chat top closer to board top */
 }
 
 .chat-scroll {

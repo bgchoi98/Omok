@@ -234,6 +234,40 @@ public class GameService {
         
         return gameState.getWinner();
     }
+
+    // GameService.java
+    public void updateRankOnGameEnd(GameState gameState) {
+        if (gameState == null || !gameState.isGameOver()) return;
+
+        String winnerName = gameState.getWinner();
+        if (winnerName == null || "DRAW".equals(winnerName)) return;
+
+        // 승자
+        User winner = userService.findByNickName(winnerName);
+        Rank winUserRank = rankService.findById(winner.getUserSeq());
+        if (winUserRank == null) {
+            Rank newRank = new Rank(winner.getUserSeq(), 1, 0, 100, winner.getNickname());
+            rankService.save(newRank);
+        } else {
+            winUserRank.addWin();
+            rankService.update(winUserRank);
+        }
+
+        // 패자
+        String loserName = winnerName.equals(gameState.getBlackPlayer()) ? gameState.getWhitePlayer() : gameState.getBlackPlayer();
+        User loser = userService.findByNickName(loserName);
+        Rank loseUserRank = rankService.findById(loser.getUserSeq());
+        if (loseUserRank == null) {
+            Rank newRank = new Rank(loser.getUserSeq(), 0, 1, 0, loser.getNickname());
+            rankService.save(newRank);
+        } else {
+            loseUserRank.addLose();
+            rankService.update(loseUserRank);
+        }
+
+        log.info("updateRankOnGameEnd: winner={}, loser={}", winnerName, loserName);
+    }
+
 }
 
 

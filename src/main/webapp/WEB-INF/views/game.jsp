@@ -441,12 +441,12 @@ body {
       white: CTX + "/assets/images/game/stone_2.png",
     };
 
-    // 역할별 색상 상수
+    // 역할별 색상 상수 (크리스마스 팔레트)
     const ROLE_COLOR = {
-      BLACK: "#212121",
-      WHITE: "#1565C0",
-      OBSERVER: "#6A1B9A",
-      SYSTEM: "#D32F2F",
+      BLACK:    "#0B3D2E", // evergreen (흑=트리 그린)
+      WHITE:    "#1E88E5", // icy blue (백=겨울 블루)
+      OBSERVER: "#C9A227", // gold (관전=장식 골드)
+      SYSTEM:   "#D32F2F", // holly red (시스템=레드)
     };
 
     // 오목판 격자 (15줄 = 14칸 간격)
@@ -606,18 +606,18 @@ body {
 
 			// 역할/색상 결정
 			let roleLabel = "";
-			let roleColor = "#1976d2";
-			if (channel === "OBSERVER") {
-				roleLabel = "[관전]";
-				roleColor = ROLE_COLOR.OBSERVER;
-			} else if (sender === blackPlayerName) {
+			let roleColor = ROLE_COLOR.OBSERVER; // 기본값을 관전자로
+
+			if (sender === blackPlayerName) {
 				roleLabel = "[흑]";
 				roleColor = ROLE_COLOR.BLACK;
 			} else if (sender === whitePlayerName) {
 				roleLabel = "[백]";
 				roleColor = ROLE_COLOR.WHITE;
 			} else {
-				roleLabel = "[채널]";
+				// 플레이어가 아니면 관전자
+				roleLabel = "[관전]";
+				roleColor = ROLE_COLOR.OBSERVER;
 			}
 
 			const lineDiv = document.createElement("div");

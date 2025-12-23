@@ -805,7 +805,7 @@ body {
           });
       }
 
-      window.addEventListener("beforeunload", () => {
+      window.addEventListener("beforeunload", (e) => {
         if (socket && socket.readyState === WebSocket.OPEN) {
           socket.close(1000, "unload");
         }
@@ -823,7 +823,7 @@ body {
       document.getElementById("closePopupBtn").onclick = close;
       dim.onclick = close;
 
-      const exitFunc = () => {
+    /*   const exitFunc = () => {
         if(confirm("정말 나가시겠습니까?")) {
           if (socket && socket.readyState === WebSocket.OPEN) {
             try {
@@ -835,6 +835,28 @@ body {
           }
           location.replace(CTX + "/main");
         }
+      }; */
+      // [수정된 부분] 안전한 게임 종료 및 퇴장 함수
+      const exitFunc = () => {
+          if(confirm("정말 나가시겠습니까?")) {
+              // 1. 소켓이 열려있다면 서버에 EXIT 알림을 보내고 닫기를 기다림
+              if (socket && socket.readyState === WebSocket.OPEN) {
+                  // 서버에 나가기 상태 전송
+                  socket.send(JSON.stringify({ type: "EXIT" }));
+                  
+                  // 2. 소켓이 완전히 닫혔을 때 실행될 콜백 재정의
+                  socket.onclose = (event) => {
+                      console.log("✅ 게임 소켓이 안전하게 닫혔습니다. 로비로 이동합니다.");
+                      location.replace(CTX + "/main"); // 페이지 이동
+                  };
+
+                  // 3. 소켓 닫기 명령 (1000: 정상 종료)
+                  socket.close(1000, "Normal Closure");
+              } else {
+                  // 소켓이 이미 없거나 닫힌 상태라면 즉시 이동
+                  location.replace(CTX + "/main");
+              }
+          }
       };
       //document.getElementById("exitBtn").onclick = exitFunc;
       document.getElementById("surrenderBtn").onclick = exitFunc;

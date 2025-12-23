@@ -156,7 +156,10 @@ public class GameWebSocket {
 	                broadcastToRoom(roomSeq, gson.toJson(msg), session);
 	                
 	                Room room = roomRepository.findById(roomSeq);
-	                if (room != null) room.setRoomStatus(RoomStatus.END);
+	                if (room != null) {
+	                	room.setRoomStatus(RoomStatus.END);
+	                	
+	                }
 	            }
 	        }
 	    }
@@ -434,6 +437,7 @@ public class GameWebSocket {
 	    // 2. Rank 전적 업데이트
 	    gameService.updateRankOnGameEnd(gameState);
 
+
 	    // 3. 브로드캐스트 메시지
 	    String winner = gameState.getWinner();
 	    JsonObject msg = new JsonObject();
@@ -446,7 +450,10 @@ public class GameWebSocket {
 
 	    // 4. 방 상태 종료
 	    Room room = roomRepository.findById(roomSeq);
-	    if (room != null) room.setRoomStatus(RoomStatus.END);
+	    if (room != null) {
+	    	room.setRoomStatus(RoomStatus.END);
+	    	
+	    }
 
 	    log.info("handleExit: roomSeq={}, quitter={}, winner={}", roomSeq, nickname, winner);
 	}

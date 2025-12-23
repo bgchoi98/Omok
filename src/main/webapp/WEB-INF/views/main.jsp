@@ -360,7 +360,10 @@
             	alert('비밀번호를 입력해주세요.');
             }
         };
-
+        
+        window.addEventListener('pageshow', function(event) {
+            hideLoading(); // 페이지 복원 시 로딩 팝업 숨기기
+        });
         // 페이지를 떠날 때 현재 재생 시간 저장
         window.onbeforeunload = function() {
             const audio = document.getElementById('bgmAudio');

@@ -718,7 +718,7 @@
                 alert('서버와 연결되어 있지 않습니다.');
                 return;
             }
-            if (confirm('방 #' + roomKey + '에 입장하시겠습니까?')) {
+            if (confirm('방에 입장하시겠습니까?')) {
                 const message = { type: 'JOIN_ROOM', roomId: roomKey };
                 console.log("[DIAG] Sending JOIN_ROOM - roomKey:", roomKey, "message:", message);
                 websocket.send(JSON.stringify(message));

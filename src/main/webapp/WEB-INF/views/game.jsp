@@ -1032,7 +1032,6 @@ body {
 		    }
 
 		    case "NOTIFICATION": {
-		      alert(`[${data.notificationType}] ${data.message}`);
 		      break;
 		    }
 

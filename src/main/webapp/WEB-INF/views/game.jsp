@@ -599,6 +599,48 @@ body {
       chatLog.scrollTop = chatLog.scrollHeight;
     }
 
+		// 플레이어/관전자 채팅 라벨 출력
+		function appendRoleChat(sender, message, channel) {
+			const chatLog = document.getElementById("chatLog") || document.getElementById("chatScroll");
+			if (!chatLog) return;
+
+			// 역할/색상 결정
+			let roleLabel = "";
+			let roleColor = "#1976d2";
+			if (channel === "OBSERVER") {
+				roleLabel = "[관전]";
+				roleColor = ROLE_COLOR.OBSERVER;
+			} else if (sender === blackPlayerName) {
+				roleLabel = "[흑]";
+				roleColor = ROLE_COLOR.BLACK;
+			} else if (sender === whitePlayerName) {
+				roleLabel = "[백]";
+				roleColor = ROLE_COLOR.WHITE;
+			} else {
+				roleLabel = "[채널]";
+			}
+
+			const lineDiv = document.createElement("div");
+
+			const labelSpan = document.createElement("span");
+			labelSpan.style.color = roleColor;
+			labelSpan.textContent = roleLabel + " ";
+
+			const senderSpan = document.createElement("span");
+			senderSpan.style.color = roleColor;
+			senderSpan.textContent = sender + ": ";
+
+			const messageSpan = document.createElement("span");
+			messageSpan.textContent = message;
+
+			lineDiv.appendChild(labelSpan);
+			lineDiv.appendChild(senderSpan);
+			lineDiv.appendChild(messageSpan);
+
+			chatLog.appendChild(lineDiv);
+			chatLog.scrollTop = chatLog.scrollHeight;
+		}
+
     // 5. 클릭 (착수)
     function onBoardClick(e) {
       if (!gameActive || gameEnded) return;
@@ -965,27 +1007,9 @@ body {
 		      const chatData = data.data ?? data;
 		      const sender = chatData.sender || chatData.nickname || "Unknown";
 		      const message = chatData.message || "";
+							const channel = chatData.channel || data.channel || "ALL";
 
-		      const chatLog = document.getElementById("chatLog") || document.getElementById("chatScroll");
-		      if (!chatLog) {
-		        console.warn("Chat log element not found");
-		        break;
-		      }
-
-		      const lineDiv = document.createElement("div");
-
-		      const senderSpan = document.createElement("span");
-		      senderSpan.style.color = "#1976d2";
-		      senderSpan.textContent = sender + ": ";
-
-		      const messageSpan = document.createElement("span");
-		      messageSpan.textContent = message;
-
-		      lineDiv.appendChild(senderSpan);
-		      lineDiv.appendChild(messageSpan);
-		      chatLog.appendChild(lineDiv);
-
-		      chatLog.scrollTop = chatLog.scrollHeight;
+							appendRoleChat(sender, message, channel);
 		      break;
 		    }
 

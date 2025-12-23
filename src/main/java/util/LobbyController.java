@@ -18,7 +18,7 @@ import javax.servlet.http.HttpSession;
 @WebServlet(urlPatterns = {
 		Constants.MAIN,
 		Constants.GAME,
-		"/main/game"
+		Constants.MAIN_GAME
 })
 public class LobbyController extends HttpServlet {
 	
@@ -37,11 +37,11 @@ public class LobbyController extends HttpServlet {
 			}
 			req.getRequestDispatcher(Constants.VIEW_MAIN).forward(req, res);
 			
-		} else if (uri.equals(contextPath+"/main/game")) {	// 게임 입장 임시
+		} else if (uri.equals(contextPath+ Constants.MAIN_GAME)) {	// 게임 입장 임시
 			System.out.println("Dasdadsadasd");
 			
 		    RequestDispatcher dispatcher =
-		            req.getRequestDispatcher("/WEB-INF/views/game.jsp");
+		            req.getRequestDispatcher(Constants.VIEW_GAME);
 		    dispatcher.forward(req, res);
 		}
 

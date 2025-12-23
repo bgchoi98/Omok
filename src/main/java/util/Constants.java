@@ -21,6 +21,7 @@ public class Constants {
     public static final String VIEW_SIGNUP = "/WEB-INF/views/signUp.jsp";
     public static final String VIEW_MAIN = "/WEB-INF/views/main.jsp";
     public static final String VIEW_MYPAGE = "/WEB-INF/views/mypage.jsp";
+    public static final String VIEW_GAME = "/WEB-INF/views/game.jsp"; // 새로운 추가
 	
 	// rank
 	public static final String RANK = "/rank";
@@ -28,6 +29,7 @@ public class Constants {
 	
 	// main
 	public static final String MAIN = "/main";
+	public static final String MAIN_GAME = "/main/game";
 	public static final String GAME = "/main/{roomId}";
 	
 	

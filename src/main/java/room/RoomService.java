@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+
 import javax.websocket.Session;
+
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 
 import game.GameUser;
 import game.Observer;
+
 import util.webSocketDTOs.MessageType;
 import util.webSocketDTOs.WebSocketMessage;
 

@@ -55,17 +55,21 @@ public class UserService {
     }
     
     private boolean isIdAvailable(String userID) {  
-        User user = USERREPOSITORY.findBySignId(userID);
+//        User user = USERREPOSITORY.findBySignId(userID);
+    	User user = USERREPOSITORY.findBySignIdIncludingDeleted(userID);
         return user == null;  
     }
+    
     private boolean isNickNameAvailable(String nickName) {  
-        User user = USERREPOSITORY.findByNickName(nickName);
+//        User user = USERREPOSITORY.findByNickName(nickName);
+    	User user = USERREPOSITORY.findByNickNameIncludingDeleted(nickName);
         return user == null;  
     }
     
     // 비동기 회원가입 ID 중복체크
     public boolean isIdExist(String userID) {	
-        User user = USERREPOSITORY.findBySignId(userID);
+//        User user = USERREPOSITORY.findBySignId(userID);
+    	User user = USERREPOSITORY.findBySignIdIncludingDeleted(userID);
         if (user != null) { // 중복된 ID가 없을때
         	if (user.getDeletedAt() != null) {
             	return false;
@@ -76,8 +80,9 @@ public class UserService {
     }
     
     // 비동기 회원가입 닉네임 중복체크
-    public boolean isNickNameExist(String userID) {	
-        User user = USERREPOSITORY.findByNickName(userID);
+    public boolean isNickNameExist(String nickName) {	
+//        User user = USERREPOSITORY.findByNickName(userID);
+    	User user = USERREPOSITORY.findByNickNameIncludingDeleted(nickName);
         if (user == null) {	// 중복된 닉네임이 없을때
         	return true;
         }

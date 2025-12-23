@@ -119,9 +119,50 @@ public class UserRepository extends JDBCRepository<User, String> {
 			return null;
 		});
 	}
+	
+	// 아이디로 회원 조회 - 탈퇴한 회원 포함 (중복체크용)
+		public User findBySignIdIncludingDeleted(String signId) {
+			String sql = 
+					     "SELECT "
+					   + "SEQ_ID, USER_ID, USER_PW, EMAIL, NICKNAME, CREATED_AT, DELETED_AT "
+					   + "FROM USERS "
+					   + "WHERE USER_ID = ?";
+
+			return executeQuery(sql, pstmt -> pstmt.setString(1, signId), rs -> {
+				try {
+					if (rs.next()) {
+						return mapRow(rs);
+					}
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+				return null;
+			});
+		}
 
 	// 닉네임으로 회원 조회
 	public User findByNickName(String nickName) {
+		String sql = 
+				     "SELECT "
+				   + "SEQ_ID, USER_ID, USER_PW, EMAIL, NICKNAME, CREATED_AT, DELETED_AT "
+				   + "FROM USERS "
+				   + "WHERE NICKNAME = ? "
+				   + "AND DELETED_AT IS NULL";;
+
+		return executeQuery(sql, pstmt -> pstmt.setString(1, nickName), rs -> {
+			try {
+				if (rs.next()) {
+					return mapRow(rs);
+				}
+			} catch (SQLException e) {
+				e.printStackTrace();
+			}
+			return null;
+		});
+	}
+	
+	// 닉네임으로 회원 조회 - 탈퇴한 회원 포함 (중복체크용)
+	public User findByNickNameIncludingDeleted(String nickName) {
 		String sql = 
 				     "SELECT "
 				   + "SEQ_ID, USER_ID, USER_PW, EMAIL, NICKNAME, CREATED_AT, DELETED_AT "
@@ -139,6 +180,7 @@ public class UserRepository extends JDBCRepository<User, String> {
 			return null;
 		});
 	}
+
 
 	@Override
 	public List<User> findAll() {

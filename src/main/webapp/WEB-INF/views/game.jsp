@@ -48,7 +48,7 @@ body {
 /* ===== Main Layout (Grid) ===== */
 .layout {
 	display: grid;
-	grid-template-columns: 1fr 400px;
+	grid-template-columns: 1fr 520px;
 	height: 100%;
 	padding: 20px;
 	gap: 20px;
@@ -148,6 +148,8 @@ body {
 		center/100% 100%;
 	min-height: 250px;
 	filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
+	transform: translateX(-30px);
+	margin-top: 10px; /* align chat top closer to board top */
 }
 
 .chat-scroll {
@@ -379,10 +381,10 @@ body {
 		</div>
 
 		<div class="right-col">
-			<div class="right-top">
+			<!-- <div class="right-top">
 				<img id="exitBtn" class="exit-btn"
 					src="<%=CTX%>/assets/images/game/getOut.png" alt="Exit" />
-			</div>
+			</div> -->
 
 			<div class="chat-panel">
 				<div class="chat-scroll" id="chatScroll">
@@ -412,7 +414,7 @@ body {
 						<div class="player-score">-</div>
 					</div>
 				</div>
-햐
+
 				<div class="config-area">
 					<img id="configBtn" class="config-btn"
 						src="<%=CTX%>/assets/images/game/configureIcon.png" alt="Config" />

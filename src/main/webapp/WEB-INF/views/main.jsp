@@ -85,7 +85,7 @@
         .loading-cancel-btn:hover { background-color: #6d4c41; transform: scale(1.05); }
 
         /* --- 랭킹 트리 --- */
-        .ranking-tree { position: fixed; right: 190px; top: 45%; transform: translateY(-50%); z-index: 1; cursor: pointer; transition: transform 0.3s ease; }
+        .ranking-tree { position: fixed; right: 120px; top: 38%; transform: translateY(-50%); z-index: 1; cursor: pointer; transition: transform 0.3s ease; }
         .ranking-tree:hover { transform: translateY(-50%) scale(1.05); }
         .ranking-tree img { width: var(--tree-w); height: auto; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.3)); }
 

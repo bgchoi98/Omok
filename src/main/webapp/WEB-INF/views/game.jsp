@@ -28,6 +28,10 @@ try {
 <title>Omok Game Room</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+
 <style>
 /* ===== Global Setting ===== */
 * {
@@ -39,7 +43,7 @@ body {
 	width: 100vw;
 	height: 100vh;
 	overflow: hidden;
-	font-family: 'Arial', sans-serif;
+	font-family: 'Patrick Hand', 'Arial', sans-serif;
 	user-select: none;
 	background: url('<%=CTX%>/assets/images/game/game_bg.png') no-repeat
 		center/cover;
@@ -48,6 +52,7 @@ body {
 /* ===== Main Layout (Grid) ===== */
 .layout {
 	display: grid;
+    /* 오른쪽 컬럼 너비 고정 */
 	grid-template-columns: 1fr 520px;
 	height: 100%;
 	padding: 20px;
@@ -91,6 +96,18 @@ body {
 	cursor: pointer;
 }
 
+/* [3] FX Canvas (승리 효과용) */
+#fxCanvas {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 84.57%;
+    height: 84.57%;
+    z-index: 20; /* 돌보다 위에 */
+    pointer-events: none; /* 클릭 통과 */
+}
+
 /* 돌 스타일 */
 .stone, .ghost-stone {
 	position: absolute;
@@ -110,51 +127,40 @@ body {
 .right-col {
 	display: flex;
 	flex-direction: column;
-	gap: 15px;
 	height: 100%;
-	justify-content: center;
+    /* 위쪽부터 정렬 (나가기 버튼 제거됨) */
+	justify-content: flex-start;
+    align-items: center; 
+    padding-top: 10px; /* 상단 여백 살짝 줄임 */
+    transform: translateX(-30px); 
 }
 
-.right-top {
-	display: flex;
-	justify-content: flex-end;
-	height: 50px;
-}
-
-.exit-btn {
-	height: 100%;
-	cursor: pointer;
-	transition: transform 0.2s;
-	filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.3));
-}
-
-.exit-btn:hover {
-	transform: scale(1.05);
-}
+/* 나가기 버튼 영역 삭제됨 (.right-top) */
 
 .chat-panel {
-	flex: 1;
+    width: 100%;
+    /* [수정] 나가기 버튼 공간만큼 높이 확장 (600px -> 680px) */
+    height: 680px; 
 	position: relative;
-	background: url('<%=CTX%>/assets/images/game/chatBox.png') no-repeat
-		center/100% 100%;
-	min-height: 250px;
+	background: url('<%=CTX%>/assets/images/game/chatBox.png') no-repeat center center;
+    background-size: 100% 100%; 
 	filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.2));
-	transform: translateX(-30px);
-	margin-top: 10px;
+    margin-bottom: 20px; 
 }
 
 .chat-scroll {
 	position: absolute;
-	top: 12%;
-	bottom: 25%;
-	left: 10%;
-	right: 10%;
+    /* [수정] 높이가 늘어난 만큼 top 위치 조정 */
+	top: 13%; 
+	bottom: 22%;
+	left: 12%;
+	right: 12%;
 	overflow-y: auto;
 	padding-right: 5px;
-	font-size: 15px;
+	font-size: 16px;
 	font-weight: bold;
 	color: #3e2723;
-	line-height: 1.5;
+	line-height: 1.6;
 }
 
 .chat-scroll::-webkit-scrollbar {
@@ -168,9 +174,9 @@ body {
 
 .chat-input-area {
 	position: absolute;
-	bottom: 8%;
-	left: 10%;
-	right: 10%;
+	bottom: 9%; 
+	left: 12%;
+	right: 12%;
 	display: flex;
 	gap: 5px;
 }
@@ -181,7 +187,8 @@ body {
 	border: 2px solid #8d6e63;
 	border-radius: 4px;
 	font-size: 14px;
-	background: rgba(255, 255, 255, 0.9);
+    font-family: 'Patrick Hand', 'Arial', sans-serif;
+	background: rgba(255, 255, 255, 0.8);
 }
 
 .chat-send-btn {
@@ -191,6 +198,7 @@ body {
 	border: none;
 	border-radius: 4px;
 	font-weight: bold;
+    font-family: 'Patrick Hand', 'Arial', sans-serif;
 	cursor: pointer;
 }
 
@@ -200,33 +208,34 @@ body {
 
 .right-bottom {
 	display: flex;
-	flex-direction: column;
-	gap: 10px;
+	flex-direction: row; 
+	gap: 15px;
+    width: 100%; 
+    align-items: center; 
 }
 
 .players-container {
 	display: flex;
-	justify-content: space-between;
-	gap: 10px;
+    flex: 1; 
+	justify-content: space-between; 
+	gap: 15px;
 }
 
-/* ✅ Player Box Style (아바타 이미지 배경 사용) */
+/* ✅ Player Box */
 .player-box {
 	position: relative;
-	flex: 1;
-	height: 120px; /* 높이 넉넉하게 */
+    width: 48%; 
+	height: 130px; 
 	padding: 0;
 	
-    /* 배경 설정 */
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: contain; 
 
 	color: #3e2723;
-	filter: grayscale(1) contrast(0.9); /* 내 턴 아닐 때 흑백 */
+	filter: grayscale(1) contrast(0.9);
 	transition: filter 0.3s ease, transform 0.2s ease;
 	
-	/* 텍스트 가독성 그림자 */
 	text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.9), 0 0 5px rgba(255, 255, 255, 0.8);
 }
 
@@ -252,13 +261,14 @@ body {
 	left: 0; right: 0;
 	bottom: 25px;
 	text-align: center;
-	font-size: 16px;
+	font-size: 18px;
 	font-weight: 900;
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
-    background: rgba(255, 255, 255, 0.5);
+    background: transparent;
     padding: 2px 0;
+    border-radius: 4px;
 }
 
 .player-score {
@@ -266,19 +276,20 @@ body {
 	left: 0; right: 0;
 	bottom: 5px;
 	text-align: center;
-	font-size: 12px;
+	font-size: 14px;
 	font-weight: 700;
-    background: rgba(255, 255, 255, 0.5);
+    background: transparent;
+    border-radius: 4px;
 }
 
 .config-area {
 	display: flex;
-	justify-content: flex-end;
-	padding-right: 5px;
+	justify-content: center;
+	align-items: center;
 }
 
 .config-btn {
-	width: 45px;
+	width: 65px; 
 	cursor: pointer;
 	transition: transform 0.3s;
 	filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
@@ -290,78 +301,64 @@ body {
 
 /* ===== Popup ===== */
 .dim-layer {
-	position: fixed;
-	inset: 0;
-	background: rgba(0, 0, 0, 0.6);
-	display: none;
-	z-index: 100;
+    position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); display: none; z-index: 100;
 }
 
 .config-popup {
-	position: fixed;
-	top: 50%;
-	left: 50%;
-	transform: translate(-50%, -50%);
-	width: 400px;
-	height: 320px;
-	background:
-		url('<%=CTX%>/assets/images/main/ConfigPopUp/configureBox.png')
-		no-repeat center/contain;
-	display: none;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-	z-index: 101;
-	filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+    position: fixed; 
+    top: 50%; left: 50%; 
+    transform: translate(-50%, -50%);
+    width: 400px; 
+    height: auto; 
+    display: none; 
+    flex-direction: column; 
+    align-items: center; 
+    justify-content: center;
+    z-index: 101; 
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
 }
 
-.close-popup-btn {
-	position: absolute;
-	top: 45px;
-	right: 30px;
-	width: 30px;
-	height: 30px;
-	background: #8d6e63;
-	border: 2px solid #5d4037;
-	color: white;
-	font-weight: bold;
-	cursor: pointer;
-	border-radius: 4px;
-}
-
-.popup-content {
-	margin-top: 20px;
-	text-align: center;
-    width: 100%;
+.config-box-frame {
+    position: relative;
+    width: 400px;
+    height: 320px;
+    background: url('<%=CTX%>/assets/images/main/ConfigPopUp/configureBox.png') no-repeat center/contain;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+}
+
+.close-popup-btn {
+    position: absolute; 
+    top: 15px; right: 60px; 
+    width: 30px; height: 30px;
+    background: #8d6e63; border: 2px solid #5d4037; color: white;
+    font-weight: bold; cursor: pointer; border-radius: 4px;
+    z-index: 10;
+}
+
+.popup-content {
+    margin-top: 20px; text-align: center; width: 100%; display: flex; flex-direction: column; align-items: center;
 }
 
 .surrender-btn {
-	padding: 10px 20px;
-	background: #5d4037;
-	color: white;
-	border: none;
-	border-radius: 8px;
-	font-weight: bold;
-	font-size: 16px;
-	cursor: pointer;
-	transition: 0.2s;
+    padding: 10px 20px; background: #5d4037; color: white; border: none;
+    border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.2s;
+    font-family: 'Patrick Hand', 'Arial', sans-serif;
 }
-
-.surrender-btn:hover {
-	background: #3e2723;
-	transform: scale(1.05);
-}
+.surrender-btn:hover { background: #3e2723; transform: scale(1.05); }
 
 /* Volume UI */
 .volume-image-wrapper {
-    position: relative; width: 320px; height: 60px;
+    position: relative; 
+    width: 320px; height: 60px;
     background-image: url('<%=CTX%>/assets/images/main/ConfigPopUp/volumeBar.png');
     background-size: 100% 100%; background-position: center; background-repeat: no-repeat;
-    display: flex; justify-content: center; align-items: center; margin-top: 20px;
+    display: flex; justify-content: center; align-items: center; 
+    margin-top: 15px; 
 }
+
 .volume-track-area {
     position: absolute; width: 200px; height: 100%; top: 0; left: 50%; transform: translateX(-50%); cursor: pointer;
 }
@@ -373,115 +370,102 @@ body {
     cursor: pointer; z-index: 5; pointer-events: none;
 }
 
-@media ( max-width : 1000px) {
-	.layout {
-		grid-template-columns: 1fr;
-		grid-template-rows: auto 1fr;
-		overflow-y: auto;
-	}
-	body {
-		overflow: auto;
-	}
-	.left-col {
-		margin-bottom: 20px;
-	}
-	.right-col {
-		height: auto;
-	}
+@media (max-width: 1000px) {
+    .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr; overflow-y: auto; }
+    body { overflow: auto; }
+    .left-col { margin-bottom: 20px; }
+    .right-col { height: auto; }
 }
 </style>
 </head>
 
 <body>
-	<div class="game-bg"></div>
-	
-	<audio id="bgmAudio" loop preload="auto">
+    <div class="game-bg"></div>
+    
+    <audio id="bgmAudio" loop preload="auto">
         <source src="<%=CTX%>/assets/sounds/game_bgm.mp3" type="audio/mp3">
     </audio>
 
-	<div id="gameOverDim" class="dim-layer"></div>
-	
-	<div id="gameOverPopup" class="config-popup" style="display:none;">
-	  <div class="popup-content">
-	    <h2 id="gameOverTitle" style="color:#3e2723; margin-bottom:15px;"></h2>
-	    <p id="gameOverMessage" style="font-size:16px; margin-bottom:25px;"></p>
-	    <button id="gameOverBtn" class="surrender-btn">로비로</button>
-	  </div>
-	</div>
-	
-	<div class="layout">
-		<div class="left-col">
-			<div class="board-frame-wrap" id="boardFrame">
-				<img src="<%=CTX%>/assets/images/game/board.png"
-					class="board-frame-img" alt="Frame" />
-
-				<div id="boardHit" class="board-hit">
-					<img id="ghostStone" class="ghost-stone"
-						src="<%=CTX%>/assets/images/game/stone_1.png" alt="" />
-				</div>
-			</div>
-		</div>
-
-		<div class="right-col">
-			<div class="chat-panel">
-				<div class="chat-scroll" id="chatScroll">
-					</div>
-				<div class="chat-input-area">
-					<input type="text" id="chatInput" class="chat-input" placeholder="메시지 입력..." maxlength="100" />
-					<button id="chatSendBtn" class="chat-send-btn">전송</button>
-				</div>
-			</div>
-
-			<div class="right-bottom">
-				<div class="players-container">
-					<div class="player-box turn-active" id="p1Box">
-						<div class="player-name"><%=nickName%></div>
-						<div class="player-score">
-							Wins:
-							<%=win%></div>
-					</div>
-					<div class="player-box" id="p2Box">
-						<div class="player-name">Waiting...</div>
-						<div class="player-score">-</div>
-					</div>
-				</div>
-
-				<div class="config-area">
-					<img id="configBtn" class="config-btn"
-						src="<%=CTX%>/assets/images/game/configureIcon.png" alt="Config" />
-				</div>
-			</div>
-		</div>
-	</div>
-
-	<div id="dimLayer" class="dim-layer"></div>
-	<div id="configPopup" class="config-popup">
-		<button id="closePopupBtn" class="close-popup-btn">X</button>
-		<div class="popup-content">
-			<h2 style="color: #3e2723; margin-bottom: 20px;">Game Settings</h2>
-			<button id="surrenderBtn" class="surrender-btn">기권 / 나가기</button>
-            
-            <div class="volume-image-wrapper">
-                <div id="volumeTrack" class="volume-track-area">
-                    <div id="volumeKnob" class="volume-knob"></div>
+    <div id="gameOverDim" class="dim-layer"></div>
+    
+    <div id="gameOverPopup" class="config-popup" style="display:none;">
+      <div class="config-box-frame">
+          <div class="popup-content">
+            <h2 id="gameOverTitle" style="color:#3e2723; margin-bottom:15px;"></h2>
+            <p id="gameOverMessage" style="font-size:16px; margin-bottom:25px;"></p>
+            <button id="gameOverBtn" class="surrender-btn">로비로</button>
+          </div>
+      </div>
+    </div>
+    
+    <div class="layout">
+        <div class="left-col">
+            <div class="board-frame-wrap" id="boardFrame">
+                <img src="<%=CTX%>/assets/images/game/board.png" class="board-frame-img" alt="Frame" />
+                <div id="boardHit" class="board-hit">
+                    <canvas id="fxCanvas"></canvas>
+                    <img id="ghostStone" class="ghost-stone" src="<%=CTX%>/assets/images/game/stone_1.png" alt="" />
                 </div>
             </div>
-		</div>
-	</div>
+        </div>
 
-	<script src="<%= request.getContextPath() %>/assets/js/game/game-chat.js?v=1"></script>
+        <div class="right-col">
+            <div class="chat-panel">
+                <div class="chat-scroll" id="chatScroll">
+                    </div>
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="메시지 입력..." maxlength="100" />
+                    <button id="chatSendBtn" class="chat-send-btn">전송</button>
+                </div>
+            </div>
 
-	<script>
+            <div class="right-bottom">
+                <div class="players-container">
+                    <div class="player-box turn-active" id="p1Box">
+                        <div class="player-name"><%=nickName%></div>
+                        <div class="player-score">Wins: <%=win%></div>
+                    </div>
+                    <div class="player-box" id="p2Box">
+                        <div class="player-name">Waiting...</div>
+                        <div class="player-score">-</div>
+                    </div>
+                </div>
+
+                <div class="config-area">
+                    <img id="configBtn" class="config-btn" src="<%=CTX%>/assets/images/game/configureIcon.png" alt="Config" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dimLayer" class="dim-layer"></div>
+    <div id="configPopup" class="config-popup">
+        <div class="config-box-frame">
+            <button id="closePopupBtn" class="close-popup-btn">X</button>
+            <div class="popup-content">
+                <h2 style="color: #3e2723; margin-bottom: 20px;">Game Settings</h2>
+                <button id="surrenderBtn" class="surrender-btn">기권 / 나가기</button>
+            </div>
+        </div>
+        <div class="volume-image-wrapper">
+            <div id="volumeTrack" class="volume-track-area">
+                <div id="volumeKnob" class="volume-knob"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="<%= request.getContextPath() %>/assets/js/game/game-chat.js?v=1"></script>
+
+    <script>
     const CTX = "<%=CTX%>";
     const IMG = {
       black: CTX + "/assets/images/game/stone_1.png",
       white: CTX + "/assets/images/game/stone_2.png",
     };
     
-    // [추가됨] 착수음 객체
+    // 착수음
     const stoneAudio = new Audio(CTX + "/assets/sounds/stone_tap.mp3");
     
-    // 역할별 색상 상수
     const ROLE_COLOR = {
       BLACK:    "#0B3D2E", 
       WHITE:    "#1E88E5", 
@@ -489,31 +473,34 @@ body {
       SYSTEM:   "#D32F2F", 
     };
 
-    // 오목판 격자 (15줄 = 14칸 간격)
     const BOARD_SIZE = 15;
     const LINES = 14;
 
-    let turn = 1; // 1: 흑, 2: 백
+    let turn = 1; 
     let gameActive = true;
     let boardState = Array.from({ length: BOARD_SIZE }, () => Array(BOARD_SIZE).fill(0));
 
-    // Role state variables (for player/observer distinction)
     let isPlayer = false;
     let isObserver = false;
-    let myStone = 0;  // 1 or 2, 0 if observer
+    let myStone = 0; 
     let blackPlayerName = "";
     let whitePlayerName = "";
     let myNickname = "<%=nickName%>";
     let inputLocked = false;
     let gameEnded = false;
     
-    // [추가됨] 볼륨 관련 변수
     let currentVolume = 0.5;
     let isDraggingVolume = false;
     
-    // 중복 출력 방지
     let announcedJoins = new Set(); 
     let lastAnnouncedTurn = 0; 
+    
+    // [추가됨] FX 관련 변수
+    const fxCanvas = document.getElementById("fxCanvas");
+    const fctx = fxCanvas.getContext("2d");
+    let fxPlaying = false;
+    let fxStartTime = 0;
+    const flakes = [];
 
     const boardHit   = document.getElementById("boardHit");
     const ghostEl    = document.getElementById("ghostStone");
@@ -523,77 +510,128 @@ body {
     let cellW = 0;
     let cellH = 0;
 
-    // 1. 그리드 수치 계산 (보드 크기에 맞춰 동적 계산)
     function recalcMetrics() {
       const width = boardHit.clientWidth;
       const height = boardHit.clientHeight;
+      
+      // Canvas 크기 맞춤
+      fxCanvas.width = width;
+      fxCanvas.height = height;
 
       cellW = width / LINES;
       cellH = height / LINES;
-      
       const stoneSize = Math.min(cellW, cellH) * 0.95; 
-      
       ghostEl.style.width = stoneSize + "px";
       ghostEl.style.height = stoneSize + "px";
     }
 
-    // 2. 좌표 변환 (Pixel -> Grid Index)
     function getGridPos(e) {
       const rect = boardHit.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-
       const col = Math.round(x / cellW);
       const row = Math.round(y / cellH);
-
-      if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) {
-        return null;
-      }
+      if (col < 0 || col >= BOARD_SIZE || row < 0 || row >= BOARD_SIZE) return null;
       return { row, col };
     }
 
-    // 3. 돌 놓기 (UI)
     function placeStone(row, col, player) {
       const stone = document.createElement("img");
       stone.src = (player === 1) ? IMG.black : IMG.white;
       stone.className = "stone";
-      
       const stoneSize = Math.min(cellW, cellH) * 0.95;
       stone.style.width = stoneSize + "px";
       stone.style.height = stoneSize + "px";
-
       stone.style.left = (col * cellW) + "px";
       stone.style.top  = (row * cellH) + "px";
-
       const deg = Math.random() * 40 - 20;
       stone.style.transform = `translate(-50%, -50%) rotate(${deg}deg)`;
-
       boardHit.appendChild(stone);
       
-      // [추가됨] 착수음 재생
       stoneAudio.currentTime = 0;
       stoneAudio.volume = currentVolume;
       stoneAudio.play().catch(e => {});
     }
 
-    // 4. 마우스 이동 (Ghost Stone)
     function onMouseMove(e) {
       if (!gameActive) return;
       const pos = getGridPos(e);
-      
       if (!pos || boardState[pos.row][pos.col] !== 0) {
         ghostEl.style.display = "none";
         return;
       }
-
       ghostEl.style.display = "block";
       ghostEl.src = (turn === 1) ? IMG.black : IMG.white;
-      
       ghostEl.style.left = (pos.col * cellW) + "px";
       ghostEl.style.top  = (pos.row * cellH) + "px";
     }
 
-    // Utility: Normalize turn value (handle nickname or 1/2)
+    // ================= [FX] 눈송이 및 승리 효과 로직 =================
+    function spawnSnow(px, py, n = 5) {
+        for (let i = 0; i < n; i++) {
+            flakes.push({
+                x: px + (Math.random() - 0.5) * 50, // 범위 약간 넓힘
+                y: py + (Math.random() - 0.5) * 50,
+                vx: (Math.random() - 0.5) * 1,
+                vy: 1 + Math.random() * 2,
+                r: Math.random() * Math.PI * 2,
+                vr: (Math.random() - 0.5) * 0.1,
+                s: 2 + Math.random() * 5,
+                a: 0.5 + Math.random() * 0.5,
+                life: 60 + Math.random() * 60
+            });
+        }
+    }
+
+    function updateSnow() {
+        for (let i = flakes.length - 1; i >= 0; i--) {
+            const f = flakes[i];
+            f.x += f.vx;
+            f.y += f.vy;
+            f.r += f.vr;
+            f.life--;
+            if (f.life < 20) f.a *= 0.9;
+            if (f.life <= 0) flakes.splice(i, 1);
+        }
+    }
+
+    function drawFlake(ctx, x, y, size, rot, alpha) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rot);
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(0, 0, size/2, 0, Math.PI*2); // 간단한 원형 눈송이
+        ctx.fill();
+        ctx.restore();
+    }
+
+    function startWinFx() {
+        fxPlaying = true;
+        fxStartTime = performance.now();
+        requestAnimationFrame(tickFx);
+    }
+
+    function tickFx(now) {
+        fctx.clearRect(0, 0, fxCanvas.width, fxCanvas.height);
+        
+        // 전체 화면 눈송이 (승리 축하)
+        if (Math.random() < 0.2) {
+             spawnSnow(Math.random() * fxCanvas.width, -10, 2);
+        }
+
+        updateSnow();
+        for (const f of flakes) {
+            drawFlake(fctx, f.x, f.y, f.s, f.r, f.a);
+        }
+
+        if (fxPlaying) {
+            requestAnimationFrame(tickFx);
+        }
+    }
+    // ===============================================================
+
     function normalizeTurn(currentTurn, blackPlayer, whitePlayer) {
       if (typeof currentTurn === 'number') return currentTurn;
       if (typeof currentTurn === 'string') {
@@ -603,19 +641,13 @@ body {
       return null;
     }
 
-    // Utility: Normalize payload structure
     function normalizePayload(msg) {
-      return {
-        type: msg.type,
-        data: msg.data ?? msg
-      };
+      return { type: msg.type, data: msg.data ?? msg };
     }
     
-    // 시스템 메시지 출력 함수
     function showSystemMessage(message, roleColor = null) {
       const chatLog = document.getElementById("chatScroll");
       if (!chatLog) return;
-
       const lineDiv = document.createElement("div");
       const systemSpan = document.createElement("span");
       systemSpan.style.color = ROLE_COLOR.SYSTEM;
@@ -630,12 +662,10 @@ body {
       } else {
         lineDiv.appendChild(document.createTextNode(message));
       }
-
       chatLog.appendChild(lineDiv);
       chatLog.scrollTop = chatLog.scrollHeight;
     }
 
-    // 플레이어/관전자 채팅 라벨 출력
     function appendRoleChat(sender, message, channel) {
         const chatLog = document.getElementById("chatLog") || document.getElementById("chatScroll");
         if (!chatLog) return;
@@ -658,45 +688,30 @@ body {
         const labelSpan = document.createElement("span");
         labelSpan.style.color = roleColor;
         labelSpan.textContent = roleLabel + " ";
-
         const senderSpan = document.createElement("span");
         senderSpan.style.color = roleColor;
         senderSpan.textContent = sender + ": ";
-
         const messageSpan = document.createElement("span");
         messageSpan.textContent = message;
 
         lineDiv.appendChild(labelSpan);
         lineDiv.appendChild(senderSpan);
         lineDiv.appendChild(messageSpan);
-
         chatLog.appendChild(lineDiv);
         chatLog.scrollTop = chatLog.scrollHeight;
     }
 
-    // 5. 클릭 (착수)
     function onBoardClick(e) {
       if (!gameActive || gameEnded) return;
       if (inputLocked) return;  
-
-      if (isObserver || !isPlayer) {
-        return;
-      }
-
-      if (myStone !== turn) {
-        return;
-      }
+      if (isObserver || !isPlayer) return;
+      if (myStone !== turn) return;
 
       const pos = getGridPos(e);
       if (!pos || boardState[pos.row][pos.col] !== 0) return;
 
       inputLocked = true;
-
-      socket.send(JSON.stringify({
-        type: "MAKE_MOVE",
-        row: pos.row,
-        col: pos.col
-      }));
+      socket.send(JSON.stringify({ type: "MAKE_MOVE", row: pos.row, col: pos.col }));
     }
 
     function updateTurnUI() {
@@ -709,26 +724,17 @@ body {
       }
     }
 
-    // Chat send function
     function sendChatMessage() {
       const input = document.getElementById("chatInput");
       const message = input.value.trim();
       if (!message) return;
-
       const channel = isObserver ? "OBSERVER" : (isPlayer ? "PLAYER" : "ALL");
-
       if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: "CHAT",
-          message: message,
-          channel: channel  
-        }));
+        socket.send(JSON.stringify({ type: "CHAT", message: message, channel: channel }));
       }
-
       input.value = "";
     }
     
-    // [추가됨] 볼륨 관련 함수들
     function initAudio() {
         const savedVolume = localStorage.getItem('omok_volume');
         if (savedVolume !== null) currentVolume = parseFloat(savedVolume);
@@ -778,7 +784,6 @@ body {
     window.addEventListener("load", () => {
       recalcMetrics();
       window.addEventListener("resize", recalcMetrics);
-
       boardHit.addEventListener("mousemove", onMouseMove);
       boardHit.addEventListener("mouseleave", () => { ghostEl.style.display = "none"; });
       boardHit.addEventListener("click", onBoardClick);
@@ -786,14 +791,11 @@ body {
       const chatInput = document.getElementById("chatInput");
       const chatSendBtn = document.getElementById("chatSendBtn");
       chatSendBtn.onclick = sendChatMessage;
-      chatInput.addEventListener("keypress", (e) => {
-        if (e.key === "Enter") sendChatMessage();
-      });
+      chatInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendChatMessage(); });
 
 	  connectWebSocket();
-      
-      // [추가됨] 초기화 실행
       initAudio();
+      
       const volumeTrack = document.getElementById('volumeTrack');
       if (volumeTrack) {
           volumeTrack.addEventListener('mousedown', startDrag);
@@ -811,11 +813,10 @@ body {
         }
       });
 
-
       const dim = document.getElementById("dimLayer");
       const popup = document.getElementById("configPopup");
       document.getElementById("configBtn").onclick = () => { 
-    	  dim.style.display="block"; 
+    	  dim.style.display="flex"; 
     	  popup.style.display="flex"; 
     	  updateVolumeUI();
       };
@@ -826,13 +827,9 @@ body {
     /*   const exitFunc = () => {
         if(confirm("정말 나가시겠습니까?")) {
           if (socket && socket.readyState === WebSocket.OPEN) {
-            try {
-              socket.send(JSON.stringify({ type: "EXIT" }));
-            } catch (e) { console.warn("Exit message send failed:", e); }
+            try { socket.send(JSON.stringify({ type: "EXIT" })); } catch (e) {}
           }
-          if (socket) {
-            socket.close(1000, "leave");
-          }
+          if (socket) socket.close(1000, "leave");
           location.replace(CTX + "/main");
         }
       }; */
@@ -858,20 +855,17 @@ body {
               }
           }
       };
-      //document.getElementById("exitBtn").onclick = exitFunc;
+      // document.getElementById("exitBtn").onclick = exitFunc; // 제거됨
       document.getElementById("surrenderBtn").onclick = exitFunc;
     });
     
-    
- // 웹소켓 호출 bgchoi
+    // ================= WebSocket =================
 	const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
 	const wsUrl = protocol + '//' + window.location.host + CTX + '/game';
 	const params = new URLSearchParams(window.location.search);
 	const roomSeq = params.get('roomSeq');
 	
-	if (!roomSeq) {
-	  alert("roomSeq가 없습니다.");
-	}
+	if (!roomSeq) alert("roomSeq가 없습니다.");
 	
 	let socket = null;
 	
@@ -1006,6 +1000,10 @@ body {
 		    case "GAME_OVER": {
 		      gameActive = false;
 		      gameEnded = true;
+              
+              // [승리 효과 시작]
+              startWinFx();
+
 		      const dim = document.getElementById("gameOverDim");
 		      const popup = document.getElementById("gameOverPopup");
 		      const title = document.getElementById("gameOverTitle");
@@ -1052,13 +1050,9 @@ body {
 		  }
 		};
 
-
 	  socket.onclose = (event) => {};
-
 	  socket.onerror = (err) => {
-	    if (!gameEnded) {
-	      alert("연결 오류가 발생했습니다.");
-	    }
+	    if (!gameEnded) alert("연결 오류가 발생했습니다.");
 	  };
 	}
 	

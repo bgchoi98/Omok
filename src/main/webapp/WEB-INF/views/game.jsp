@@ -441,6 +441,14 @@ body {
       white: CTX + "/assets/images/game/stone_2.png",
     };
 
+    // 역할별 색상 상수
+    const ROLE_COLOR = {
+      BLACK: "#212121",
+      WHITE: "#1565C0",
+      OBSERVER: "#6A1B9A",
+      SYSTEM: "#D32F2F",
+    };
+
     // 오목판 격자 (15줄 = 14칸 간격)
     const BOARD_SIZE = 15;
     const LINES = 14;
@@ -458,6 +466,10 @@ body {
     let myNickname = "<%=nickName%>";
     let inputLocked = false;
     let gameEnded = false;
+
+    // 중복 출력 방지를 위한 상태 관리
+    let announcedJoins = new Set(); // 입장 안내한 닉네임들
+    let lastAnnouncedTurn = 0; // 마지막으로 안내한 턴
 
     const boardHit   = document.getElementById("boardHit");
     const ghostEl    = document.getElementById("ghostStone");
@@ -557,6 +569,34 @@ body {
         type: msg.type,
         data: msg.data ?? msg
       };
+    }
+
+    // 시스템 메시지 출력 함수
+    function showSystemMessage(message, roleColor = null) {
+      const chatLog = document.getElementById("chatScroll");
+      if (!chatLog) return;
+
+      const lineDiv = document.createElement("div");
+
+      // System 라벨
+      const systemSpan = document.createElement("span");
+      systemSpan.style.color = ROLE_COLOR.SYSTEM;
+      systemSpan.textContent = "System: ";
+
+      lineDiv.appendChild(systemSpan);
+
+      // 메시지 내용 (역할 색상 적용)
+      if (roleColor) {
+        const messageSpan = document.createElement("span");
+        messageSpan.style.color = roleColor;
+        messageSpan.textContent = message;
+        lineDiv.appendChild(messageSpan);
+      } else {
+        lineDiv.appendChild(document.createTextNode(message));
+      }
+
+      chatLog.appendChild(lineDiv);
+      chatLog.scrollTop = chatLog.scrollHeight;
     }
 
     // 5. 클릭 (착수)
@@ -775,6 +815,26 @@ body {
 		      updateTurnUI();
 
 		      console.log("✅ JOIN_GAME_SUCCESS - isPlayer:", isPlayer, "myStone:", myStone);
+
+		      // 입장 안내 메시지 출력 (중복 방지)
+		      if (blackPlayerName && !announcedJoins.has(blackPlayerName)) {
+		        showSystemMessage("흑 : " + blackPlayerName + " 입장했습니다.", ROLE_COLOR.BLACK);
+		        announcedJoins.add(blackPlayerName);
+		      }
+		      if (whitePlayerName && !announcedJoins.has(whitePlayerName)) {
+		        showSystemMessage("백 : " + whitePlayerName + " 입장했습니다.", ROLE_COLOR.WHITE);
+		        announcedJoins.add(whitePlayerName);
+		      }
+
+		      // 턴 안내 메시지 출력 (게임 시작 시 첫 턴)
+		      if (blackPlayerName && whitePlayerName && lastAnnouncedTurn !== turn) {
+		        const currentPlayerName = (turn === 1) ? blackPlayerName : whitePlayerName;
+		        const roleText = (turn === 1) ? "흑" : "백";
+		        const roleColor = (turn === 1) ? ROLE_COLOR.BLACK : ROLE_COLOR.WHITE;
+		        showSystemMessage("돌을 놓을 차례입니다. (" + roleText + ": " + currentPlayerName + ")", roleColor);
+		        lastAnnouncedTurn = turn;
+		      }
+
 		      break;
 		    }
 
@@ -787,6 +847,11 @@ body {
 			case "JOIN_OBSERVER": {
                 const { board, blackPlayer, whitePlayer, currentTurn } = data;
                 console.log("옵저버일떄 확인" , data);
+
+                // 플레이어 이름 저장
+                blackPlayerName = blackPlayer || "";
+                whitePlayerName = whitePlayer || "";
+
                 // 전체 보드 상태 초기화
                 for (let r = 0; r < board.length; r++) {
                     for (let c = 0; c < board[r].length; c++) {
@@ -802,6 +867,12 @@ body {
 
                 // 플레이어 정보 등 UI 업데이트 가능
                 updatePlayersUI(blackPlayer, whitePlayer);
+
+                // 관전자 입장 안내 (내가 관전자로 들어온 경우)
+                if (myNickname && !announcedJoins.has(myNickname)) {
+                  showSystemMessage("관전자 : " + myNickname + " 입장했습니다.", ROLE_COLOR.OBSERVER);
+                  announcedJoins.add(myNickname);
+                }
 
                 break;
             }
@@ -856,6 +927,16 @@ body {
 		      inputLocked = false;
 
 		      console.log(`🪨 ${player} 가 (${row}, ${col}) 착수, 다음 턴: ${turn}`);
+
+		      // 턴 안내 메시지 (턴이 실제로 바뀔 때만 출력)
+		      if (lastAnnouncedTurn !== turn && blackPlayerName && whitePlayerName) {
+		        const currentPlayerName = (turn === 1) ? blackPlayerName : whitePlayerName;
+		        const roleText = (turn === 1) ? "흑" : "백";
+		        const roleColor = (turn === 1) ? ROLE_COLOR.BLACK : ROLE_COLOR.WHITE;
+		        showSystemMessage("돌을 놓을 차례입니다. (" + roleText + ": " + currentPlayerName + ")", roleColor);
+		        lastAnnouncedTurn = turn;
+		      }
+
 		      break;
 		    }
 

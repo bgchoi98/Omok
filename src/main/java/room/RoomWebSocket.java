@@ -78,7 +78,7 @@ public class RoomWebSocket {
         sessionToUser.put(session, lobbyUser);
         nicknameToSession.put(nickname, session);
         
-        roomService.sendRoomListToLobbyUser(session, lobbyUser);
+        sendRoomListToLobbyUser(session, lobbyUser);
         System.out.println("소켓 세션아이디 확인용 : "+session.getId());
         log.info("LobbyUser connected userId={}", nickname);
 	}
@@ -111,6 +111,7 @@ public class RoomWebSocket {
                 
             case "CREATE_ROOM":
                 Room room = roomService.createRoom(currentUser, allSessions);
+                broadcastRoomList(allSessions);
                 log.info("Room created by: {}, roomSeq: {}", currentUser.getNickName(), room.getRoomSeq());
                 
                 // 방 생성자에게 성공 응답 전송
@@ -143,7 +144,7 @@ public class RoomWebSocket {
                     log.info("{} joined room {}", currentUser.getNickName(), joinRoomId);
                     
                     //  방 리스트 업데이트 브로드캐스트
-                    roomService.broadcastRoomList(allSessions);  
+                    broadcastRoomList(allSessions);  
                     
                     // 2명이 모두 모였을 때 게임 시작 메시지 전송
                     if (findRoom.isFull()) {
@@ -186,7 +187,7 @@ public class RoomWebSocket {
             	if (observeSuccess) {
             		log.info("{} started observing room {}", currentUser.getNickName(), observingRoomId);
             		//  방 리스트 업데이트 브로드캐스트
-                    roomService.broadcastRoomList(allSessions);  
+                    broadcastRoomList(allSessions);  
             		// 관전 성공 응답 전송
             		JsonObject observeResponse = new JsonObject();
             		// 게임유저와 동일하게 게임페이지 가면될거같아서 주석처리해놈 BGHOI
@@ -196,7 +197,7 @@ public class RoomWebSocket {
             		observeResponse.addProperty("message", "관전을 시작합니다.");
             		session.getAsyncRemote().sendText(gson.toJson(observeResponse));
             	} else {
-            		sendError(session, "관전에 실패했습니다. (게임이 진행 중이 아닙니다)");
+            		sendError(session, "게임중이거나 관전인원이 꽉 찼습니다");
             	}
             	break;
             	
@@ -228,7 +229,7 @@ public class RoomWebSocket {
 //                	deleteResponse.addProperty("roomSeq", roomSeq);
 //                	deleteResponse.addProperty("message", "방이 삭제되었습니다.");
 //                	session.getBasicRemote().sendText(gson.toJson(deleteResponse));
-                	roomService.broadcastRoomList(allSessions);  
+                	broadcastRoomList(allSessions);  
                 } else {
                 	sendError(session, "방 삭제에 실패했습니다. (권한이 없거나 게임이 진행 중입니다)");
                 }
@@ -264,7 +265,7 @@ public class RoomWebSocket {
 	    if (room == null) return;
 	    if (room.getRoomStatus() == RoomStatus.WAITING) {
 	        roomService.deleteRoom_Refresh(room.getRoomSeq(), lobbyUser.getNickName());
-	        roomService.broadcastRoomList(sessionToUser.keySet());
+	        broadcastRoomList(sessionToUser.keySet());
 	    }
 	    
 	}
@@ -309,4 +310,38 @@ public class RoomWebSocket {
             log.error("Error sending error message: {}", e.getMessage());
         }
     }
+    
+	/**
+	 * 특정 유저에게 방 리스트 전송
+	 * 
+	 * @param session   전송할 세션
+	 * @param lobbyUser 유저 정보
+	 */
+	public void sendRoomListToLobbyUser(Session session, LobbyUser lobbyUser) {
+		try {
+			if (!session.isOpen()) {
+				return;
+			}
+			String json = roomService.createRoomListJson();
+			session.getBasicRemote().sendText(json);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	// 변경
+		public void broadcastRoomList(Set<Session> sessions) {
+			String json = roomService.createRoomListJson();
+			for (Session session : sessions) {
+				if (!session.isOpen())
+					continue;
+				synchronized (session) {
+					try {
+						session.getBasicRemote().sendText(json);
+					} catch (IOException e) {
+
+					}
+				}
+			}
+		}
 }

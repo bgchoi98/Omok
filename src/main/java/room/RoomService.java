@@ -56,8 +56,6 @@ public class RoomService {
 				room.setP1Avatar(avatar);
 			}
 		}
-
-		broadcastRoomList(sessions);
 		return room;
 	}
 
@@ -121,8 +119,10 @@ public class RoomService {
 		Observer observer = new Observer(lobbyUser);
 		room.getObservers().add(observer);
 
-		// 관전자 인원수 제한 ?
-		// if *(room.getObservers().size > 2 )
+		// 관전자 인원수 제한 5
+		 if(room.getObservers().size() >= 5 ) {
+			 return false;
+		 }
 		return true;
 	}
 
@@ -191,29 +191,11 @@ public class RoomService {
 	}
 
 	/**
-	 * 특정 유저에게 방 리스트 전송
-	 * 
-	 * @param session   전송할 세션
-	 * @param lobbyUser 유저 정보
-	 */
-	public void sendRoomListToLobbyUser(Session session, LobbyUser lobbyUser) {
-		try {
-			if (!session.isOpen()) {
-				return;
-			}
-			String json = createRoomListJson();
-			session.getBasicRemote().sendText(json);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	/**
 	 * 방 리스트 JSON 생성
 	 * 
 	 * @return JSON 문자열
 	 */
-	private String createRoomListJson() {
+	public String createRoomListJson() {
 		List<Room> rooms = ROOM_REPOSITORY.findAll();
 		return gson.toJson(new WebSocketMessage(MessageType.ROOMLIST, null, rooms));
 	}
@@ -236,21 +218,6 @@ public class RoomService {
 //            }
 //        }
 //    }
-	// 변경
-	public void broadcastRoomList(Set<Session> sessions) {
-		String json = createRoomListJson();
-		for (Session session : sessions) {
-			if (!session.isOpen())
-				continue;
-			synchronized (session) {
-				try {
-					session.getBasicRemote().sendText(json);
-				} catch (IOException e) {
-
-				}
-			}
-		}
-	}
 
 	/**
 	 * 방 조회

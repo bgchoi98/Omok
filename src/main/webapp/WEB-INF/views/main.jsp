@@ -618,7 +618,8 @@
             const roomObservers = document.createElement('div');
             roomObservers.className = 'room-observers';
             const observerCount = (room.observers && room.observers.length) || 0;
-            roomObservers.textContent = '관전자  ' + observerCount + '/5	';
+            const displayCount = observerCount > 5 ? 5 : observerCount; // 5 이상이면 5로 제한
+            roomObservers.textContent = '관전자  ' + displayCount + '/5';
 
             info.appendChild(roomNumber);
             info.appendChild(roomStatus);

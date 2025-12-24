@@ -24,9 +24,8 @@ public class Room {
 	private GameState gameState;
 
 	// ADD: 플레이어 아바타 (1~4)
-	private Integer p1Avatar;  // Player 1 아바타 번호 (1~4)
-	private Integer p2Avatar;  // Player 2 아바타 번호 (1~4)
-
+	private Integer p1Avatar; // Player 1 아바타 번호 (1~4)
+	private Integer p2Avatar; // Player 2 아바타 번호 (1~4)
 
 	public Room(RoomStatus roomStatus, String hostNickname) {
 		this.roomSeq = roomSeqGenerator++;
@@ -34,8 +33,8 @@ public class Room {
 		this.hostNickname = hostNickname;
 	}
 
-	public Long getRoomSeq() {  
-	    return roomSeq;
+	public Long getRoomSeq() {
+		return roomSeq;
 	}
 
 	public List<GameUser> getGameUsers() {
@@ -58,18 +57,15 @@ public class Room {
 		return hostNickname;
 	}
 
-
 	// 해당 유저가 방장인지
 	public boolean isHost(String nickname) {
 		return this.hostNickname != null && this.hostNickname.equals(nickname);
 	}
 
-
 	// 해당 방이 가득찼는지
 	public boolean isFull() {
 		return gameUsers.size() >= 2;
 	}
-
 
 	// 해당 방이 비어있는지
 	public boolean isEmpty() {
@@ -81,12 +77,10 @@ public class Room {
 		return roomStatus == RoomStatus.WAITING && !isFull();
 	}
 
-
 	// 현재 게임 상태 조회
 	public GameState getGameState() {
 		return gameState;
 	}
-
 
 	// 게임 상태 수정
 	public void setGameState(GameState gameState) {

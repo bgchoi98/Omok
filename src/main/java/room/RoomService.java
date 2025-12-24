@@ -119,9 +119,9 @@ public class RoomService {
 		room.getObservers().add(observer);
 
 		// 관전자 인원수 제한 5
-		 if(room.getObservers().size() >= 5 ) {
-			 return false;
-		 }
+		if (room.getObservers().size() > 5) {
+			return false;
+		}
 		return true;
 	}
 
@@ -156,7 +156,7 @@ public class RoomService {
 //    	}
 		return deleted;
 	}
-	
+
 	/**
 	 * 방 삭제
 	 * 
@@ -198,25 +198,6 @@ public class RoomService {
 		List<Room> rooms = ROOM_REPOSITORY.findAll();
 		return gson.toJson(new WebSocketMessage(MessageType.ROOMLIST, null, rooms));
 	}
-
-	/**
-	 * 모든 세션에 방 리스트 브로드캐스트
-	 * 
-	 * @param sessions 전송할 세션 목록
-	 */
-//    public void broadcastRoomList(Set<Session> sessions) {
-//        String json = createRoomListJson(); 
-//        System.out.println("json출력"  + json);
-//        for (Session session : sessions) {
-//            if (session.isOpen()) {
-//                try {
-//                    session.getAsyncRemote().sendText(json);
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                }
-//            }
-//        }
-//    }
 
 	/**
 	 * 방 조회

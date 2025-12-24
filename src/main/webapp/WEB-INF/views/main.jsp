@@ -505,6 +505,7 @@
                 if (type === 'ROOMLIST') {
                     // Only update room list when ROOMLIST is received
                     updateRoomList(payload);
+                    console.log('콘솔확인용',data);
                     if (isCreatingRoom) isCreatingRoom = false;
                 } else if (type === 'ROOM_CREATED') {
                     // Room creation success - store roomSeq
@@ -621,8 +622,7 @@
             const roomObservers = document.createElement('div');
             roomObservers.className = 'room-observers';
             const observerCount = (room.observers && room.observers.length) || 0;
-            const displayCount = observerCount > 5 ? 5 : observerCount; // 5 이상이면 5로 제한
-            roomObservers.textContent = '관전자  ' + displayCount + '/5';
+            roomObservers.textContent = '관전자  ' + observerCount + '/5';
 
             info.appendChild(roomNumber);
             info.appendChild(roomStatus);

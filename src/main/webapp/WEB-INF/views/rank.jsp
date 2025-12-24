@@ -19,32 +19,13 @@
   <meta charset="UTF-8" />
   <title>Omok Ranking</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- 기존 폰트 (폴백용으로 유지) -->
-  <!-- <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet"> -->
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@400;700&family=Patrick+Hand&display=swap" rel="stylesheet">
 
   <style>
-    /* ====== 🎄 크리스마스 폰트 (Mountains of Christmas) ====== */
-    /* License: SIL Open Font License 1.1 - 상업적 사용 가능 */
-    /* Author: Crystal Kluge (Tart Workshop) */
-    /* Source: https://fonts.google.com/specimen/Mountains+of+Christmas */
-    @font-face {
-      font-family: 'Mountains of Christmas';
-      src: url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Regular.woff2') format('woff2'),
-           url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Regular.woff') format('woff');
-      font-weight: 400;
-      font-style: normal;
-      font-display: swap;
-    }
-
-    @font-face {
-      font-family: 'Mountains of Christmas';
-      src: url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Bold.woff2') format('woff2'),
-           url('${ctx}/assets/fonts/mountains-of-christmas/MountainsofChristmas-Bold.woff') format('woff');
-      font-weight: 700;
-      font-style: normal;
-      font-display: swap;
-    }
-    /* ================================================= */
+    /* ✅ [수정 2] 기존 로컬 @font-face 선언 삭제함 (CDN이 대신함) */
 
     :root{
       --shadow: 0 20px 40px rgba(0,0,0,0.5);
@@ -90,7 +71,10 @@
       width:100vw; height:100vh;
       overflow:hidden;
       background: none;              /* ✅ 실제 배경은 ::before로 깔 거라 제거 */
+      
+      /* ✅ [수정 3] 폰트 패밀리 적용 (CDN 이름과 동일하게) */
       font-family: 'Mountains of Christmas', 'Patrick Hand', cursive, sans-serif;
+      
       position:relative;
 
       display:flex;
@@ -196,16 +180,13 @@
     /* ✅ 오른쪽 여백(스크롤바 자리) 너무 많이 먹지 않게 줄임 */
     .rank-list{
       width: 100%;
-    
-    
-·    }
+    }
 
     /* ✅ 종이 안에 "무조건" 들어가게 더 타이트하게 */
     .rank-item{
       width:100%;
       display:grid;
       grid-template-columns: 40px minmax(0, 1fr) 70px 50px; /* 등수 / 닉네임 / 승패 / 승률 */
-     /* grid-template-columns: 40px minmax(0, 1fr) 70px; /* 등수 / 닉 / 승패 */
       column-gap: 6px;
       align-items:center;
 
@@ -284,8 +265,7 @@
         --ui-shift-x: 0px;
       }
       .back-btn{ width: clamp(110px, 18vw, 170px); }
-      /*.rank-item{ grid-template-columns: 38px minmax(0,1fr) 66px; }*/
-      .rank-item{ grid-template-columns: 38px minmax(0,1fr) 66px 48px; } /* 4개 컬럼으로 수정 */
+      .rank-item{ grid-template-columns: 38px minmax(0,1fr) 66px 48px; }
       .rank-list{ padding-right: 30px; gap: 7px; }
     }
   </style>
@@ -356,13 +336,8 @@
       const scrollbar = document.getElementById('scrollbar');
       const thumb = document.getElementById('scrollThumb');
 
-      /*
-        ✅ 핵심: 종이 "빈 영역" 기준으로 좌우 대칭 안전영역 설정
-        - sideRatio: 좌/우 동일한 여백 (0.12~0.16 범위에서 미세조정)
-        - 중앙 정렬은 좌=우 대칭으로 자동 해결
-      */
       const PAPER_SAFE = {
-        sideRatio: 0.16,    // ✅ 좌/우 동일 (필요시 0.01 단위로 조정)
+        sideRatio: 0.16,
         topRatio: 0.17,
         bottomRatio: 0.12,
       };
@@ -376,14 +351,13 @@
         scrollRightRatio: 0.02,
         scrollHeightRatio: 0.74,
 
-        offsetX: 0,    // ✅ 중앙 정렬을 위해 추가 오프셋 제거
+        offsetX: 0,
         offsetY: 0,
       };
 
       function clamp(v, min, max) { return Math.max(min, Math.min(max, v)); }
 
       function syncUiToPaperImage() {
-        // ✅ object-fit: contain으로 실제 그려진 이미지 영역 계산
         const containerW = wrap.clientWidth;
         const containerH = wrap.clientHeight;
         const naturalW = img.naturalWidth;
@@ -391,28 +365,17 @@
 
         if (!naturalW || !naturalH) return;
 
-        // contain 방식: 비율 유지하며 컨테이너에 맞춤
         const scale = Math.min(containerW / naturalW, containerH / naturalH);
         const drawnW = naturalW * scale;
         const drawnH = naturalH * scale;
         const drawnLeft = (containerW - drawnW) / 2;
         const drawnTop = (containerH - drawnH) / 2;
 
-        // 좌우 대칭으로 안전영역 계산
         const innerW = drawnW * (1 - PAPER_SAFE.sideRatio * 2);
         const innerH = drawnH * (1 - PAPER_SAFE.topRatio - PAPER_SAFE.bottomRatio);
 
         const innerLeft = drawnLeft + (drawnW * PAPER_SAFE.sideRatio) + PAPER_TUNE.offsetX;
         const innerTop = drawnTop + (drawnH * PAPER_SAFE.topRatio) + PAPER_TUNE.offsetY;
-
-        // 디버깅 정보
-        console.log('🔍 Debug Info:', {
-          container: { w: containerW, h: containerH },
-          natural: { w: naturalW, h: naturalH },
-          drawn: { w: drawnW, h: drawnH, left: drawnLeft, top: drawnTop },
-          inner: { w: innerW, h: innerH, left: innerLeft, top: innerTop },
-          safe: PAPER_SAFE
-        });
 
         ui.style.left = innerLeft + 'px';
         ui.style.top = innerTop + 'px';

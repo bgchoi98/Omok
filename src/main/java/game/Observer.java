@@ -13,5 +13,5 @@ public class Observer {
 	public String getNickName() {
 		return nickName;
 	}
-	
+
 }
